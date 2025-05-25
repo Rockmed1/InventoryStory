@@ -1,0 +1,49 @@
+{
+  "$schema": "https://cdn.statically.io/gh/nguyenngoclongdev/cdn/main/schema/v10/terminal-keeper.json",
+  "theme": "chaos",
+  "active": "default",
+  "activateOnStartup": true,
+  "noClear": false,
+  "keepExistingTerminals": false,
+  "sessions": {
+    "default": [
+      {
+        "name": "node",
+        "icon": "server-process",
+        "color": "terminal.ansiGreen",
+        "commands": [
+          "npm run dev"
+        ],
+        "autoExecuteCommands": true
+      },
+      {
+        "name": "zsh",
+        "icon": "terminal",
+        "color": "terminal.ansiBrightWhite",
+        "focus": true,
+        "commands": [
+          ""
+        ]
+      },
+      {
+        "name": "yazi",
+        "icon": "diff",
+        "color": "terminal.ansiMagenta",
+        "commands": [
+          "yazi"
+        ],
+        "autoExecuteCommands": true
+      },
+      {
+        "name": "git",
+        "autoExecuteCommands": true,
+        "icon": "github",
+        "color": "terminal.ansiRed",
+        "cwd": "/Users/themac/Dev/React/",
+        "commands": [
+          ""
+        ]
+      }
+    ]
+  }
+}
