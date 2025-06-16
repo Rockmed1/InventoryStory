@@ -8,23 +8,24 @@ Lite inventory management application
 
 - multi-tenent/ multi-user application
 - user authentication and authorization
-- user can create an organization based on permission
+- user can create an organization (later: based on permission)
 - user to tenant many to many relationship
-- user can create Item with Item number description initial quantity pictures
-- user can ceate location : location , isle, bin, number
-- user can create selling venues with links to different selling platform an Item can be sold at
-- user can add quantity to items and sell quantity. total quantity on hand will auto calculate
+- user can create Item with Item number, description, initial qty, pictures
+- user can ceate location : location , bin
+- user can create Markets: selling/buying venues with links to different selling/buying platform an Item can be sold/bougt at
+- user can add qty to items and sell qty. total qty on hand will auto calculate
 - user can edit item details
-- user can place certain quantity on hold
-- user can adjust quantity for reconciliation
-- user can assign quantity to location.
-- user can transfer quantity between locations
+- user can place certain qty on hold
+- user can adjust qty for reconciliation
+- user can assign qty to location/bin.
+- user can transfer qty between locations/bins•
 - user can search for an item
+- user can see transactions history (allow filter by item, location, bin, trx_type)
+- user can see (QOH) per location
+- later:
+- user can see location history
 - user can see item details history
 - user can see item history
-- user can see location status (QOH)
-- user can see location history
-- user can see transactions history
 - user can see full history
 
 ### Analysis: Define:
@@ -42,13 +43,13 @@ todo: market research, competition, user personas?
 
 ## 2- Design:
 
-### a- Divide the application into pages:
+### a- Divide the application INTO pages:
 
 1- Think about the overall and page-level UI
-2- Break the UI into components and establish the component tree
+2- Break the UIINTO components and establish the component tree
 3- Build a static version (without state and data)
 
-### b- Divide the application into feature categories
+### b- Divide the application INTO feature categories
 
 #### Feature categories:
 
@@ -58,6 +59,7 @@ todo: market research, competition, user personas?
 4- Settings:
 4a- Items Settings (Category, Type, variety, ...etc.)
 4b- Location (sublocations)
+4c- Transaction settings: transaction types
 6- Transactions (buy- sell - transfer)
 7- Reports (Insights)
 
@@ -71,9 +73,9 @@ todo: market research, competition, user personas?
 #### Pages: ( linked to feature categories)
 
 1- Homepage: /
-2- Items: /items (list items;delete item)
+2- Items: /items (list items; find item; create item; delete item)
 2a- Item actions: /item/:itemId
-3- Transactions (buy; sell; transfer)
+3- Transactions (buy; sell; transfer; adjust; scrap)
 4- Reports: /Reports
 5- Settings: /settings
 
@@ -91,7 +93,7 @@ use branding if it exists
 
 #### state:
 
-Q: 1- Think about state: when to use? types of state (local / global/ server / clien)
+Q: 1- Think about state: when to use? types of state (local / global/ server / client)
 A: most state is Global Remote
 
 Q: 2- Establish data flow

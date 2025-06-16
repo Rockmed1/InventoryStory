@@ -1,3 +1,29 @@
 {
-  "dotenv.enableAutocloaking": false
+  "dotenv.enableAutocloaking": false,
+  "sqltools.connections": [
+    {
+      "previewLimit": 100,
+      "server": "localhost",
+      "port": 5432,
+      "driver": "PostgreSQL",
+      "name": "local",
+      "username": "aa",
+      "database": "testdb",
+      "password": ""
+    }
+  ],
+  "workbench.colorTheme": "Default Light+",
+  "[sql]": {
+    "editor.defaultFormatter": "bradymholt.pgformatter"
+  },
+  "sql-formatter.dialect": "postgresql",
+  "sql-formatter.uppercase": true,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "notebook.formatOnCellExecution": true,
+  "notebook.formatOnSave.enabled": true,
+  "notebook.defaultFormatter": "esbenp.prettier-vscode",
+  "[postgres]": {
+    "editor.defaultFormatter": "bradymholt.pgformatter"
+  }
 }

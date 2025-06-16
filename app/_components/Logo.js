@@ -22,7 +22,6 @@ export default function Logo() {
     /> */}
       <span className="w-10 sm:w-16">
         <Image
-          s
           src={logoImage}
           alt="Inventory House Logo"
           height="60"

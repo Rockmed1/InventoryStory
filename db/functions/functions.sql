@@ -1,0 +1,97 @@
+/* 
+--NOTES:
+-- ! use utils_admin role to create all functions. so that the set_context helper functions can be set as security definer to apply rls..
+-- schema name usrs is named usrs to avoid conflict with supabase table
+-- table name usr is named usr because usr is a keyword
+-- convention is to have the table primary key named : <table_name_id>
+exceptions:
+--organization_id is org_id
+--transaction_id is trx_id
+--function parameters and local variables are always preceded with _ (_usr_id)
+-- functions exposed to api start with fn_ while functions for sql use only start with _fn_
+
+-- !CONVENTION TRANSLATIONS:
+--usr is usr
+--organization is org
+--transaction is trx
+--qty is qty
+
+-- !Data flow:
+-- isAuthenticated is controlled and tracked on the APP LAYER and not in the database.
+-- usrs and orgs schema functions are gated through the APP LAYER ONLY through authentication. FIXME: add rls to usrs and orgs tables
+-- user/org authorization is controlled in the app after caching the usr_org data
+-- org_id and usr_id are kept in the database only.
+-- org_uuid and usr_uuid are exposed to the api for consumption and reference in the application
+-- all function calls coming from the api must pass isAuthenticated=true on the server
+-- all function calls coming from the api have to include the org_uuid and usr_uuid as part of the function parameters, except:
+
+---: the create user function 
+--*fn_create_usr : only object of {usr_name, usr_email,...etc.} => usr_uuid
+
+---: the create organization function 
+--*fn_create_organization : only object of {usr_uuid, org_name,...etc.}
+
+---- the get user uuid function (usr_name) 
+--*fn_get_usr_uuid : only usr_name =>usr_uuid
+
+---- the user/org authentication function (usr_uuid)
+--*fn_get_usr_orgs : only usr_uuid => {"usr_uuid", ["org_uuid",  "org_name"]}
+---- 
+---
+--TODO: FUNCTIONS AND PROCEDURES
+--
+--!UTILITY:
+--//_fn_verify_jsonb_input_keys_param
+--//_fn_set_org_rls
+--//_fn_set_app_context
+--//_fn_get_usr_id :usr_uuid =>usr_id
+--//_fn_get_org_id :org_uuid =>org_id 
+--//_fn_get_org_uuid :org_id =>org_uuid
+--//_fn_assign_usr_org :usr_id,org_id =>success bool --=>automatically when org is created OR later: user can manage org access 
+--!ASSERTS:
+--//_fn_assert_usr_not_exist :usr_name => void - raises error if exists
+--//_fn_assert_org_not_exist :org_name => void - raises error if exists
+--//_fn_assert_usr_org_not_exist : usr_id, org_id => void raises if exists
+--//_fn_assert_usr_org_auth: usr_id, org_id =>void raises error if not authorized
+--//_fn_assert_item_class_dup  ====> will handle on the front end
+--//_fn_assert_item_trx_input
+--!GETTERS:
+--// *fn_get_usr_uuid :usr_name =>usr_uuid
+--//fn_get_usr_orgs :usr_uuid => {"usr_uuid", ["org_uuid",  "org_name"]}
+--//fn_get_locations
+--//fn_get_bins
+--//fn_get_market_type
+--//fn_get_markets
+--//fn_get_items_classes
+--//fn_get_items
+--//fn_get_trx_types
+--//fn_get_transactions
+--//fn_get_transaction_details
+--_fn_get_items_qty
+--!SETTERS:
+--//_fn_set_item_qty
+--!CALCULATORS:
+--//_fn_calculate_item_QOH
+--!CREATE:
+--//fn_create_usr :object of usr_name, usr_email,...etc. => usr_uuid
+--//fn_create_organization : object of usr_uuid, org_name,...etc. => table of org_uuid, org_name (needs to call _fn_assign_usr_org)
+--//fn_create_location
+--//fn_create_bin
+--//fn_create_market_type
+--//fn_create_market
+--//fn_create_item_class : item_class_name text, item_class_desc text 
+--//fn_create_item
+--//fn_create_trx_type
+--FIXME: fn_get_transaction_serial
+--//fn_create_item_trx
+--_//fn_create_item_trx_detail(might be embedded in the header)
+--! TRIGGERS:
+--fn_delete_usr_org_on_org_delete
+ */
+--
+--
+--
+----------
+-----
+----
+---
