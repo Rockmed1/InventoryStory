@@ -23,9 +23,12 @@ FROM
 -----
 ---
 --
-CREATE VIEW items.v_item AS
+DROP VIEW IF EXISTS items.v_item;
+
+CREATE OR REPLACE VIEW items.v_item AS
 SELECT
 	i.item_id
+	, i.item_name
 	, i.item_desc
 	, i.item_class_id
 	, c.item_class_name
@@ -37,6 +40,7 @@ FROM
 	LEFT JOIN items.item_qty q ON i.item_id = q.item_id
 GROUP BY
 	i.item_id
+	, i.item_name
 	, i.item_desc
 	, i.item_class_id
 	, c.item_class_name

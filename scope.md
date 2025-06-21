@@ -53,7 +53,7 @@ todo: market research, competition, user personas?
 
 #### Feature categories:
 
-1- User
+1- User : login, signup, profile
 2- Organization
 3- Items
 4- Settings:
@@ -72,12 +72,14 @@ todo: market research, competition, user personas?
 
 #### Pages: ( linked to feature categories)
 
-1- Homepage: /
-2- Items: /items (list items; find item; create item; delete item)
-2a- Item actions: /item/:itemId
+1- Homepage: /TBD: dashboard?
+2- Items overview: /items (list items; find item; create item; delete item)
+2a- Item details/ actions: /item/:itemId
 3- Transactions (buy; sell; transfer; adjust; scrap)
 4- Reports: /Reports
 5- Settings: /settings
+6- Authentication: login/signup
+7- Profile:
 
 #### scetch:
 
@@ -97,7 +99,7 @@ Q: 1- Think about state: when to use? types of state (local / global/ server / c
 A: most state is Global Remote
 
 Q: 2- Establish data flow
-A: TBD
+A: inventory.erd inventory.drawio
 
 ### c-Design decisions:
 
@@ -105,10 +107,11 @@ A: TBD
 
 (what libraries we will use)
 
-- NextJs
-- Tailwind
-- Supabase for database
-- NextAuth for authentication (possibly clerk)
+- Framework: NextJs
+- Global local state: Context API or redux
+- CSS: Tailwind
+- Database: Supabase
+- Authentication: NextAuth (possibly clerk)
 
 #### Website personality:
 

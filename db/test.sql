@@ -292,6 +292,7 @@ SELECT
 FROM
 	trans.trx_type;
 
+_fn_assert_valid_item_trx_input failed FOR 2 line(s).Details:[{"line" : 1 , "error" :"invalid_in_out_transaction" , "_data->" : {"_qty_in" : 1.0 , "_to_bin" :"1001" , "_item_id" :"1000" , "_qty_out" : 1.0 , "_from_bin" :"1002" , "_trx_line_num" :"1" , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" }} , {"line" : 2 , "error" :"invalid_in_out_transaction" , "_data->" : {"_qty_in" : 1.0 , "_to_bin" :"1001" , "_item_id" :"1000" , "_qty_out" : 1.0 , "_from_bin" :"1002" , "_trx_line_num" :"2" , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" }}]
 SELECT
 	*
 FROM
@@ -320,14 +321,14 @@ FROM
 DO $$
 DECLARE
 	-- _data JSONB;
-	_data JSONB := ' {"_org_uuid" :"d20ad64c-7d77-4028-b0a3-fb45ba6b37eb"
-	, "_usr_uuid" :"44c3a261-1fc0-4199-be80-eaf721f7eaa2"
+	_data JSONB := ' {"_org_uuid" :"ceba721b-b8dc-487d-a80c-15ae9d947084"
+	, "_usr_uuid" :"2bfdec48-d917-41ee-99ff-123757d59df1"
 	, "_trx_header" : { "_trx_date" :"7/1/2025"
 	, "_trx_desc" :"kjhskjdhfsdkh"
 	, "_market_id" :"1000"
-	, "_trx_type_id" :"1002"
+	, "_trx_type_id" :"1000"
 	, "_num_of_lines" :"2" }
-	, "_trx_details" :[{ "_trx_line_num" :"1" , "_to_bin" :"1001" , "_item_id" :"1000" , "_from_bin" :"1002" , "_qty_in" :1.0 , "_qty_out" :1.0 , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" } , { "_trx_line_num" :"2" , "_to_bin" :"1001" , "_item_id" :"1000" , "_from_bin" :"1002" , "_qty_in" :1.0 , "_qty_out" :1.0 , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" }] }'::JSONB;
+	, "_trx_details" :[{ "_trx_line_num" :"1" , "_to_bin" :"1001" , "_item_id" :"1000" , "_from_bin" :null , "_qty_in" :8.0 , "_qty_out" :null , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" } , { "_trx_line_num" :"2" , "_to_bin" :"1001" , "_item_id" :"1001" , "_from_bin" :null , "_qty_in" :10.0 , "_qty_out" :null , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" }] }'::JSONB;
 	_results JSONB;
 	_type_id INTEGER;
 	_trx_direction_id INTEGER;
@@ -365,7 +366,13 @@ FROM
 	usrs.v_usr_org;
 
 SELECT
+	*
+FROM
+	items.item;
+
+SELECT
 	i.item_id
+	, i.item_name
 	, i.item_desc
 	, i.item_class_id
 	, c.item_class_name
@@ -381,3 +388,7 @@ GROUP BY
 	, i.item_class_id
 	, c.item_class_name
 	, c.item_class_desc;
+
+SELECT
+	json_agg(json_build_object('item_id' , i.item_id , 'item_name' , i.item_name , 'item_desc' , i.item_desc , 'item_class_name' , i.item_class_name , 'item_QOH' , COALESCE(i.qoh , 0)))
+		FROM items.v_item i;

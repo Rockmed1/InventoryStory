@@ -1,4 +1,5 @@
 import logoImage from '@/public/InventoryMoney.png';
+// import logoImage from '@/public/InventoryProcess.png';
 import { Lora } from 'next/font/google';
 import Image from 'next/image';
 
@@ -30,7 +31,7 @@ export default function Logo() {
         />
       </span>
       <span
-        className={`${secondFont.className} text-primary-800 hidden text-3xl font-semibold tracking-tighter sm:block`}
+        className={`${secondFont.className} text-primary-900 hidden text-3xl font-semibold tracking-tighter text-shadow-neutral-200 sm:block`}
       >
         Inventory story
       </span>

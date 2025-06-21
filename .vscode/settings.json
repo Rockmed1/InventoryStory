@@ -12,7 +12,7 @@
       "password": ""
     }
   ],
-  "workbench.colorTheme": "Default Light+",
+  "workbench.colorTheme": "One Dark Pro Monokai Darker Reloaded",
   "[sql]": {
     "editor.defaultFormatter": "bradymholt.pgformatter"
   },

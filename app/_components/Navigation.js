@@ -1,9 +1,9 @@
 import Logo from '@/app/_components/Logo';
 import Link from 'next/link';
 
-function Navigation() {
+export default function Navigation() {
   return (
-    <div className="col-span-2 flex items-center justify-between gap-4 border-b-[0.5] border-stone-300 bg-neutral-100 px-2.5 py-1 shadow-xs sm:gap-10">
+    <div className="w-100% col-span-2 m-auto mx-2.5 flex items-center justify-between gap-4 rounded-xl border-b-[0.5] border-stone-300 bg-neutral-100 px-2.5 py-1 shadow-xs">
       <Logo />
       <input type="text" placeholder="Search Item..." className="input" />
 
@@ -17,5 +17,3 @@ function Navigation() {
     </div>
   );
 }
-
-export default Navigation;

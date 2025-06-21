@@ -1,3 +1,5 @@
+'use client';
+
 import {
   ArchiveBoxIcon,
   ArrowRightEndOnRectangleIcon,
@@ -7,55 +9,63 @@ import {
   HomeIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
 export default function SideNavigation() {
+  const pathName = usePathname();
+
+  const navLinks = [
+    {
+      name: 'Home',
+      href: '/',
+      icon: <HomeIcon className="size-6" />,
+    },
+    {
+      name: 'Items',
+      href: '/items',
+      icon: <ArchiveBoxIcon className="size-6" />,
+    },
+
+    {
+      name: 'Transactions',
+      href: '/transactions',
+      icon: <ArrowsRightLeftIcon className="size-6" />,
+    },
+
+    {
+      name: 'Reports',
+      href: '/reports',
+      icon: <ChartPieIcon className="size-6" />,
+    },
+
+    {
+      name: 'Settings',
+      href: '/settings',
+      icon: <Cog8ToothIcon className="size-6" />,
+    },
+  ];
+
   return (
-    <div className="mx-auto h-full w-[95%] rounded-lg px-2 py-4">
-      <ul className="col-span-1 mx-auto flex h-full w-[80%] flex-col items-start gap-2 text-xs text-neutral-600 sm:gap-8 sm:text-xl">
-        <li className="hover:font-semibold">
-          <Link href="/" className="flex items-center justify-center gap-2">
-            <HomeIcon className="h-6 w-6" />
-            <div>Home</div>
-          </Link>
-        </li>
-        <li className="hover:font-semibold">
-          <Link
-            href="/items"
-            className="flex items-center justify-center gap-2"
-          >
-            <ArchiveBoxIcon className="h-6 w-6" />
-            Items
-          </Link>
-        </li>
-        <li className="hover:font-semibold">
-          <Link
-            href="/transactions"
-            className="flex items-center justify-center gap-2"
-          >
-            <ArrowsRightLeftIcon className="h-6 w-6" />
-            Transactions
-          </Link>
-        </li>
-        <li className="hover:font-semibold">
-          <Link
-            href="/reports"
-            className="flex items-center justify-center gap-2"
-          >
-            <ChartPieIcon className="h-6 w-6" />
-            Reports
-          </Link>
-        </li>
-        <li className="hover:font-semibold">
-          <Link
-            href="/settings"
-            className="flex items-center justify-center gap-2"
-          >
-            <Cog8ToothIcon className="h-6 w-6" />
-            Settings
-          </Link>
-        </li>
+    <div className="mx-auto h-full w-full rounded-lg p-2">
+      <ul className="col-span-1 mx-auto flex h-full flex-col items-start text-xs text-gray-900 sm:text-sm">
+        {navLinks.map(link => (
+          <li className="w-[100%]" key={link.name}>
+            <Link
+              href={link.href}
+              className={`flex items-center justify-items-start gap-2 rounded-lg p-2 transition-all duration-300 hover:bg-neutral-100 hover:font-semibold ${pathName === link.href ? 'bg-neutral-100' : ''}`}
+            >
+              {link.icon}
+              <div>{link.name}</div>
+            </Link>
+          </li>
+        ))}
+
         <li className="mt-auto hover:font-semibold">
-          <Link href="/" className="flex items-center justify-center gap-2">
-            <ArrowRightEndOnRectangleIcon className="h-6 w-6" />
+          <Link
+            href="/"
+            className="flex items-center justify-items-start gap-2 rounded-lg p-2 transition-all duration-300 hover:bg-neutral-100 hover:font-semibold"
+          >
+            <ArrowRightEndOnRectangleIcon className="size-6" />
             Sign out/ Account
           </Link>
         </li>

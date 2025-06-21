@@ -2,7 +2,7 @@ import Button from './_components/Button';
 
 export default function Home() {
   return (
-    <div className="mx-auto flex h-full items-center justify-between rounded-lg bg-neutral-50 px-2 py-1 shadow-2xl">
+    <div className="mx-auto flex h-full items-center justify-between rounded-xl border border-neutral-100 bg-white px-2.5 py-1">
       <input
         type="checkbox"
         name="line"

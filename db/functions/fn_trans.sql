@@ -293,7 +293,8 @@ BEGIN
 					OR _obj ->> '_from_bin' IS NULL
 					OR _obj ->> '_qty_in' IS NOT NULL
 					OR _obj ->> '_to_bin' IS NOT NULL
-					OR _fn_not_enough_item_QOH((_obj ->> '_item_id')::INT ,(_obj ->> '_from_bin')::INT ,((_obj ->> '_qty_out')::DECIMAL(8 , 2)))) THEN
+					-- OR _fn_not_enough_item_QOH((_obj ->> '_item_id')::INT ,(_obj ->> '_from_bin')::INT ,((_obj ->> '_qty_out')::DECIMAL(8 , 2)))
+) THEN
 					'invalid_out_transaction'
 				WHEN _trx_direction_id = 3
 					AND (_obj ->> '_qty_in' IS NULL
@@ -303,8 +304,12 @@ BEGIN
 					OR ((_obj ->> '_qty_out')::decimal(8 , 2)) = 0
 					OR _obj ->> '_from_bin' IS NULL
 					OR _obj ->> '_to_bin' = _obj ->> '_from_bin'
-					OR _fn_not_enough_item_QOH((_obj ->> '_item_id')::INT ,(_obj ->> '_from_bin')::INT ,((_obj ->> '_qty_out')::DECIMAL(8 , 2)))) THEN
+					-- OR _fn_not_enough_item_QOH((_obj ->> '_item_id')::INT ,(_obj ->> '_from_bin')::INT ,((_obj ->> '_qty_out')::DECIMAL(8 , 2)))
+) THEN
 					'invalid_in_out_transaction'
+				WHEN _trx_direction_id IN (2 , 3)
+					AND _fn_not_enough_item_QOH((_obj ->> '_item_id')::INT ,(_obj ->> '_from_bin')::INT ,((_obj ->> '_qty_out')::DECIMAL(8 , 2))) THEN
+					'Not enough QOH. Current QOH is :'
 				ELSE
 					NULL
 				END , '_data->' , _obj))

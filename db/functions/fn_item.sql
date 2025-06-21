@@ -646,6 +646,11 @@ ALTER FUNCTION utils.fn_create_item OWNER TO utils_admin;
 ----------
 --------
 ------
+SELECT
+	*
+FROM
+	items.v_item;
+
 ---
 /* ## fn_get_items */
 DROP FUNCTION IF EXISTS utils.fn_get_items;
@@ -677,9 +682,9 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_build_object('items' , json_agg(json_build_object('item_id' , t.item_id , 'item_name' , t.item_name , 'item_desc' , t.item_desc , 'item_class_id' , t.item_class_id)))
+		INTO _result json_agg(json_build_object('id' , i.item_id , 'name' , i.item_name , 'item_desc' , i.item_desc , 'item_class_name' , i.item_class_name , 'item_QOH' , COALESCE(i.qoh , 0)))
 	FROM
-		items.item t;
+		items.v_item i;
 
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'No records found in items.item.';
