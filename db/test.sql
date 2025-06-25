@@ -109,9 +109,9 @@ SELECT
 -- SELECT * FROM usrs.v_usr_org;
 -------
 ---
-'1000	7377c9df-4fa9-4b4d-b1d9-1877d2711e9a	sa	1000	test_co 1bfabc56-116d-4db4-ba16-77d2f5699ca5
-1000	7377c9df-4fa9-4b4d-b1d9-1877d2711e9a	sa	1002	test_co2 aadb7c11-b96a-495d-86a3-31e3ab4deabe
-1001	155b29b7-375a-407f-8168-f2090d61518e	test_usr2	1000	test_co 1bfabc56-116d-4db4-ba16-77d2f5699ca5'
+'1000	2bfdec48-d917-41ee-99ff-123757d59df1	sa	1000	test_co ceba721b-b8dc-487d-a80c-15ae9d947084
+1000	2bfdec48-d917-41ee-99ff-123757d59df1	sa	1002	test_co2 aadb7c11-b96a-495d-86a3-31e3ab4deabe
+1001	155b29b7-375a-407f-8168-f2090d61518e	test_usr2	1000	test_co ceba721b-b8dc-487d-a80c-15ae9d947084'
 --* get user organizations
 SELECT
 	*
@@ -124,7 +124,7 @@ FROM
 --* get organization id
 --1000
 SELECT
-	utils._fn_get_org_id('1bfabc56-116d-4db4-ba16-77d2f5699ca5'::UUID);
+	utils._fn_get_org_id('ceba721b-b8dc-487d-a80c-15ae9d947084'::UUID);
 
 - 1002
 SELECT
@@ -150,7 +150,7 @@ BEGIN
 		, _org_id
 		, _is_context_set
 	FROM
-		utils._fn_set_app_context('7377c9df-4fa9-4b4d-b1d9-1877d2711e9a' , '1bfabc56-116d-4db4-ba16-77d2f5699ca5');
+		utils._fn_set_app_context('2bfdec48-d917-41ee-99ff-123757d59df1' , 'ceba721b-b8dc-487d-a80c-15ae9d947084');
 	RESET ROLE;
 END
 $$;
@@ -179,14 +179,14 @@ FROM
 SELECT
 	*
 FROM
-	utils.fn_create_item_class(jsonb_build_object('_usr_uuid' , '7377c9df-4fa9-4b4d-b1d9-1877d2711e9a' , '_org_uuid' , '1bfabc56-116d-4db4-ba16-77d2f5699ca5' , '_item_class_name' , 'class1' , '_item_class_desc' , 'text1 text text text text'));
+	utils.fn_create_item_class(jsonb_build_object('_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084' , '_item_class_name' , 'class1' , '_item_class_desc' , 'text1 text text text text'));
 
 -- ROLLBACK
 --* get item class
 SELECT
 	*
 FROM
-	utils.fn_get_items_classes(jsonb_build_object('_usr_uuid' , '7377c9df-4fa9-4b4d-b1d9-1877d2711e9a' , '_org_uuid' , '1bfabc56-116d-4db4-ba16-77d2f5699ca5'));
+	utils.fn_get_items_classes(jsonb_build_object('_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084'));
 
 SELECT
 	*
@@ -205,7 +205,7 @@ WHERE item_class_id > 12;
 SELECT
 	* INTO _result
 FROM
-	utils.fn_create_location(jsonb_build_object('_usr_uuid' , '7377c9df-4fa9-4b4d-b1d9-1877d2711e9a' , '_org_uuid' , '1bfabc56-116d-4db4-ba16-77d2f5699ca5' , '_loc_name' , 'location1' , '_loc_desc' , 'text1 text text text text'));
+	utils.fn_create_location(jsonb_build_object('_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084' , '_loc_name' , 'location1' , '_loc_desc' , 'text1 text text text text'));
 
 RAISE NOTICE '_result: %' , _result;
 
@@ -217,17 +217,17 @@ END $$;
 SELECT
 	*
 FROM
-	utils.fn_get_locations(jsonb_build_object('_usr_uuid' , '7377c9df-4fa9-4b4d-b1d9-1877d2711e9a' , '_org_uuid' , '1bfabc56-116d-4db4-ba16-77d2f5699ca5'));
+	utils.fn_get_locations(jsonb_build_object('_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084'));
 
 -- SELECT
 -- 	*
 -- FROM
--- 	locations.location;
+-- 	locations.v_location;
 --* create bin
 SELECT
 	* INTO _result
 FROM
-	utils.fn_create_bin(jsonb_build_object('_usr_uuid' , '7377c9df-4fa9-4b4d-b1d9-1877d2711e9a' , '_org_uuid' , '1bfabc56-116d-4db4-ba16-77d2f5699ca5' , '_bin_name' , 'location1' , '_bin_desc' , 'text1 text text text text' , 'loc_id' , '1'));
+	utils.fn_create_bin(jsonb_build_object('_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084' , '_bin_name' , 'location1' , '_bin_desc' , 'text1 text text text text' , 'loc_id' , '1'));
 
 RAISE NOTICE '_result: %' , _result;
 
@@ -244,7 +244,7 @@ FROM
 SELECT
 	*
 FROM
-	utils.fn_get_bins(jsonb_build_object('_usr_uuid' , '7377c9df-4fa9-4b4d-b1d9-1877d2711e9a' , '_org_uuid' , '1bfabc56-116d-4db4-ba16-77d2f5699ca5'));
+	utils.fn_get_bins(jsonb_build_object('_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084'));
 
 SELECT
 	*
@@ -391,4 +391,5 @@ GROUP BY
 
 SELECT
 	json_agg(json_build_object('item_id' , i.item_id , 'item_name' , i.item_name , 'item_desc' , i.item_desc , 'item_class_name' , i.item_class_name , 'item_QOH' , COALESCE(i.qoh , 0)))
-		FROM items.v_item i;
+FROM
+	items.v_item i;

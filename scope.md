@@ -73,7 +73,7 @@ todo: market research, competition, user personas?
 #### Pages: ( linked to feature categories)
 
 1- Homepage: /TBD: dashboard?
-2- Items overview: /items (list items; find item; create item; delete item)
+2- Items overview: /items (list items; find item; edit item; create item; delete item)
 2a- Item details/ actions: /item/:itemId
 3- Transactions (buy; sell; transfer; adjust; scrap)
 4- Reports: /Reports

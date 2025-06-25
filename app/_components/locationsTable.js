@@ -4,12 +4,12 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import dummyServerAction from "../_lib/actions";
-import { getItems } from "../_lib/data-services";
+import { getLocations } from "../_lib/data-services";
 import Table from "../_ui/Table";
 
-const labels = ["Item ID", "Name", "Description", "Class", "QOH"];
+const labels = ["Location ID", "Name", "Description"];
 
-export default async function ItemsTable() {
+export default async function LocationsTable() {
   const rowActions = [
     {
       id: "edit",
@@ -31,7 +31,7 @@ export default async function ItemsTable() {
     },
   ];
 
-  const data = await getItems();
+  const data = await getLocations();
 
   return <Table data={data} labels={labels} rowActions={rowActions} />;
 }
@@ -40,4 +40,4 @@ function Fallback() {
   return <Table labels={labels} />;
 }
 
-ItemsTable.Fallback = Fallback;
+LocationsTable.Fallback = Fallback;

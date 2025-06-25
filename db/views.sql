@@ -45,3 +45,37 @@ GROUP BY
 	, i.item_class_id
 	, c.item_class_name
 	, c.item_class_desc;
+
+----------------
+--------------
+-----------
+--------
+-----
+---
+DROP VIEW IF EXISTS locations.v_location;
+
+CREATE OR REPLACE VIEW locations.v_location AS
+SELECT
+	l.loc_id
+	, l.loc_name
+	, l.loc_desc
+FROM
+	locations.location l;
+
+----------------
+--------------
+-----------
+--------
+-----
+---
+DROP VIEW IF EXISTS locations.v_bin;
+
+CREATE OR REPLACE VIEW locations.v_bin AS
+SELECT
+	b.bin_id
+	, b.bin_name
+	, l.loc_name
+	, b.bin_desc
+FROM
+	locations.bin b
+	JOIN locations.location l ON l.loc_id = b.loc_id;

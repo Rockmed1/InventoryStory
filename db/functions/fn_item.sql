@@ -210,9 +210,9 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_build_object('locations' , json_agg(json_build_object('loc_id' , t.loc_id , 'loc_name' , t.loc_name , 'loc_desc' , t.loc_desc)))
+		INTO _result json_build_object('locations' , json_agg(json_build_object('id' , t.loc_id , 'loc_name' , t.loc_name , 'loc_desc' , t.loc_desc)))
 	FROM
-		locations.location t;
+		locations.v_location t;
 
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'No records found in locations.location.';
@@ -327,9 +327,9 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_build_object('bins' , json_agg(json_build_object('bin_id' , t.bin_id , 'bin_name' , t.bin_name , 'bin_desc' , t.bin_desc)))
+		INTO _result json_build_object('bins' , json_agg(json_build_object('id' , b.bin_id , 'bin_name' , b.bin_name , 'loc_name' , b.loc_name , 'bin_desc' , b.bin_desc)))
 	FROM
-		locations.bin t;
+		locations.v_bin b;
 
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'No records found in locations.bin.';

@@ -1,5 +1,6 @@
 {
-  "singleQuote": true,
-  "arrowParens": "avoid",
+  "singleQuote": false,
+  "arrowParens": "always",
+  "bracketSameLine": true,
   "plugins": ["prettier-plugin-tailwindcss"]
 }
