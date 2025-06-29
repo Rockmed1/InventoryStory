@@ -1,12 +1,13 @@
-import { useOutsideClick } from "@/app/hooks/useOutsideClick";
+"use client";
+
+import { useOutsideClick } from "@/app/_hooks/useOutsideClick";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import React, { cloneElement, createContext, use, useState } from "react";
 import { createPortal } from "react-dom";
-import Button from "../_ui/Button";
 
 function Overlay({ children }) {
   return (
-    <div className="bg-backdrop fixed top-0 left-0 z-[1000] flex h-lvh w-full items-center justify-center backdrop-blur-xs transition-all duration-200">
+    <div className="fixed top-0 left-0 z-[1000] flex h-lvh w-full items-center justify-center bg-black/50 transition-all duration-200">
       {/* // <div className="bg-backdrop fixed inset-0 flex items-center justify-center p-4 backdrop-blur-sm"> */}
       {children}
     </div>
@@ -17,7 +18,7 @@ function StyledModal({ children, ref }) {
   return (
     <div
       ref={ref}
-      className="border-primary-300 fixed top-1/2 left-1/2 -translate-1/2 rounded-xl border bg-neutral-50 p-4 shadow-lg transition-all duration-200">
+      className="fixed top-1/2 left-1/2 w-full max-w-[calc(100%-2rem)] -translate-1/2 rounded-xl border border-neutral-300 bg-white p-6 shadow-lg transition-all duration-200 sm:w-md">
       {/* <div
       ref={ref}
       className="relative z-50 mx-auto grid w-9/12 items-center justify-center rounded-xl bg-white p-2 shadow-xl"
@@ -43,6 +44,14 @@ function StyledModal({ children, ref }) {
 //     document.body,
 //   );
 // }
+
+function Title({ children }) {
+  return <p className="text-lg font-semibold">{children}</p>;
+}
+
+function Description({ children }) {
+  return <p className="text-sm text-neutral-500">{children}</p>;
+}
 
 //:  to improve even further we should keep the isOpenModal state encapsulated inide the Modal component. to achieve this we use the compound component pattern.
 
@@ -72,10 +81,19 @@ function Open({ children, opensWindowName }) {
   return cloneElement(children, { onClick: () => open(opensWindowName) });
 }
 
-function Window({ name, children }) {
+function Window({
+  name,
+  title,
+  description,
+  isUseOutsideClick = true,
+  children,
+}) {
   const { openName, close } = use(ModalContext);
 
-  const modalRef = useOutsideClick(close);
+  let modalRef;
+  if (isUseOutsideClick) {
+    modalRef = useOutsideClick(close);
+  }
 
   // const modalRef = useRef(null);
   // useEffect(() => {
@@ -99,18 +117,27 @@ function Window({ name, children }) {
   return createPortal(
     <Overlay>
       <StyledModal ref={modalRef}>
-        <Button onClick={close}>
+        {/* <Button onClick={close} className="absolute top-4 right-4">
           <XMarkIcon className="size-5" />
-        </Button>
-        <div>
+        </Button> */}
+
+        <button
+          onClick={close}
+          className="text-md absolute top-4 right-4 inline-block h-8 rounded-xs text-neutral-950 opacity-70 transition-all duration-300 hover:opacity-100 disabled:pointer-events-none has-[>svg]:px-0.5 hover:[&_svg]:stroke-2">
+          <XMarkIcon className="size-4" />
+        </button>
+
+        <div className="flex w-full flex-col gap-4 sm:max-w-[425px]">
+          <div className="flex flex-col gap-2">
+            <Title>{title}</Title>
+            <Description>{description}</Description>
+          </div>
           {/* {children} */}
           {/* {cloneElement(children, { onCloseModal: close })} // this will error out if passing [null or undefined, Arrays of elements, Plain text/strings, Numbers, Multiple elements] as children*/}
-          {React.Children.count(children) === 1 &&
-          React.isValidElement(children)
+          {React.Children.count(children) > 0 && React.isValidElement(children)
             ? cloneElement(children, { onCloseModal: close })
             : children}
         </div>
-        {/* <div>{children}</div> */}
       </StyledModal>
     </Overlay>,
 
@@ -120,6 +147,8 @@ function Window({ name, children }) {
 
 //4- Add the properties to the parent function
 Modal.Open = Open;
+// Modal.Title = Title;
+// Modal.Description = Description;
 Modal.Window = Window;
 
 export default Modal;

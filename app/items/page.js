@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import AddItem from "../_components/AddItem";
 import ItemsTable from "../_components/ItemsTable";
+import AddButtonModal from "../_components/_ui/client/AddButtonModal";
 
 export const metadata = {
   title: "items",
@@ -15,7 +15,10 @@ export default async function Items() {
     <>
       <div className="container m-auto grid w-full items-center gap-6 p-2">
         <div className="flex flex-row-reverse gap-2">
-          <AddItem />
+          {/* <AddItem /> */}
+          <AddButtonModal opensWindowName="item-form" buttonLabel="Add item">
+            This is a modal for the item form.
+          </AddButtonModal>
         </div>
         <Suspense fallback={<ItemsTable.Fallback />}>
           <ItemsTable />

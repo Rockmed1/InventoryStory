@@ -1,14 +1,14 @@
-import logoImage from '@/public/InventoryMoney.png';
+import logoImage from "@/public/InventoryMoney.png";
 // import logoImage from '@/public/InventoryProcess.png';
-import { Lora } from 'next/font/google';
-import Image from 'next/image';
+import { Lora } from "next/font/google";
+import Image from "next/image";
 
 //font using NextJs
 const secondFont = Lora({
   // weight: '400',
   // weight: ['300', '400', '700', '900'],
-  subsets: ['latin'],
-  display: 'swap',
+  subsets: ["latin"],
+  display: "swap",
 });
 
 export default function Logo() {
@@ -31,8 +31,7 @@ export default function Logo() {
         />
       </span>
       <span
-        className={`${secondFont.className} text-primary-900 hidden text-3xl font-semibold tracking-tighter text-shadow-neutral-200 sm:block`}
-      >
+        className={`${secondFont.className} hidden text-3xl font-semibold tracking-tighter text-neutral-900 text-shadow-neutral-200 sm:block`}>
         Inventory story
       </span>
     </div>

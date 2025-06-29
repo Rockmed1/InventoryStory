@@ -5,9 +5,9 @@ import {
 } from "@heroicons/react/24/outline";
 import dummyServerAction from "../_lib/actions";
 import { getLocations } from "../_lib/data-services";
-import Table from "../_ui/Table";
+import Table from "./_ui/Table";
 
-const labels = ["Location ID", "Name", "Description"];
+const labels = ["Location ID", "Location Name", "Description"];
 
 export default async function LocationsTable() {
   const rowActions = [

@@ -95,9 +95,9 @@ BEGIN
 	END IF;
 	--!Main Action Here
 	SELECT
-		INTO _result json_build_object('itemClass' , json_agg(json_build_object('item_class_id' , ic.item_class_id , 'item_class_name' , ic.item_class_name , 'item_class_desc' , ic.item_class_desc)))
+		INTO _result json_agg(json_build_object('id' , ic.item_class_id , 'name' , ic.item_class_name , 'item_class_desc' , ic.item_class_desc))
 	FROM
-		items.item_class ic;
+		items.v_item_class ic;
 
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'No item classes available in this Organization.';
@@ -210,7 +210,7 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_build_object('locations' , json_agg(json_build_object('id' , t.loc_id , 'loc_name' , t.loc_name , 'loc_desc' , t.loc_desc)))
+		INTO _result json_agg(json_build_object('id' , t.loc_id , 'name' , t.loc_name , 'loc_desc' , t.loc_desc))
 	FROM
 		locations.v_location t;
 
@@ -327,7 +327,7 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_build_object('bins' , json_agg(json_build_object('id' , b.bin_id , 'bin_name' , b.bin_name , 'loc_name' , b.loc_name , 'bin_desc' , b.bin_desc)))
+		INTO _result json_agg(json_build_object('id' , b.bin_id , 'name' , b.bin_name , 'loc_name' , b.loc_name , 'bin_desc' , b.bin_desc))
 	FROM
 		locations.v_bin b;
 
@@ -441,9 +441,9 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_build_object('marketTypes' , json_agg(json_build_object('market_type_id' , t.market_type_id , 'market_type_name' , t.market_type_name , 'market_type_desc' , t.market_type_desc)))
+		INTO _result json_agg(json_build_object('id' , t.market_type_id , 'name' , t.market_type_name , 'market_type_desc' , t.market_type_desc))
 	FROM
-		markets.market_type t;
+		markets.v_market_type t;
 
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'No records found in markets.market_type.';
@@ -560,9 +560,9 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_build_object('markets' , json_agg(json_build_object('market_id' , t.market_id , 'market_name' , t.market_name , 'market_desc' , t.market_desc , 'market_url' , t.market_url)))
+		INTO _result json_agg(json_build_object('id' , t.market_id , 'name' , t.market_name , 'market_type' , t.market_type_name , 'market_desc' , t.market_desc , 'market_url' , t.market_url))
 	FROM
-		markets.market t;
+		markets.v_market t;
 
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'No records found in markets.market.';

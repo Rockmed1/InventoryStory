@@ -5,7 +5,7 @@ import {
 } from "@heroicons/react/24/outline";
 import dummyServerAction from "../_lib/actions";
 import { getItems } from "../_lib/data-services";
-import Table from "../_ui/Table";
+import Table from "./_ui/Table";
 
 const labels = ["Item ID", "Name", "Description", "Class", "QOH"];
 

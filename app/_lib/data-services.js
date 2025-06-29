@@ -30,18 +30,17 @@ export const getItems = async function () {
   //Cashing:
   // no-store is deprecated
   // The connection() function allows you to indicate rendering should wait for an incoming user request before continuing.
-  await connection();
 
+  await connection();
   const { data, error } = await supabase.rpc("fn_get_items", {
     _data,
   });
-
   // console.log(data, error);
+
   if (error) {
     console.error(error);
     throw new Error("Items could not be loaded.");
   }
-
   return data;
 };
 
@@ -50,20 +49,13 @@ export const getLocations = async function () {
     _org_uuid: ORG_UUID,
     _usr_uuid: USR_UUID,
   };
-
   await connection();
-
-  const {
-    data: { locations: data },
-    error,
-  } = await supabase.rpc("fn_get_locations", { _data });
+  const { data, error } = await supabase.rpc("fn_get_locations", { _data });
   // console.log(data, error);
-
   if (error) {
     console.log(error);
     throw new Error("Locations could not be loaded.");
   }
-
   return data;
 };
 
@@ -72,19 +64,72 @@ export const getBins = async function () {
     _org_uuid: ORG_UUID,
     _usr_uuid: USR_UUID,
   };
-
   await connection();
-
-  const {
-    data: { bins: data },
-    error,
-  } = await supabase.rpc("fn_get_bins", { _data });
-  console.log(data, error);
-
+  const { data, error } = await supabase.rpc("fn_get_bins", { _data });
+  // console.log(data, error);
   if (error) {
     console.log(error);
-    throw new Error("Locations could not be loaded.");
+    throw new Error("Bins could not be loaded.");
   }
+  return data;
+};
 
+export const getItemClasses = async function () {
+  const _data = {
+    _org_uuid: ORG_UUID,
+    _usr_uuid: USR_UUID,
+  };
+  await connection();
+  const { data, error } = await supabase.rpc("fn_get_items_classes", { _data });
+  // console.log(data, error);
+  if (error) {
+    console.log(error);
+    throw new Error("ItemClass could not be loaded.");
+  }
+  return data;
+};
+
+export const getMarketTypes = async function () {
+  const _data = {
+    _org_uuid: ORG_UUID,
+    _usr_uuid: USR_UUID,
+  };
+  await connection();
+  const { data, error } = await supabase.rpc("fn_get_market_types", { _data });
+  // console.log(data, error);
+  if (error) {
+    console.log(error);
+    throw new Error("Market Types could not be loaded.");
+  }
+  return data;
+};
+
+export const getMarkets = async function () {
+  const _data = {
+    _org_uuid: ORG_UUID,
+    _usr_uuid: USR_UUID,
+  };
+  await connection();
+  const { data, error } = await supabase.rpc("fn_get_markets", { _data });
+  // console.log(data, error);
+  if (error) {
+    console.log(error);
+    throw new Error("Markets could not be loaded.");
+  }
+  return data;
+};
+
+export const getTrxTypes = async function () {
+  const _data = {
+    _org_uuid: ORG_UUID,
+    _usr_uuid: USR_UUID,
+  };
+  await connection();
+  const { data, error } = await supabase.rpc("fn_get_trx_types", { _data });
+  // console.log(data, error);
+  if (error) {
+    console.log(error);
+    throw new Error("Transaction Types could not be loaded.");
+  }
   return data;
 };

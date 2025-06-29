@@ -79,3 +79,72 @@ SELECT
 FROM
 	locations.bin b
 	JOIN locations.location l ON l.loc_id = b.loc_id;
+
+----------------
+--------------
+-----------
+--------
+-----
+---
+DROP VIEW IF EXISTS items.v_item_class;
+
+CREATE OR REPLACE VIEW items.v_item_class AS
+SELECT
+	c.item_class_id
+	, c.item_class_name
+	, c.item_class_desc
+FROM
+	items.item_class c;
+
+----------------
+--------------
+-----------
+--------
+-----
+---
+DROP VIEW IF EXISTS markets.v_market_type;
+
+CREATE OR REPLACE VIEW markets.v_market_type AS
+SELECT
+	t.market_type_id
+	, t.market_type_name
+	, t.market_type_desc
+FROM
+	markets.market_type t;
+
+----------------
+--------------
+-----------
+--------
+-----
+---
+DROP VIEW IF EXISTS markets.v_market;
+
+CREATE OR REPLACE VIEW markets.v_market AS
+SELECT
+	m.market_id
+	, m.market_name
+	, t.market_type_name
+	, m.market_desc
+	, m.market_url
+FROM
+	markets.market m
+	JOIN markets.market_type t ON m.market_type_id = t.market_type_id;
+
+----------------
+--------------
+-----------
+--------
+-----
+---
+DROP VIEW IF EXISTS trans.v_trx_type;
+
+CREATE OR REPLACE VIEW trans.v_trx_type AS
+SELECT
+	t.trx_type_id
+	, t.trx_type_name
+	, d.trx_direction
+	, t.trx_type_desc
+FROM
+	trans.trx_type t
+	JOIN trans.trx_direction d ON t.trx_direction_id = d.trx_direction_id;

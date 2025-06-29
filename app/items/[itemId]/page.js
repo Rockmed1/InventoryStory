@@ -7,10 +7,10 @@ export async function generateMetadata({ params }) {
 //page
 export default async function Page({ params }) {
   const { itemId } = await params;
-  if (itemId === 'error') {
-    throw new Error('item Id error');
+  if (itemId === "error") {
+    throw new Error("item Id error");
   }
 
-  console.log(itemId);
+  // console.log(itemId);
   return <div>Item ID {itemId} details...</div>;
 }

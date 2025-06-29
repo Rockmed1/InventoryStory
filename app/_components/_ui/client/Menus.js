@@ -1,16 +1,16 @@
 "use client";
 
+import { useOutsideClick } from "../../../_hooks/useOutsideClick";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { createContext, use, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { useOutsideClick } from "../hooks/useOutsideClick";
 
 //translate-x-3.5
 function StyledToggle({ onClick, children, isActive }) {
   return (
     <button
       onClick={onClick}
-      className={`hover:bg-primary-200 flex items-center justify-center gap-2 rounded-lg bg-none p-0.5 text-neutral-700 transition-all duration-200 [&_svg]:h-6 [&_svg]:stroke-1 hover:[&_svg]:stroke-2 ${isActive ? "bg-primary-200" : ""}`}>
+      className={`flex items-center justify-center gap-2 rounded-lg bg-none p-0.5 text-neutral-700 transition-all duration-200 hover:bg-neutral-100 [&_svg]:h-6 [&_svg]:stroke-1 hover:[&_svg]:stroke-2 ${isActive ? "bg-neutral-100" : ""}`}>
       {children}
     </button>
   );
@@ -20,7 +20,7 @@ function StyledList({ position, children, ref }) {
   return (
     <ul
       ref={ref}
-      className={`bg-primary-50 border-primary-200 fixed min-w-max rounded-lg border p-1 shadow-md`}
+      className={`fixed min-w-max rounded-lg border border-neutral-200 bg-white p-1 shadow-md`}
       style={{
         // using style because tailwind does not allow class names interpolation from props
         top: `${position?.y || 20}px`,
@@ -34,7 +34,7 @@ function StyledList({ position, children, ref }) {
 function StyledButton({ children, onClick }) {
   return (
     <button
-      className="hover:bg-primary-200 active:bg-primary-200 flex min-w-32 items-center gap-2.5 rounded-lg border-none bg-none px-2 py-1.5 text-left text-sm transition-all duration-200 [&_svg]:size-3.5 [&_svg]:stroke-1 hover:[&_svg]:stroke-[1.6]"
+      className="flex min-w-32 items-center gap-2.5 rounded-lg border-none bg-none px-2 py-1.5 text-left text-sm transition-all duration-200 hover:bg-neutral-100 active:bg-neutral-100 [&_svg]:size-3.5 [&_svg]:stroke-1 hover:[&_svg]:stroke-[1.6]"
       onClick={onClick}>
       {children}
     </button>
@@ -52,8 +52,8 @@ function Menus({ children }) {
   const close = () => setOpenId("");
   const open = setOpenId;
 
-  //later
-  //close window when pressing escape button
+  //LATER: //close window when pressing escape button
+
   //Close menu when user scrolls:
   useEffect(() => {
     if (!openId) return;

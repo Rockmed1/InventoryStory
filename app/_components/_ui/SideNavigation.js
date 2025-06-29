@@ -41,8 +41,8 @@ export default function SideNavigation() {
       },
 
       {
-        name: "Setup",
-        href: "/setup",
+        name: "My Setup",
+        href: "/mysetup",
         icon: <PuzzlePieceIcon className="" />,
       },
     ],
@@ -66,7 +66,7 @@ export default function SideNavigation() {
           <li className="w-full" key={link.name}>
             <Link
               href={link.href}
-              className={`flex items-center justify-items-start gap-2 rounded-md p-2 transition-all duration-300 hover:font-semibold [&_svg]:size-6 hover:[&_svg]:stroke-[1.6] ${pathName === link.href ? "bg-primary-200" : "hover:bg-primary-200"}`}>
+              className={`flex items-center justify-items-start gap-2 rounded-md p-2 transition-all duration-300 hover:font-semibold [&_svg]:size-6 hover:[&_svg]:stroke-[1.6] ${pathName === link.href ? "bg-neutral-100" : "hover:bg-neutral-100"}`}>
               <span>{link.icon}</span>
               <span>{link.name}</span>
             </Link>
@@ -78,7 +78,7 @@ export default function SideNavigation() {
             <li className="w-full" key={link.name}>
               <Link
                 href={link.href}
-                className={`flex items-center justify-items-start gap-2 rounded-md p-2 transition-all duration-300 hover:font-semibold [&_svg]:size-6 hover:[&_svg]:stroke-[1.6] ${pathName === link.href ? "bg-primary-200" : "hover:bg-primary-200"}`}>
+                className={`flex items-center justify-items-start gap-2 rounded-md p-2 transition-all duration-300 hover:font-semibold [&_svg]:size-6 hover:[&_svg]:stroke-[1.6] ${pathName === link.href ? "bg-neutral-200" : "hover:bg-neutral-200"}`}>
                 <span>{link.icon}</span>
                 <span>{link.name}</span>
               </Link>

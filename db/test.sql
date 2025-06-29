@@ -202,16 +202,19 @@ DELETE FROM items.item_class
 WHERE item_class_id > 12;
 
 --* create location
-SELECT
-	* INTO _result
-FROM
-	utils.fn_create_location(jsonb_build_object('_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084' , '_loc_name' , 'location1' , '_loc_desc' , 'text1 text text text text'));
+DO $$
+DECLARE
+	_result JSON;
+BEGIN
+	SELECT
+		* INTO _result
+	FROM
+		utils.fn_create_location(jsonb_build_object('_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084' , '_loc_name' , 'api_2' , '_loc_desc' , 'text1 text text text text'));
 
-RAISE NOTICE '_result: %' , _result;
+	RAISE NOTICE '_result: %' , _result;
 
-RESET ROLE;
-
-END $$;
+END
+$$;
 
 --* get locations
 SELECT
@@ -219,6 +222,9 @@ SELECT
 FROM
 	utils.fn_get_locations(jsonb_build_object('_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084'));
 
+-- DELETE FROM locations.location
+-- -- WHERE location.loc_name LIKE 'api%'
+-- WHERE location.loc_id = 1030
 -- SELECT
 -- 	*
 -- FROM
@@ -268,11 +274,21 @@ SELECT
 FROM
 	markets.market_type;
 
+SELECT
+	*
+FROM
+	utils.fn_get_market_types(jsonb_build_object('_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084'));
+
 --* market
 SELECT
 	*
 FROM
 	markets.market;
+
+SELECT
+	*
+FROM
+	utils.fn_get_markets(jsonb_build_object('_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084'));
 
 --* item class
 SELECT
@@ -292,7 +308,11 @@ SELECT
 FROM
 	trans.trx_type;
 
-_fn_assert_valid_item_trx_input failed FOR 2 line(s).Details:[{"line" : 1 , "error" :"invalid_in_out_transaction" , "_data->" : {"_qty_in" : 1.0 , "_to_bin" :"1001" , "_item_id" :"1000" , "_qty_out" : 1.0 , "_from_bin" :"1002" , "_trx_line_num" :"1" , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" }} , {"line" : 2 , "error" :"invalid_in_out_transaction" , "_data->" : {"_qty_in" : 1.0 , "_to_bin" :"1001" , "_item_id" :"1000" , "_qty_out" : 1.0 , "_from_bin" :"1002" , "_trx_line_num" :"2" , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" }}]
+SELECT
+	*
+FROM
+	utils.fn_get_trx_types(jsonb_build_object('_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084'));
+
 SELECT
 	*
 FROM
@@ -393,3 +413,12 @@ SELECT
 	json_agg(json_build_object('item_id' , i.item_id , 'item_name' , i.item_name , 'item_desc' , i.item_desc , 'item_class_name' , i.item_class_name , 'item_QOH' , COALESCE(i.qoh , 0)))
 FROM
 	items.v_item i;
+
+-- CREATE TABLE public."test"(
+-- 	id INT
+-- 	, name VARCHAR(255)
+-- 	, status VARCHAR(50)
+-- 	, "createdAt" TIMESTAMP
+-- 	, "updatedAt" TIMESTAMP
+-- );
+-- DROP TABLE test;

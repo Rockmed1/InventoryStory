@@ -100,9 +100,9 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_build_object('transactionTypes' , json_agg(json_build_object('trx_type_id' , t.trx_type_id , 'trx_type_name' , t.trx_type_name , 'trx_type_desc' , t.trx_type_desc)))
+		INTO _result json_agg(json_build_object('id' , t.trx_type_id , 'name' , t.trx_type_name , 'direction' , t.trx_direction , 'trx_type_desc' , t.trx_type_desc))
 	FROM
-		trans.trx_type t;
+		trans.v_trx_type t;
 
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'No records found in trans.trx_type!';
@@ -584,7 +584,7 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_build_object('itemTransactions' , json_agg(json_build_object('item_trx_id' , t.item_trx_id , 'trx_date' , t.trx_date , 'trx_type_id' , t.trx_type_id , 'market_id' , t.market_id)))
+		INTO _result json_agg(json_build_object('item_trx_id' , t.item_trx_id , 'trx_date' , t.trx_date , 'trx_type_id' , t.trx_type_id , 'market_id' , t.market_id))
 	FROM
 		trans.item_trx t;
 
@@ -636,7 +636,7 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_build_object('itemTransactionDetails' , json_agg(json_build_object('item_trx_id' , t.item_trx_id , 'item_id' , t.item_id , 'item_trx_desc' , t.item_trx_desc , 'from_bin' , t.from_bin , 'to_bin' , t.to_bin , 'qty_in' , t.qty_in , 'qty_out' , t.qty_out)))
+		INTO _result json_agg(json_build_object('item_trx_id' , t.item_trx_id , 'item_id' , t.item_id , 'item_trx_desc' , t.item_trx_desc , 'from_bin' , t.from_bin , 'to_bin' , t.to_bin , 'qty_in' , t.qty_in , 'qty_out' , t.qty_out))
 	FROM
 		trans.item_trx_detail t;
 

@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from "next/link";
 
 function NotFound() {
   return (
@@ -8,8 +8,7 @@ function NotFound() {
       </h1>
       <Link
         href="/"
-        className="bg-primary-200 text-primary-800 inline-block rounded-xl p-2 text-lg"
-      >
+        className="inline-block rounded-xl bg-neutral-200 p-2 text-lg text-neutral-800">
         Go back home
       </Link>
     </main>

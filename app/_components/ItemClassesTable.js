@@ -4,12 +4,12 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import dummyServerAction from "../_lib/actions";
-import { getBins } from "../_lib/data-services";
+import { getItemClasses } from "../_lib/data-services";
 import Table from "./_ui/Table";
 
-const labels = ["Bin ID", "Bin Name", "Location Name", "Description"];
+const labels = ["Item Class ID", "Item Class Name", "Description"];
 
-export default async function BinsTable() {
+export default async function ItemClassesTable() {
   const rowActions = [
     {
       id: "edit",
@@ -31,7 +31,7 @@ export default async function BinsTable() {
     },
   ];
 
-  const data = await getBins();
+  const data = await getItemClasses();
 
   return <Table data={data} labels={labels} rowActions={rowActions} />;
 }
@@ -40,4 +40,4 @@ function Fallback() {
   return <Table labels={labels} />;
 }
 
-BinsTable.Fallback = Fallback;
+ItemClassesTable.Fallback = Fallback;

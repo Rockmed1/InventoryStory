@@ -1,8 +1,8 @@
-import Button from "./_ui/Button";
+import Button from "./_components/_ui/Button";
 
 export default function Home() {
   return (
-    <div className="mx-auto flex h-full items-center justify-between rounded-xl border border-neutral-100 bg-white px-2.5 py-1">
+    <div className="mx-auto flex h-full items-center justify-between rounded-xl border border-neutral-200 bg-white px-2.5 py-1">
       <input
         type="checkbox"
         name="line"
@@ -11,7 +11,7 @@ export default function Home() {
       />
       <h1 className="block text-xl font-semibold">Hello Inventory</h1>
       <input className="input w-36" value="Item Name" readOnly />
-      <Button>Add Item</Button>
+      <Button type="secondary">Add Item</Button>
     </div>
   );
 }

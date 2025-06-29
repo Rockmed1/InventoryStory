@@ -1,4 +1,4 @@
-'use client';
+"use client";
 //error boundaries have to always be client components
 
 export default function Error({ error, reset }) {
@@ -8,9 +8,8 @@ export default function Error({ error, reset }) {
       <p className="text-lg">{error.message}</p>
 
       <button
-        className="bg-primary-200 text-primary-800 inline-block rounded-xl p-2 text-lg"
-        onClick={reset}
-      >
+        className="inline-block rounded-xl bg-neutral-200 p-2 text-lg text-neutral-800"
+        onClick={reset}>
         Try again
       </button>
     </main>

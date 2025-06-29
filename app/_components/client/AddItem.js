@@ -1,9 +1,6 @@
 "use client";
 
-import Button from "@/app/_ui/Button";
-import ConfirmDelete from "@/app/_ui/ConfirmDelete";
-import Modal from "@/app/_ui/Modal";
-import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline";
+import AddButtonModal from "../_ui/client/AddButtonModal";
 
 //* this is OK but not ideal because isOpenModal state is unnecessarily managed by the AddCabin component ...
 // export default function AddItem() {
@@ -37,7 +34,10 @@ import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline";
 export default function AddItem() {
   return (
     <div>
-      <Modal>
+      <AddButtonModal opensWindowName="item-form" buttonLabel="Add item">
+        This is a modal for the item form.
+      </AddButtonModal>
+      {/* <Modal>
         <Modal.Open opensWindowName="item-form">
           <Button>
             <div className="flex items-center justify-between gap-1">
@@ -66,7 +66,7 @@ export default function AddItem() {
             }}
           />
         </Modal.Window>
-      </Modal>
+      </Modal> */}
     </div>
   );
 }
