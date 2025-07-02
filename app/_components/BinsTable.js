@@ -4,12 +4,13 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import dummyServerAction from "../_lib/actions";
-import { getBins } from "../_lib/data-services";
-import Table from "./_ui/Table";
+import { createDataService } from "../_lib/data-services";
+import StoreHydrator from "../_store/StoreHydrator";
+import Table from "./_ui/client/Table";
 
 const labels = ["Bin ID", "Bin Name", "Location Name", "Description"];
 
-export default async function BinsTable() {
+export default async function BinsTable({ org_uuid }) {
   const rowActions = [
     {
       id: "edit",
@@ -31,9 +32,16 @@ export default async function BinsTable() {
     },
   ];
 
-  const data = await getBins();
+  //1- fetch only the data for this view
+  const dataService = createDataService(org_uuid);
+  const data = await dataService.getBins();
 
-  return <Table data={data} labels={labels} rowActions={rowActions} />;
+  return (
+    <>
+      <StoreHydrator bins={data} />
+      <Table data={data} labels={labels} rowActions={rowActions} />
+    </>
+  );
 }
 
 function Fallback() {

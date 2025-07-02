@@ -4,12 +4,13 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import dummyServerAction from "../_lib/actions";
-import { getLocations } from "../_lib/data-services";
-import Table from "./_ui/Table";
+import { createDataService } from "../_lib/data-services";
+import Table from "./_ui/client/Table";
+import StoreHydrator from "../_store/StoreHydrator";
 
 const labels = ["Location ID", "Location Name", "Description"];
 
-export default async function LocationsTable() {
+export default async function LocationsTable({ org_uuid }) {
   const rowActions = [
     {
       id: "edit",
@@ -31,9 +32,16 @@ export default async function LocationsTable() {
     },
   ];
 
-  const data = await getLocations();
+  //1- fetch only the data for this view
+  const dataService = createDataService(org_uuid);
+  const data = await dataService.getLocations();
 
-  return <Table data={data} labels={labels} rowActions={rowActions} />;
+  return (
+    <>
+      <StoreHydrator locations={data} />
+      <Table data={data} labels={labels} rowActions={rowActions} />
+    </>
+  );
 }
 
 function Fallback() {

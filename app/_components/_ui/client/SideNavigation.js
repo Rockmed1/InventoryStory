@@ -7,7 +7,7 @@ import {
   ChartPieIcon,
   Cog8ToothIcon,
   HomeIcon,
-  PuzzlePieceIcon,
+  WrenchScrewdriverIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -43,7 +43,8 @@ export default function SideNavigation() {
       {
         name: "My Setup",
         href: "/mysetup",
-        icon: <PuzzlePieceIcon className="" />,
+        // icon: <PuzzlePieceIcon className="" />,
+        icon: <WrenchScrewdriverIcon className="" />,
       },
     ],
     bottom: [

@@ -3,25 +3,35 @@
 import Form from "@/app/_components/_ui/Form";
 import { useActionState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { createLocation } from "../../_lib/actions";
+import { createBin } from "../../_lib/actions";
 import Button from "../_ui/Button";
-import { SelectDemo } from "../_ui/SelectDemo";
+import { ParentSelector } from "../_ui/client/ParentSelector";
 import SpinnerMini from "../_ui/SpinnerMini";
 
 export default function AddBinForm({ onCloseModal }) {
   const ORG_UUID = "ceba721b-b8dc-487d-a80c-15ae9d947084";
   const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
 
-  const locations = "";
+  // const [locations, setLocations] = useState([]);
+
+  // useEffect(
+  //   async function loadLocations() {
+  //     const result = await parseIdAndName(getLocations()).then(setLocations);
+  //   },
+  //   [parseIdAndName, getLocations],
+  // );
+
+  // console.log(locations);
+
   const initialState = {
-    _org_uuid: ORG_UUID,
-    _usr_uuid: USR_UUID,
+    // _org_uuid: ORG_UUID,
+    // _usr_uuid: USR_UUID,
   };
 
-  const [state, formAction, pending] = useActionState(
-    createLocation,
-    initialState,
-  );
+  // const { locations } = useAppStore((state) => state);
+
+  // console.log(locations);
+  const [state, formAction, pending] = useActionState(createBin, initialState);
 
   // console.log(state);
 
@@ -35,9 +45,14 @@ export default function AddBinForm({ onCloseModal }) {
 
   return (
     <Form action={formAction}>
-      <Form.InputSelect>
+      <Form.InputSelect name={"_loc_id"}>
         <Form.Label>Select Location *</Form.Label>
-        <SelectDemo required />
+        <ParentSelector
+          parent="locations"
+          _col_name="_loc_id"
+          label="location"
+          required={true}
+        />
       </Form.InputSelect>
       <Form.InputWithLabel name={"_bin_name"} description="">
         Bin Name

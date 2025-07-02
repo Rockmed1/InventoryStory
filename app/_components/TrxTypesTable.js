@@ -4,12 +4,13 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import dummyServerAction from "../_lib/actions";
-import { getTrxTypes } from "../_lib/data-services";
-import Table from "./_ui/Table";
+import Table from "./_ui/client/Table";
+import { createDataService } from "../_lib/data-services";
+import StoreHydrator from "../_store/StoreHydrator";
 
 const labels = ["Trx Type ID", "Trx Type", "Direction", "Description"];
 
-export default async function TrxTypesTable() {
+export default async function TrxTypesTable({ org_uuid }) {
   const rowActions = [
     {
       id: "edit",
@@ -31,9 +32,16 @@ export default async function TrxTypesTable() {
     },
   ];
 
-  const data = await getTrxTypes();
+  //1- fetch only the data for this view
+  const dataService = createDataService(org_uuid);
+  const data = await dataService.getTrxTypes();
 
-  return <Table data={data} labels={labels} rowActions={rowActions} />;
+  return (
+    <>
+      <StoreHydrator trxTypes={data} />
+      <Table data={data} labels={labels} rowActions={rowActions} />
+    </>
+  );
 }
 
 function Fallback() {

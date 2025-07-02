@@ -4,12 +4,13 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import dummyServerAction from "../_lib/actions";
-import { getItemClasses } from "../_lib/data-services";
-import Table from "./_ui/Table";
+import Table from "./_ui/client/Table";
+import { createDataService } from "../_lib/data-services";
+import StoreHydrator from "../_store/StoreHydrator";
 
 const labels = ["Item Class ID", "Item Class Name", "Description"];
 
-export default async function ItemClassesTable() {
+export default async function ItemClassesTable({ org_uuid }) {
   const rowActions = [
     {
       id: "edit",
@@ -31,9 +32,16 @@ export default async function ItemClassesTable() {
     },
   ];
 
-  const data = await getItemClasses();
+  //1- fetch only the data for this view
+  const dataService = createDataService(org_uuid);
+  const data = await dataService.getItemClasses();
 
-  return <Table data={data} labels={labels} rowActions={rowActions} />;
+  return (
+    <>
+      <StoreHydrator itemClasses={data} />
+      <Table data={data} labels={labels} rowActions={rowActions} />
+    </>
+  );
 }
 
 function Fallback() {

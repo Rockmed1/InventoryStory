@@ -4,12 +4,13 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import dummyServerAction from "../_lib/actions";
-import { getMarketTypes } from "../_lib/data-services";
-import Table from "./_ui/Table";
+import Table from "./_ui/client/Table";
+import { createDataService } from "../_lib/data-services";
+import StoreHydrator from "../_store/StoreHydrator";
 
 const labels = ["Market Type ID", "Market Type Name", "Description"];
 
-export default async function MarketTypesTable() {
+export default async function MarketTypesTable({ org_uuid }) {
   const rowActions = [
     {
       id: "edit",
@@ -31,9 +32,16 @@ export default async function MarketTypesTable() {
     },
   ];
 
-  const data = await getMarketTypes();
+  //1- fetch only the data for this view
+  const dataService = createDataService(org_uuid);
+  const data = await dataService.getMarketTypes();
 
-  return <Table data={data} labels={labels} rowActions={rowActions} />;
+  return (
+    <>
+      <StoreHydrator marketTypes={data} />
+      <Table data={data} labels={labels} rowActions={rowActions} />
+    </>
+  );
 }
 
 function Fallback() {

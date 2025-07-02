@@ -11,9 +11,7 @@
         "name": "node",
         "icon": "server-process",
         "color": "terminal.ansiGreen",
-        "commands": [
-          "npm run dev"
-        ],
+        "commands": ["npm run dev"],
         "autoExecuteCommands": true
       },
       {
@@ -21,17 +19,13 @@
         "icon": "terminal",
         "color": "terminal.ansiBrightWhite",
         "focus": true,
-        "commands": [
-          ""
-        ]
+        "commands": [""]
       },
       {
         "name": "yazi",
         "icon": "diff",
         "color": "terminal.ansiMagenta",
-        "commands": [
-          "yazi"
-        ],
+        "commands": ["yazi"],
         "autoExecuteCommands": true
       },
       {
@@ -40,9 +34,15 @@
         "icon": "github",
         "color": "terminal.ansiRed",
         "cwd": "/Users/themac/Dev/React/",
-        "commands": [
-          ""
-        ]
+        "commands": [""]
+      },
+      {
+        "name": "Gemini",
+        "autoExecuteCommands": true,
+        "icon": "globe",
+        "color": "terminal.ansiBlue",
+        "cwd": "/Users/themac/Dev/React/",
+        "commands": ["gemini"]
       }
     ]
   }

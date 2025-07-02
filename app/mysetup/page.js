@@ -9,12 +9,16 @@ import LocationsTable from "../_components/locationsTable";
 import MarketsTable from "../_components/MarketsTable";
 import MarketTypesTable from "../_components/MarketTypesTable";
 import TrxTypesTable from "../_components/TrxTypesTable";
+import UseAuth from "../_hooks/useAuth";
 
 export default function Page() {
+  //1- authenticate the user
+  const { _org_uuid, _usr_uuid } = UseAuth();
+
   const cards = [
     {
       cardName: "Locations",
-      cardTable: <LocationsTable />,
+      cardTable: <LocationsTable org_uuid={_org_uuid} />,
       cardFallback: <LocationsTable.Fallback />,
       CardAction: (
         <AddButtonModal
@@ -29,7 +33,7 @@ export default function Page() {
 
     {
       cardName: "Bins",
-      cardTable: <BinsTable />,
+      cardTable: <BinsTable org_uuid={_org_uuid} />,
       cardFallback: <BinsTable.Fallback />,
       CardAction: (
         <AddButtonModal
@@ -41,9 +45,10 @@ export default function Page() {
         </AddButtonModal>
       ),
     },
+
     {
       cardName: "Item Classes",
-      cardTable: <ItemClassesTable />,
+      cardTable: <ItemClassesTable org_uuid={_org_uuid} />,
       cardFallback: <ItemClassesTable.Fallback />,
       CardAction: (
         <AddButtonModal
@@ -53,9 +58,10 @@ export default function Page() {
         </AddButtonModal>
       ),
     },
+
     {
       cardName: "Market Types",
-      cardTable: <MarketTypesTable />,
+      cardTable: <MarketTypesTable org_uuid={_org_uuid} />,
       cardFallback: <MarketTypesTable.Fallback />,
       CardAction: (
         <AddButtonModal
@@ -65,9 +71,10 @@ export default function Page() {
         </AddButtonModal>
       ),
     },
+
     {
       cardName: "Markets",
-      cardTable: <MarketsTable />,
+      cardTable: <MarketsTable org_uuid={_org_uuid} />,
       cardFallback: <MarketsTable.Fallback />,
       CardAction: (
         <AddButtonModal opensWindowName="add-Markets" buttonLabel="Add Market">
@@ -75,9 +82,10 @@ export default function Page() {
         </AddButtonModal>
       ),
     },
+
     {
       cardName: "Transaction Types",
-      cardTable: <TrxTypesTable />,
+      cardTable: <TrxTypesTable org_uuid={_org_uuid} />,
       cardFallback: <TrxTypesTable.Fallback />,
       CardAction: (
         <AddButtonModal
@@ -90,28 +98,26 @@ export default function Page() {
   ];
 
   return (
-    <>
-      <div className="grid grid-cols-2 gap-4 px-3">
-        {cards.map((card) => (
-          <Card key={card.cardName}>
-            <Card.CardHeader>
-              <Card.CardTitle>{card.cardName}</Card.CardTitle>
-              <Card.CardAction>{card.CardAction} </Card.CardAction>
-            </Card.CardHeader>
-            <Card.CardContent>
-              <Suspense fallback={card.cardFallback}>{card.cardTable}</Suspense>
-            </Card.CardContent>
-          </Card>
-        ))}
-        <Card>
+    <div className="grid grid-cols-2 gap-4 px-3">
+      {cards.map((card) => (
+        <Card key={card.cardName}>
           <Card.CardHeader>
-            <Card.CardTitle>Form</Card.CardTitle>
+            <Card.CardTitle>{card.cardName}</Card.CardTitle>
+            <Card.CardAction>{card.CardAction} </Card.CardAction>
           </Card.CardHeader>
           <Card.CardContent>
-            <AddLocationForm />
+            <Suspense fallback={card.cardFallback}>{card.cardTable}</Suspense>
           </Card.CardContent>
         </Card>
-      </div>
-    </>
+      ))}
+      <Card>
+        <Card.CardHeader>
+          <Card.CardTitle>Form</Card.CardTitle>
+        </Card.CardHeader>
+        <Card.CardContent>
+          <AddLocationForm />
+        </Card.CardContent>
+      </Card>
+    </div>
   );
 }
