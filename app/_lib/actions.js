@@ -1,108 +1,146 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
+// import { auth } from "./auth"; // Placeholder for your actual auth function
 import { connection } from "next/server";
-import UseAuth from "../_hooks/useAuth";
-import { destructuredFormAction } from "../_utils/helpers";
 import { supabase } from "./supabase";
+import { schema } from "./ZodSchemas";
 
-export default async function dummyServerAction(param) {
+/**
+ * A factory function to create standardized database server actions.
+ * This reduces boilerplate by handling authentication, data extraction,
+ * database calls, error handling, and cache revalidation in one place.
+ *
+ * @param {string} rpcName - The name of the Supabase RPC function to call.
+ * @param {string} revalidateTagKey - The base key for the cache tag to revalidate (e.g., 'locations').
+ * @returns {Function} An async server action function compatible with useActionState.
+ */
+
+function dbAction(rpcName, revalidateTagKey, actionSchema) {
+  return async function (prevState, formData) {
+    // 1. Authenticate the user on the server.
+    // Server Actions should not use hooks. They get auth state directly.
+    const ORG_UUID = "ceba721b-b8dc-487d-a80c-15ae9d947084";
+    const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
+    // const session = await auth();
+    const session = { _org_uuid: ORG_UUID, _usr_uuid: USR_UUID };
+
+    if (!session?._org_uuid || !session?._usr_uuid) return redirect("/");
+    const { _org_uuid, _usr_uuid } = session;
+
+    // validate the session data
+    const validatedAppContext = schema.appContextSchema.safeParse({
+      _org_uuid,
+      _usr_uuid,
+    });
+
+    if (!validatedAppContext.success) {
+      return {
+        error: z.prettifyError(validatedAppContext.error),
+      };
+    }
+
+    // prepare and validate the form data
+    const destructuredFormData = Object.fromEntries(formData);
+
+    const validatedData = schema[actionSchema].safeParse({
+      ...destructuredFormData,
+    });
+
+    if (!validatedData.success) {
+      return {
+        success: false,
+        formData: destructuredFormData,
+        zodErrors: validatedData.error.flatten().fieldErrors,
+        message: "Missing Fields. Operation aborted.",
+      };
+    }
+
+    const _data = { _org_uuid, _usr_uuid, ...validatedData.data };
+
+    // console.log(_data);
+    await connection();
+
+    // For testing
+    // await new Promise((res) => setTimeout(res, 2000));
+
+    // 2. Prepare the data for the RPC call.
+
+    // const destructuredFormData = Object.fromEntries(formData);
+
+    // const validatedData = schema[actionSchema].safeParse({
+    //   _org_uuid,
+    //   _usr_uuid,
+    //   ...destructuredFormData,
+    // });
+
+    // if (!validatedData.success) {
+    //   return {
+    //     success: false,
+    //     formData: destructuredFormData,
+    //     zodErrors: validatedData.error.flatten().fieldErrors,
+    //     message: "Missing Fields. Operation aborted.",
+    //   };
+    // }
+
+    // const _data = validatedData.data;
+    // console.log(_data);
+    // console.log(typeof payload);
+
+    // 3. Call the specified Supabase RPC function.
+    const { data, error } = await supabase.rpc(rpcName, {
+      _data,
+    });
+
+    // 4. Handle errors.
+    if (error || !data?.success) {
+      const errorMessage = error?.message || `Failed to execute ${rpcName}.`;
+      console.error(`Error in ${rpcName}:`, errorMessage);
+      return {
+        success: false,
+        formData: destructuredFormData,
+        zodErrors: validatedData.Error?.flatten().fieldErrors,
+        message: errorMessage,
+      };
+      // throw new Error(errorMessage);
+    }
+
+    // 5. Revalidate the appropriate cache tag on success.
+    if (revalidateTagKey) {
+      revalidateTag(`${revalidateTagKey}-${_org_uuid}`);
+    }
+
+    // console.log(prevState);
+    // return new form state
+    return {
+      // ...prevState,
+      success: data.success,
+      formData: destructuredFormData,
+      zodErrors: null,
+      message: null,
+    };
+  };
+}
+
+// --- Define and export your server actions using the factory ---
+
+export const createLocation = dbAction("fn_create_location", "locations");
+export const createBin = dbAction("fn_create_bin", "bins");
+export const createItemClass = dbAction("fn_create_item_class", "itemClasses");
+export const createMarketType = dbAction(
+  "fn_create_market_type",
+  "marketTypes",
+);
+export const createTrxType = dbAction("fn_create_trx_type", "trxTypes");
+export const createMarket = dbAction("fn_create_market", "markets");
+export const createItem = dbAction("fn_create_item", "items", "itemSchema");
+
+// --- Other Actions ---
+
+export async function createTrx(prevState, formData) {
+  console.log("Transaction form data:", formData);
+  // Placeholder for transaction logic
+}
+export async function dummyServerAction(param) {
   console.log(`${param} button has been pressed`);
-}
-
-// //dummy data
-// const _usr_name = "sa";
-// const ORG_UUID = "ceba721b-b8dc-487d-a80c-15ae9d947084";
-// const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
-
-// const _data = {
-//   _org_uuid: ORG_UUID,
-//   _usr_uuid: USR_UUID,
-//   _item_trx_desc: "test sales trans",
-//   _trx_date: "3/2/2024",
-//   _item_trx_id: 3,
-//   _item_id: "2",
-//   // _from_bin: 9,
-//   _to_bin: 3,
-//   _qty_in: 3,
-//   _qty_out: 2,
-// };
-
-export async function createLocation(initialState, formData) {
-  //1- authenticate the user
-  const { _org_uuid, _usr_uuid } = UseAuth();
-
-  await connection();
-  // For testing
-  // await new Promise((res) => setTimeout(res, 2000));
-  const _data = destructuredFormAction(
-    { _org_uuid, _usr_uuid, ...initialState },
-    formData,
-  );
-  // console.log(_data);
-  const { data, error } = await supabase.rpc("fn_create_location", {
-    _data,
-  });
-  // console.log(data, error);
-  if (error || !data.success) {
-    console.error(data, error.message);
-    throw new Error(error.message);
-  }
-
-  revalidateTag(`locations-${_org_uuid}`);
-  return data;
-  // return true;
-}
-
-export async function createBin(initialState, formData) {
-  //1- authenticate the user
-  const { _org_uuid, _usr_uuid } = UseAuth();
-
-  await connection();
-  // For testing
-  // await new Promise((res) => setTimeout(res, 2000));
-
-  const _data = destructuredFormAction(
-    { _org_uuid, _usr_uuid, ...initialState },
-    formData,
-  );
-
-  console.log(_data);
-
-  const { data, error } = await supabase.rpc("fn_create_bin", {
-    _data,
-  });
-  console.log(data, error);
-
-  if (error || !data.success) {
-    console.error(data, error.message);
-    throw new Error(error.message);
-  }
-  revalidateTag(`bins-${_org_uuid}`);
-  return data;
-  // return true;
-}
-
-export async function createItemClass(initialState, formData) {
-  console.log(formData);
-}
-
-export async function createItem(initialState, formData) {
-  console.log(formData);
-}
-
-export async function createMarketType(initialState, formData) {
-  console.log(formData);
-}
-
-export async function createMarket(initialState, formData) {
-  console.log(formData);
-}
-
-export async function createTrxType(initialState, formData) {
-  console.log(formData);
-}
-
-export async function createTrx(initialState, formData) {
-  console.log(formData);
 }

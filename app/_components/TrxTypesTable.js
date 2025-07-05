@@ -3,10 +3,10 @@ import {
   PencilIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import dummyServerAction from "../_lib/actions";
-import Table from "./_ui/client/Table";
-import { createDataService } from "../_lib/data-services";
+import { dummyServerAction } from "../_lib/actions";
+import { createDataService } from "../_lib/dataServices";
 import StoreHydrator from "../_store/StoreHydrator";
+import Table from "./_ui/client/Table";
 
 const labels = ["Trx Type ID", "Trx Type", "Direction", "Description"];
 
@@ -36,9 +36,15 @@ export default async function TrxTypesTable({ org_uuid }) {
   const dataService = createDataService(org_uuid);
   const data = await dataService.getTrxTypes();
 
+  const TRXDIRECTIONS = [
+    { id: 1, name: "in" },
+    { id: 2, name: "out" },
+    { id: 3, name: "in-out" },
+  ];
+
   return (
     <>
-      <StoreHydrator trxTypes={data} />
+      <StoreHydrator trxTypes={data} trxDirections={TRXDIRECTIONS} />
       <Table data={data} labels={labels} rowActions={rowActions} />
     </>
   );

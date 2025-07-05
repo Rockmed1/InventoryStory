@@ -3,10 +3,10 @@ import {
   PencilIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import dummyServerAction from "../_lib/actions";
-import Table from "./_ui/client/Table";
-import { createDataService } from "../_lib/data-services";
+import { dummyServerAction } from "../_lib/actions";
+import { createDataService } from "../_lib/dataServices";
 import StoreHydrator from "../_store/StoreHydrator";
+import Table from "./_ui/client/Table";
 
 const labels = ["Item Class ID", "Item Class Name", "Description"];
 

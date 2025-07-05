@@ -148,3 +148,8 @@ SELECT
 FROM
 	trans.trx_type t
 	JOIN trans.trx_direction d ON t.trx_direction_id = d.trx_direction_id;
+
+SELECT
+	*
+FROM
+	trans.trx_direction;

@@ -3,18 +3,18 @@
 import Form from "@/app/_components/_ui/Form";
 import { useActionState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { createLocation } from "../../_lib/actions";
+import { createItemClass } from "../../_lib/actions";
 import Button from "../_ui/Button";
 import SpinnerMini from "../_ui/SpinnerMini";
 
 /**
- * A form for adding a new location, designed to be used within a modal.
+ * A form for adding a new item class, designed to be used within a modal.
  * It handles form submission using a server action and displays success notifications.
  *
  * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
  */
-export default function AddLocationForm({ onCloseModal }) {
-    // const ORG_UUID = "ceba721b-b8dc-487d-a80c-15ae9d947084";
+export default function AddItemClassForm({ onCloseModal }) {    
+  // const ORG_UUID = "ceba721b-b8dc-487d-a80c-15ae9d947084";
   // const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
 
   //const initialState = {
@@ -25,7 +25,7 @@ export default function AddLocationForm({ onCloseModal }) {
   const initialState = {};
   
   const [state, formAction, pending] = useActionState(
-    createLocation,
+    createItemClass,
     initialState,
   );
 
@@ -34,9 +34,9 @@ export default function AddLocationForm({ onCloseModal }) {
   //   parentId: null,
   // };
 
-  // const createLocationWrapper = useCallback(
+  // const createItemClassWrapper = useCallback(
   //   (prevState, formData) => {
-  //     return createLocation({
+  //     return createItemClass({
   //       _org_uuid: ORG_UUID,
   //       _usr_uuid: USR_UUID,
   //       ...prevState,
@@ -47,7 +47,7 @@ export default function AddLocationForm({ onCloseModal }) {
   // );
 
   // const [state, formAction, pending] = useActionState(
-  //   createLocationWrapper,
+  //   createItemClassWrapper,
   //   initialState,
   // );
 
@@ -55,18 +55,18 @@ export default function AddLocationForm({ onCloseModal }) {
 
   useEffect(() => {
     if (state?.success === true) {
-      toast.success("Location has been created.");
+      toast.success("Item Class has been created.");
       onCloseModal?.();
     }
   }, [state, onCloseModal]);
 
   return (
     <Form action={formAction}>
-      <Form.InputWithLabel name={"_loc_name"} description="">
-        Location Name
+      <Form.InputWithLabel name={"_item_class_name"} description="">
+        Item Class Name
       </Form.InputWithLabel>
-      <Form.InputWithLabel name={"_loc_desc"} description="">
-        Location Description
+      <Form.InputWithLabel name={"_item_class_desc"} description="">
+        Item Class Description
       </Form.InputWithLabel>
       <Form.Footer>
         <Button disabled={pending} type="secondary" onClick={onCloseModal}>
@@ -74,7 +74,7 @@ export default function AddLocationForm({ onCloseModal }) {
         </Button>
         <Button disabled={pending} type="secondary">
           {pending && <SpinnerMini />}
-          <span> Add Location</span>
+          <span> Add Item Class</span>
         </Button>
       </Form.Footer>
     </Form>

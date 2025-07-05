@@ -3,8 +3,8 @@ import {
   PencilIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import dummyServerAction from "../_lib/actions";
-import { createDataService } from "../_lib/data-services";
+import { dummyServerAction } from "../_lib/actions";
+import { createDataService } from "../_lib/dataServices";
 import StoreHydrator from "../_store/StoreHydrator";
 import Table from "./_ui/client/Table";
 
@@ -34,12 +34,14 @@ export default async function ItemsTable({ org_uuid }) {
 
   //1- fetch only the data for this view
   const dataService = createDataService(org_uuid);
+
   const data = await dataService.getItems();
+  const dataDependency = await dataService.getItemClasses();
 
   return (
     <>
-      <StoreHydrator items={data} />
       <Table data={data} labels={labels} rowActions={rowActions} />
+      <StoreHydrator items={data} itemClasses={dataDependency} />
     </>
   );
 }

@@ -4,18 +4,24 @@ import Menus from "@/app/_components/_ui/client/Menus";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
+/**
+ * A generic, reusable table component for displaying data.
+ * It supports dynamic row actions and displays a loading state if no data is provided.
+ *
+ * @param {string[]} labels - An array of strings to be used as table headers. This is required.
+ * @param {object[]} [data] - An array of objects to display. Each object should have an `id` property. If not provided, the table will render in a loading state.
+ * @param {object[]} [rowActions] - An array of action objects for the menu in each row. Each object should have `id`, `label`, `icon`, and `action` properties.
+ */
 export default function Table({ labels, data, rowActions }) {
-  // labels parameter is required
-  // data parameter is optional.
-  // the Table component comes with a place holder data to display loading status while data is being fetched.
-  // later:
+    // later:
   // get the number of rows for the place holder
-
-  if (!labels)
-    throw new Error("Table components requires labels param, none was passed.");
+  if (!labels) {
+    throw new Error("Table component requires 'labels' prop, but none was passed.");
+  }
 
   const tableData =
-    data || //default place holder for when data is not passed
+    data ||
+     //default place holder for when data is not passed
     Array.from({ length: 3 }, (_, i) => ({
       id: "loading" + i,
       ...Object.fromEntries(
@@ -38,13 +44,11 @@ export default function Table({ labels, data, rowActions }) {
           <thead>
             <tr className="border-b border-neutral-200 bg-neutral-100 whitespace-nowrap">
               <th scope="col" className="p-2 font-medium"></th>
-
               {labels.map((label) => (
                 <th scope="col" key={label} className="h-10 px-2 font-medium">
                   {label}
                 </th>
               ))}
-
               <th scope="col" className="p-2 text-center font-medium"></th>
             </tr>
           </thead>

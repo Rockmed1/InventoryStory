@@ -1,7 +1,10 @@
+import "server-only";
+
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { cache } from "react";
 import { supabase } from "./supabase";
+import { schema } from "./ZodSchemas";
 
 //!Factory pattern is used as it is better for multi-tennant applications caching to ensure org scoped operations
 
@@ -22,6 +25,17 @@ export function createDataService(org_uuid) {
   if (_org_uuid !== org_uuid) throw new Error("Unauthorized 🚫"); //unauthorized
 
   const _data = { _org_uuid, _usr_uuid };
+
+  const validatedAppContext = schema.appContextSchema.safeParse({
+    _org_uuid,
+    _usr_uuid,
+  });
+
+  if (!validatedAppContext.success) {
+    return {
+      error: z.prettifyError(validatedAppContext.error),
+    };
+  }
 
   return {
     getItems: cache(

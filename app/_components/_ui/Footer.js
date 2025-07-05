@@ -1,3 +1,6 @@
+/**
+ * A simple footer component that displays the copyright notice.
+ */
 function Footer() {
   return (
     <div className="col-span-1">

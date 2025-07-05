@@ -1,5 +1,13 @@
 import Button from "./Button";
 
+/**
+ * A confirmation dialog for destructive actions.
+ *
+ * @param {string} resourceName - The name of the resource to be deleted (e.g., "item", "location").
+ * @param {Function} onConfirm - The function to call when the delete button is clicked.
+ * @param {boolean} disabled - Whether the buttons should be disabled.
+ * @param {Function} [onCloseModal] - An optional function to close the modal this component is in.
+ */
 export default function ConfirmDelete({
   resourceName,
   onConfirm,

@@ -11,6 +11,11 @@ const secondFont = Lora({
   display: "swap",
 });
 
+/**
+ * Renders the application logo and name.
+ * Includes a responsive design that shows an icon on small screens
+ * and the full logo with text on larger screens.
+ */
 export default function Logo() {
   return (
     <div className="flex items-center gap-0.5">

@@ -8,36 +8,27 @@ import Button from "../_ui/Button";
 import { ParentSelector } from "../_ui/client/ParentSelector";
 import SpinnerMini from "../_ui/SpinnerMini";
 
+/**
+ * A form for adding a new bin, designed to be used within a modal.
+ * It handles form submission using a server action and displays success notifications.
+ * ParentSelector is required to link to the parent location
+ * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
+ */
 export default function AddBinForm({ onCloseModal }) {
-  const ORG_UUID = "ceba721b-b8dc-487d-a80c-15ae9d947084";
-  const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
+    // const ORG_UUID = "ceba721b-b8dc-487d-a80c-15ae9d947084";
+  // const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
 
-  // const [locations, setLocations] = useState([]);
-
-  // useEffect(
-  //   async function loadLocations() {
-  //     const result = await parseIdAndName(getLocations()).then(setLocations);
-  //   },
-  //   [parseIdAndName, getLocations],
-  // );
-
-  // console.log(locations);
-
-  const initialState = {
+  //const initialState = {
     // _org_uuid: ORG_UUID,
     // _usr_uuid: USR_UUID,
-  };
-
-  // const { locations } = useAppStore((state) => state);
-
-  // console.log(locations);
+  //};
+  const initialState = {};
   const [state, formAction, pending] = useActionState(createBin, initialState);
 
   // console.log(state);
 
   useEffect(() => {
     if (state?.success === true) {
-      console.log("Bin has been created. closing Modal");
       toast.success("Bin has been created.");
       onCloseModal?.();
     }

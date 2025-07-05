@@ -1,7 +1,14 @@
 import { useEffect, useRef } from "react";
 
-//! lesson 369
+/**
+ * Custom hook that detects clicks outside of a specified element.
+ *
+ * @param {Function} handler - The function to call when a click outside is detected.
+ * @param {boolean} [listenCapturing=true] - Whether to listen for the event during the capturing phase.
+ * @returns {React.RefObject} A ref object that should be attached to the element to monitor.
+ */
 
+//! lesson 369
 export function useOutsideClick(handler, listenCapturing = true) {
   const ref = useRef();
 

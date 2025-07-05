@@ -9,6 +9,7 @@ export default function StoreHydrator({
   locations,
   bins,
   trxTypes,
+  trxDirections,
   itemTrx,
   marketTypes,
   markets,
@@ -21,6 +22,7 @@ export default function StoreHydrator({
   const setLocations = useAppStore((state) => state.setLocations);
   const setBins = useAppStore((state) => state.setBins);
   const setTrxTypes = useAppStore((state) => state.setTrxTypes);
+  const setTrxDirections = useAppStore((state) => state.setTrxDirections);
   const setItemTrx = useAppStore((state) => state.setItemTrx);
   const setMarketTypes = useAppStore((state) => state.setMarketTypes);
   const setMarkets = useAppStore((state) => state.setMarkets);
@@ -41,6 +43,9 @@ export default function StoreHydrator({
     if (trxTypes) {
       setTrxTypes(trxTypes);
     }
+    if (trxDirections) {
+      setTrxDirections(trxDirections);
+    }
     if (itemTrx) {
       setItemTrx(itemTrx);
     }
@@ -56,6 +61,7 @@ export default function StoreHydrator({
     locations,
     bins,
     trxTypes,
+    trxDirections,
     itemTrx,
     marketTypes,
     markets,

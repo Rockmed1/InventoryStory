@@ -13,6 +13,7 @@ export const initStore = () => {
     bins: [],
     trxTypes: [],
     itemTrx: [],
+    trxDirections: [],
     marketTypes: [],
     markets: [],
   };
@@ -39,6 +40,7 @@ export const createAppStore = (initState = initStore()) => {
     setBins: (bins) => set({ bins }),
     setTrxTypes: (trxTypes) => set({ trxTypes }),
     setItemTrx: (itemTrx) => set({ itemTrx }),
+    setTrxDirections: (trxDirections) => set({ trxDirections }),
     setMarketTypes: (marketTypes) => set({ marketTypes }),
     setMarkets: (markets) => set({ markets }),
 

@@ -1,10 +1,11 @@
-export function destructuredFormAction(state, formData) {
+export function destructuredFormData(state, formData) {
   const formDataObject = Object.fromEntries(formData.entries());
 
   // 3. Combine and return the two arrays
   return { ...state, ...formDataObject };
 }
 
+/*  */
 export function parseIdAndName(data) {
   if (!Array.isArray(data)) {
     return [];
@@ -21,4 +22,3 @@ export function removeLocDesc(data) {
     name: item.name,
   }));
 }
-

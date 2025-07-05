@@ -45,6 +45,11 @@ function StyledButton({ children, onClick }) {
 const MenusContext = createContext();
 
 //2- Create the parent component
+
+/**
+ * A compound component for creating dropdown menus with encapsulated state.
+ * @param {React.ReactNode} children - The child components, typically `Menus.Menu`.
+ */
 function Menus({ children }) {
   const [openId, setOpenId] = useState("");
   const [position, setPosition] = useState(null);
@@ -58,12 +63,10 @@ function Menus({ children }) {
   useEffect(() => {
     if (!openId) return;
     const handleScroll = () => close();
-
     window.addEventListener("scroll", handleScroll, true);
-    return window.removeEventListener("scroll", handleScroll, true);
+    return () => window.removeEventListener("scroll", handleScroll, true);
   }, [openId]);
 
-  // ii- provide context
   return (
     <MenusContext.Provider
       value={{ openId, close, open, position, setPosition }}>
@@ -74,10 +77,18 @@ function Menus({ children }) {
 
 //3- Create the children components
 
+/**
+ * A container for a single menu instance.
+ * @param {React.ReactNode} children - Typically `Menus.MenuToggle` and `Menus.MenuList`.
+ */
 function Menu({ children }) {
   return <div className="flex items-center justify-end">{children}</div>;
 }
 
+/**
+ * The button that toggles the menu's visibility.
+ * @param {string | number} id - A unique ID for this menu instance.
+ */
 function MenuToggle({ id }) {
   //iii- consume context
   const { openId, open, close, position, setPosition } = use(MenusContext);
@@ -91,12 +102,8 @@ function MenuToggle({ id }) {
       x: window.innerWidth - rect.width - rect.x,
       y: rect.y + rect.height + 2,
     });
-
-    if (openId === "" || openId !== id) {
-      open(id);
-    } else {
-      close();
-    }
+    if (openId === "" || openId !== id) open(id);
+    else close();
   }
 
   return (
@@ -106,10 +113,15 @@ function MenuToggle({ id }) {
   );
 }
 
+/**
+ * The list of menu items. Renders into a portal.
+ * @param {string | number} id - The ID of the menu instance this list belongs to.
+ * @param {React.ReactNode} children - The `Menus.MenuButton` components.
+ */
 function MenuList({ id, children }) {
   const { openId, position, close } = use(MenusContext);
-
   const ref = useOutsideClick(close);
+
   if (id !== openId) return null;
 
   return createPortal(
@@ -120,6 +132,11 @@ function MenuList({ id, children }) {
   );
 }
 
+/**
+ * A single button/item within a menu list.
+ * @param {React.ReactNode} children - The content of the button (icon and text).
+ * @param {Function} [onClick] - A function to call when the button is clicked.
+ */
 function MenuButton({ children, onClick }) {
   const { close } = use(MenusContext);
 

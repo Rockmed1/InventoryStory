@@ -302,11 +302,13 @@ SELECT
 FROM
 	items.item;
 
---* transaction types
-SELECT
-	*
-FROM
-	trans.trx_type;
+DELETE FROM items.item
+WHERE item.item_name LIKE 'api%'
+	--* transaction types
+	SELECT
+		*
+	FROM
+		trans.trx_type;
 
 SELECT
 	*

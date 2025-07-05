@@ -72,15 +72,28 @@ function Modal({ children }) {
     </ModalContext.Provider>
   );
 }
-
 //3- Create Children Components
+/**
+ * A button or element that opens a modal window. Must be a child of `Modal`.
+ * It clones its child element to attach the necessary `onClick` handler.
+ * @param {React.ReactNode} children - The trigger element (e.g., a Button).
+ * @param {string} opensWindowName - The name of the `Modal.Window` to open.
+ */
 function Open({ children, opensWindowName }) {
   // iii-consume the context
-  const { open } = use(ModalContext);
-
+    const { open } = use(ModalContext);
   return cloneElement(children, { onClick: () => open(opensWindowName) });
 }
 
+/**
+ * The window content of the modal. Must be a child of `Modal`.
+ * It is rendered into a React Portal at the end of `document.body`.
+ * @param {string} name - The unique name of this window, which must match the `opensWindowName` of a `Modal.Open` component.
+ * @param {string} [title] - The title to display at the top of the modal.
+ * @param {string} [description] - A description to display below the title.
+ * @param {boolean} [isUseOutsideClick=true] - Whether to enable closing the modal by clicking outside of it.
+ * @param {React.ReactNode} children - The content of the modal window.
+ */
 function Window({
   name,
   title,
@@ -140,7 +153,6 @@ function Window({
         </div>
       </StyledModal>
     </Overlay>,
-
     document.body,
   );
 }
@@ -152,3 +164,76 @@ Modal.Open = Open;
 Modal.Window = Window;
 
 export default Modal;
+
+// "use client";
+
+// import AddButtonModal from "../_ui/client/AddButtonModal";
+
+// //* this is OK but not ideal because isOpenModal state is unnecessarily managed by the AddCabin component ...
+// // export default function AddItem() {
+// //   const [openModal, setOpenModal] = useState(false);
+
+// //   function handleOpenModal() {
+// //     setOpenModal(open => !open);
+// //   }
+
+// //   return (
+// //     <div>
+// //       <Button onClick={handleOpenModal}>
+// //         <div className="flex items-center justify-between gap-1">
+// //           <PlusIcon className="size-4" /> {'  '}
+// //           <span>Add item</span>
+// //         </div>
+// //       </Button>
+// //       {openModal && (
+// //         <Modal handleCloseModal={() => setOpenModal(false)}>
+// //           <p>This is Modal</p>
+// //           <Button type="cancel" onClick={() => setOpenModal(false)}>
+// //             Cancel
+// //           </Button>
+// //         </Modal>
+// //       )}
+// //     </div>
+// //   );
+// // }
+
+// //* applying the Compound Component Pattern to encapsulate the Modal Logic and state
+// export default function AddItem() {
+//   return (
+//     <div>
+//       <AddButtonModal opensWindowName="item-form" buttonLabel="Add item">
+//         This is a modal for the item form.
+//       </AddButtonModal>
+//       {/* <Modal>
+//         <Modal.Open opensWindowName="item-form">
+//           <Button>
+//             <div className="flex items-center justify-between gap-1">
+//               <PlusIcon className="size-4" />
+//               <span>Add item</span>
+//             </div>
+//           </Button>
+//         </Modal.Open>
+//         <Modal.Window name="item-form">
+//           This is a modal for the item form.
+//         </Modal.Window>
+
+//         <Modal.Open opensWindowName="confirm-delete">
+//           <Button>
+//             <div className="flex items-center justify-between gap-1">
+//               <MinusIcon className="size-4" />
+//               <span>Delete item</span>
+//             </div>
+//           </Button>
+//         </Modal.Open>
+//         <Modal.Window name="confirm-delete">
+//           <ConfirmDelete
+//             resourceName="item"
+//             onConfirm={() => {
+//               alert("delete confirmed");
+//             }}
+//           />
+//         </Modal.Window>
+//       </Modal> */}
+//     </div>
+//   );
+// }

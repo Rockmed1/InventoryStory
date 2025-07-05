@@ -3,7 +3,11 @@ import Card from "../_components/_ui/Card";
 import AddButtonModal from "../_components/_ui/client/AddButtonModal";
 import BinsTable from "../_components/BinsTable";
 import AddBinForm from "../_components/client/AddBinForm";
+import AddItemClassForm from "../_components/client/AddItemClassForm";
 import AddLocationForm from "../_components/client/AddLocationForm";
+import AddMarketForm from "../_components/client/AddMarketForm";
+import AddMarketTypeForm from "../_components/client/AddMarketTypeForm";
+import AddTrxTypeForm from "../_components/client/AddTrxTypeForm";
 import ItemClassesTable from "../_components/ItemClassesTable";
 import LocationsTable from "../_components/locationsTable";
 import MarketsTable from "../_components/MarketsTable";
@@ -54,31 +58,7 @@ export default function Page() {
         <AddButtonModal
           opensWindowName="add-Item-Classes"
           buttonLabel="Add Item Class">
-          Add Location placeholder
-        </AddButtonModal>
-      ),
-    },
-
-    {
-      cardName: "Market Types",
-      cardTable: <MarketTypesTable org_uuid={_org_uuid} />,
-      cardFallback: <MarketTypesTable.Fallback />,
-      CardAction: (
-        <AddButtonModal
-          opensWindowName="add-Market-Types"
-          buttonLabel="Add Market Type">
-          Add Location placeholder
-        </AddButtonModal>
-      ),
-    },
-
-    {
-      cardName: "Markets",
-      cardTable: <MarketsTable org_uuid={_org_uuid} />,
-      cardFallback: <MarketsTable.Fallback />,
-      CardAction: (
-        <AddButtonModal opensWindowName="add-Markets" buttonLabel="Add Market">
-          Add Location placeholder
+          <AddItemClassForm />
         </AddButtonModal>
       ),
     },
@@ -91,7 +71,31 @@ export default function Page() {
         <AddButtonModal
           opensWindowName="add-Transaction-Types"
           buttonLabel="Add Trx Type">
-          Add Location placeholder
+          <AddTrxTypeForm />
+        </AddButtonModal>
+      ),
+    },
+
+    {
+      cardName: "Market Types",
+      cardTable: <MarketTypesTable org_uuid={_org_uuid} />,
+      cardFallback: <MarketTypesTable.Fallback />,
+      CardAction: (
+        <AddButtonModal
+          opensWindowName="add-Market-Types"
+          buttonLabel="Add Market Type">
+          <AddMarketTypeForm />
+        </AddButtonModal>
+      ),
+    },
+
+    {
+      cardName: "Markets",
+      cardTable: <MarketsTable org_uuid={_org_uuid} />,
+      cardFallback: <MarketsTable.Fallback />,
+      CardAction: (
+        <AddButtonModal opensWindowName="add-Markets" buttonLabel="Add Market">
+          <AddMarketForm />
         </AddButtonModal>
       ),
     },
@@ -110,14 +114,14 @@ export default function Page() {
           </Card.CardContent>
         </Card>
       ))}
-      <Card>
+      {/* <Card>
         <Card.CardHeader>
           <Card.CardTitle>Form</Card.CardTitle>
         </Card.CardHeader>
         <Card.CardContent>
           <AddLocationForm />
         </Card.CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 }

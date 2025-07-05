@@ -1,5 +1,15 @@
 import SpinnerMini from "./SpinnerMini";
 
+/**
+ * A versatile button component with different visual styles and states.
+ *
+ * @param {React.ReactNode} children - The content to display inside the button.
+ * @param {boolean} [disabled=false] - Whether the button is disabled.
+ * @param {'primary' | 'secondary' | 'danger' | 'menu' | 'cancel'} [type='secondary'] - The visual style of the button.
+ * @param {Function} [onClick] - The function to call when the button is clicked.
+ * @param {boolean} [pending=false] - If true, shows a spinner and disables the button.
+ * @param {object} props - Any other props to pass to the underlying button element.
+ */
 function Button({
   children,
   disabled = false,
@@ -28,9 +38,10 @@ function Button({
 
   return (
     <button
-      disabled={disabled}
+      disabled={disabled || pending}
       onClick={onClick}
-      className={`text-md inline-block h-8 rounded-md px-3 py-1 tracking-wide transition-colors duration-300 disabled:cursor-not-allowed has-[>svg]:px-2.5 [&_svg]:shrink-0 ${buttonType}`}>
+      className={`text-md inline-block h-8 rounded-md px-3 py-1 tracking-wide transition-colors duration-300 disabled:cursor-not-allowed has-[>svg]:px-2.5 [&_svg]:shrink-0 ${buttonType}`}
+      {...props}>
       {pending && <SpinnerMini />}
       {children}
     </button>

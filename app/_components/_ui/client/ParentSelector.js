@@ -9,9 +9,18 @@ import {
 } from "@/app/_components/_ui/client/Select";
 import { useAppStore } from "@/app/_store/AppProvider";
 
+/**
+ * A dropdown selector that is dynamically populated from a slice of the global app store.
+ * It is designed to select a "parent" entity from a list.
+ *
+ * @param {string} parent - The key of the data slice in the global store (e.g., 'locations', 'itemClasses').
+ * @param {string} _col_name - The name attribute for the select input, corresponding to the database column name.
+ * @param {string} label - A user-friendly label for the selector (e.g., 'location', 'item class').
+ * @param {boolean} [required=true] - Whether the select input is required.
+ */
 export function ParentSelector({ parent, _col_name, label, required = true }) {
   //get the parent [parents] and remove the description column
-  const parents = useAppStore((state) => state[parent]).map((_) => ({
+  const parents = useAppStore((state) => state[parent] || []).map((_) => ({
     id: _.id,
     name: _.name,
   }));
@@ -28,7 +37,7 @@ export function ParentSelector({ parent, _col_name, label, required = true }) {
     return (
       <Select disabled>
         <SelectTrigger className="w-m">
-          <SelectValue placeholder="No parents available" />
+          <SelectValue placeholder={`No ${label}s available in the store`} />
         </SelectTrigger>
       </Select>
     );
@@ -37,29 +46,20 @@ export function ParentSelector({ parent, _col_name, label, required = true }) {
   return (
     <Select
       name={_col_name}
-      // value={(value) => parents.find((loc) => loc.id === value)}
       onValueChange={(value) => {
         console.log("🎯 Selected value:", value);
       }}
       required={required}>
       <SelectTrigger className="w-m">
-        <SelectValue placeholder={`Select a ${label}`} />
+        <SelectValue placeholder={`Select ${label}`} />
       </SelectTrigger>
       <SelectContent className="z-[2000]">
-        {parents.map((parent) => {
-          console.log("🗂️ Mapping parent:", parent);
-          return (
-            <SelectItem key={parent.id} value={parent.id.toString()}>
-              {parent.name}
-            </SelectItem>
-          );
-        })}
+        {parents.map((parent) => (
+          <SelectItem key={parent.id} value={parent.id.toString()}>
+            {parent.name}
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );
-}
-{
-  /* <SelectItem value="light">Light</SelectItem>
-        <SelectItem value="dark">Dark</SelectItem>
-        <SelectItem value="system">System</SelectItem> */
 }
