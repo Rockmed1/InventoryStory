@@ -4,7 +4,7 @@ import { revalidateTag } from "next/cache";
 // import { auth } from "./auth"; // Placeholder for your actual auth function
 import { connection } from "next/server";
 import { supabase } from "./supabase";
-import { schema } from "./ZodSchemas";
+import { getSchema, appContextSchema } from "./ZodSchemas";
 
 /**
  * A factory function to create standardized database server actions.
@@ -12,11 +12,11 @@ import { schema } from "./ZodSchemas";
  * database calls, error handling, and cache revalidation in one place.
  *
  * @param {string} rpcName - The name of the Supabase RPC function to call.
- * @param {string} revalidateTagKey - The base key for the cache tag to revalidate (e.g., 'locations').
+ * @param {string} entityType - The entity type used for validation and cache revalidation (e.g., 'location').
  * @returns {Function} An async server action function compatible with useActionState.
  */
 
-function dbAction(rpcName, revalidateTagKey, actionSchema) {
+function dbAction(rpcName, entityType, operation) {
   return async function (prevState, formData) {
     // 1. Authenticate the user on the server.
     // Server Actions should not use hooks. They get auth state directly.
@@ -29,7 +29,7 @@ function dbAction(rpcName, revalidateTagKey, actionSchema) {
     const { _org_uuid, _usr_uuid } = session;
 
     // validate the session data
-    const validatedAppContext = schema.appContextSchema.safeParse({
+    const validatedAppContext = appContextSchema.safeParse({
       _org_uuid,
       _usr_uuid,
     });
@@ -43,7 +43,9 @@ function dbAction(rpcName, revalidateTagKey, actionSchema) {
     // prepare and validate the form data
     const destructuredFormData = Object.fromEntries(formData);
 
-    const validatedData = schema[actionSchema].safeParse({
+    const schema = getSchema(entityType, operation);
+
+    const validatedData = schema.safeParse({
       ...destructuredFormData,
     });
 
@@ -106,8 +108,8 @@ function dbAction(rpcName, revalidateTagKey, actionSchema) {
     }
 
     // 5. Revalidate the appropriate cache tag on success.
-    if (revalidateTagKey) {
-      revalidateTag(`${revalidateTagKey}-${_org_uuid}`);
+    if (entityType) {
+      revalidateTag(`${entityType}-${_org_uuid}`);
     }
 
     // console.log(prevState);
@@ -124,33 +126,22 @@ function dbAction(rpcName, revalidateTagKey, actionSchema) {
 
 // --- Define and export your server actions using the factory ---
 
-export const createLocation = dbAction(
-  "fn_create_location",
-  "locations",
-  "locationSchema",
-);
-export const createBin = dbAction("fn_create_bin", "bins", "binSchema");
-export const createItemClass = dbAction(
-  "fn_create_item_class",
-  "itemClasses",
-  "itemClassSchema",
-);
-export const createMarketType = dbAction(
-  "fn_create_market_type",
-  "marketTypes",
-  "marketTypeSchema",
-);
-export const createTrxType = dbAction(
-  "fn_create_trx_type",
-  "trxTypes",
-  "trxTypeSchema",
-);
-export const createMarket = dbAction(
-  "fn_create_market",
-  "markets",
-  "marketSchema",
-);
-export const createItem = dbAction("fn_create_item", "items", "itemSchema");
+export const createLocation = dbAction("fn_create_location", "location", "create");
+export const createBin = dbAction("fn_create_bin", "bin", "create");
+export const createItemClass = dbAction("fn_create_item_class", "itemClass", "create");
+export const createMarketType = dbAction("fn_create_market_type", "marketType", "create");
+export const createTrxType = dbAction("fn_create_trx_type", "trxType", "create");
+export const createMarket = dbAction("fn_create_market", "market", "create");
+export const createItem = dbAction("fn_create_item", "item", "create");
+
+// --- Update Actions ---
+export const updateLocation = dbAction("fn_update_location", "location", "update");
+export const updateBin = dbAction("fn_update_bin", "bin", "update");
+export const updateItemClass = dbAction("fn_update_item_class", "itemClass", "update");
+export const updateItem = dbAction("fn_update_item", "item", "update");
+export const updateMarketType = dbAction("fn_update_market_type", "marketType", "update");
+export const updateMarket = dbAction("fn_update_market", "market", "update");
+export const updateTrxType = dbAction("fn_update_trx_type", "trxType", "update");
 
 // --- Other Actions ---
 

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { cache } from "react";
 import { supabase } from "./supabase";
-import { schema } from "./ZodSchemas";
+import { appContextSchema } from "./ZodSchemas";
 
 //!Factory pattern is used as it is better for multi-tennant applications caching to ensure org scoped operations
 
@@ -26,7 +26,7 @@ export function createDataService(org_uuid) {
 
   const _data = { _org_uuid, _usr_uuid };
 
-  const validatedAppContext = schema.appContextSchema.safeParse({
+  const validatedAppContext = appContextSchema.safeParse({
     _org_uuid,
     _usr_uuid,
   });
@@ -58,8 +58,8 @@ export function createDataService(org_uuid) {
         }
         return data;
       },
-      [`items-${org_uuid}`], // A unique key for this specific query
-      { tags: [`items-${org_uuid}`] }, // The tag we will use to revalidate this data
+      [`item-${org_uuid}`], // A unique key for this specific query
+      { tags: [`item-${org_uuid}`] }, // The tag we will use to revalidate this data
     ),
 
     getLocations: cache(
@@ -75,8 +75,8 @@ export function createDataService(org_uuid) {
         }
         return data;
       },
-      [`locations-${org_uuid}`],
-      { tags: [`locations-${org_uuid}`] },
+      [`location-${org_uuid}`],
+      { tags: [`location-${org_uuid}`] },
     ),
 
     getBins: cache(
@@ -90,8 +90,8 @@ export function createDataService(org_uuid) {
         }
         return data;
       },
-      [`bins-${org_uuid}`],
-      { tags: [`bins-${org_uuid}`] },
+      [`bin-${org_uuid}`],
+      { tags: [`bin-${org_uuid}`] },
     ),
 
     getItemClasses: cache(
@@ -107,8 +107,8 @@ export function createDataService(org_uuid) {
         }
         return data;
       },
-      [`itemClasses-${org_uuid}`],
-      { tags: [`itemClasses-${org_uuid}`] },
+      [`itemClass-${org_uuid}`],
+      { tags: [`itemClass-${org_uuid}`] },
     ),
 
     getMarketTypes: cache(
@@ -124,8 +124,8 @@ export function createDataService(org_uuid) {
         }
         return data;
       },
-      [`marketTypes-${org_uuid}`],
-      { tags: [`marketTypes-${org_uuid}`] },
+      [`marketType-${org_uuid}`],
+      { tags: [`marketType-${org_uuid}`] },
     ),
 
     getMarkets: cache(
@@ -139,8 +139,8 @@ export function createDataService(org_uuid) {
         }
         return data;
       },
-      [`markets-${org_uuid}`],
-      { tags: [`markets-${org_uuid}`] },
+      [`market-${org_uuid}`],
+      { tags: [`market-${org_uuid}`] },
     ),
 
     getTrxTypes: cache(
@@ -156,8 +156,8 @@ export function createDataService(org_uuid) {
         }
         return data;
       },
-      [`trxTypes-${org_uuid}`],
-      { tags: [`trxTypes-${org_uuid}`] },
+      [`trxType-${org_uuid}`],
+      { tags: [`trxType-${org_uuid}`] },
     ),
   };
 }

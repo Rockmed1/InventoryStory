@@ -4,44 +4,44 @@ import { useEffect } from "react";
 import { useAppStore } from "./AppProvider";
 
 export default function StoreHydrator({
-  items,
-  itemClasses,
-  locations,
-  bins,
-  trxTypes,
+  item,
+  itemClass,
+  location,
+  bin,
+  trxType,
   trxDirections,
   itemTrx,
-  marketTypes,
-  markets,
+  marketType,
+  market,
 }) {
   // We use useEffect to ensure this runs only on the client, after the component mounts.
   // The props (items, locations) are passed down from a Server Component.
 
-  const setItems = useAppStore((state) => state.setItems);
-  const setItemClasses = useAppStore((state) => state.setItemClasses);
-  const setLocations = useAppStore((state) => state.setLocations);
-  const setBins = useAppStore((state) => state.setBins);
-  const setTrxTypes = useAppStore((state) => state.setTrxTypes);
+  const setItem = useAppStore((state) => state.setItem);
+  const setItemClass = useAppStore((state) => state.setItemClass);
+  const setLocation = useAppStore((state) => state.setLocation);
+  const setBin = useAppStore((state) => state.setBin);
+  const setTrxType = useAppStore((state) => state.setTrxType);
   const setTrxDirections = useAppStore((state) => state.setTrxDirections);
   const setItemTrx = useAppStore((state) => state.setItemTrx);
-  const setMarketTypes = useAppStore((state) => state.setMarketTypes);
-  const setMarkets = useAppStore((state) => state.setMarkets);
+  const setMarketType = useAppStore((state) => state.setMarketType);
+  const setMarket = useAppStore((state) => state.setMarket);
 
   useEffect(() => {
-    if (items) {
-      setItems(items);
+    if (item) {
+      setItem(item);
     }
-    if (itemClasses) {
-      setItemClasses(itemClasses);
+    if (itemClass) {
+      setItemClass(itemClass);
     }
-    if (locations) {
-      setLocations(locations);
+    if (location) {
+      setLocation(location);
     }
-    if (bins) {
-      setBins(bins);
+    if (bin) {
+      setBin(bin);
     }
-    if (trxTypes) {
-      setTrxTypes(trxTypes);
+    if (trxType) {
+      setTrxType(trxType);
     }
     if (trxDirections) {
       setTrxDirections(trxDirections);
@@ -49,22 +49,22 @@ export default function StoreHydrator({
     if (itemTrx) {
       setItemTrx(itemTrx);
     }
-    if (marketTypes) {
-      setMarketTypes(marketTypes);
+    if (marketType) {
+      setMarketType(marketType);
     }
-    if (markets) {
-      setMarkets(markets);
+    if (market) {
+      setMarket(market);
     }
   }, [
-    items,
-    itemClasses,
-    locations,
-    bins,
-    trxTypes,
+    item,
+    itemClass,
+    location,
+    bin,
+    trxType,
     trxDirections,
     itemTrx,
-    marketTypes,
-    markets,
+    marketType,
+    market,
   ]);
 
   return null;

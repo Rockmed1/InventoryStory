@@ -69,7 +69,7 @@ export default function AddItemForm({ onCloseModal }) {
       <Form.InputSelect name={"_item_class_id"}>
         <Form.Label>Select Item Class *</Form.Label>
         <ParentSelector
-          parent="itemClasses"
+          parent="itemClass"
           _col_name="_item_class_id"
           label="item class"
           required={true}

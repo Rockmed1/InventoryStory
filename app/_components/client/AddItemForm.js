@@ -4,7 +4,7 @@ import Form from "@/app/_components/_ui/Form";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { createItem } from "../../_lib/actions";
-import { schema } from "../../_lib/ZodSchemas";
+import { getClientValidationSchema } from "../../_lib/ZodSchemas";
 import { useAppStore } from "../../_store/AppProvider";
 import Button from "../_ui/Button";
 import { ParentSelector } from "../_ui/client/ParentSelector";
@@ -22,7 +22,7 @@ export default function AddItemForm({ onCloseModal }) {
   // const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
 
   // 1- Get existing items from the store for validation
-  const existingItems = useAppStore((state) => state.items || []);
+  const existingItems = useAppStore((state) => state.item || []);
 
   const initialState = {
     success: null,
@@ -53,16 +53,20 @@ export default function AddItemForm({ onCloseModal }) {
     // CLIENT VALIDATE FORM DATA
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData);
-    console.log(data);
+    // console.log(data);
 
-    // 2- Refresh the data used in validation
-    const itemSchemaWithValidation = schema.createClientSchemaValidation(
-      "items",
-      existingItems,
-    );
+    // 2- get the validation schema with refreshed validation data
+
+    const schema = getClientValidationSchema("item", existingItems, "create");
+
+    // const itemSchemaWithValidation = schema.getClientValidationSchema(
+    //   "item",
+    //   existingItems,
+    //   "create",
+    // );
 
     // 3- perform combined validation
-    const validationResults = itemSchemaWithValidation.safeParse(data);
+    const validationResults = schema.safeParse(data);
 
     // 4- if form data did not pass client validation
     if (!validationResults.success) {
@@ -88,7 +92,7 @@ export default function AddItemForm({ onCloseModal }) {
       <Form.InputSelect name={"_item_class_id"}>
         <Form.Label>Select Item Class *</Form.Label>
         <ParentSelector
-          parent="itemClasses"
+          parent="itemClass"
           _col_name="_item_class_id"
           label="item class"
           required={true}
@@ -99,14 +103,14 @@ export default function AddItemForm({ onCloseModal }) {
         inputValue={currentFormState.formData?._item_name}
         placeholder="Enter Item name"
         error={currentFormState?.zodErrors?._item_name}>
-        Item Name
+        Item Name *
       </Form.InputWithLabel>
       <Form.InputWithLabel
         name={"_item_desc"}
         inputValue={currentFormState.formData?._item_desc}
         placeholder="Enter Item description"
         error={currentFormState?.zodErrors?._item_desc}>
-        Item Description
+        Item Description *
       </Form.InputWithLabel>
       <Form.Footer>
         <Button disabled={pending} type="secondary" onClick={onCloseModal}>

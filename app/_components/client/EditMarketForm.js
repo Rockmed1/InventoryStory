@@ -3,7 +3,7 @@
 import Form from "@/app/_components/_ui/Form";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { createMarket } from "../../_lib/actions";
+import { updateMarket } from "../../_lib/actions";
 import { getClientValidationSchema } from "../../_lib/ZodSchemas";
 import { useAppStore } from "../../_store/AppProvider";
 import Button from "../_ui/Button";
@@ -11,12 +11,14 @@ import { ParentSelector } from "../_ui/client/ParentSelector";
 import SpinnerMini from "../_ui/SpinnerMini";
 
 /**
- * A form for adding a new market, designed to be used within a modal.
+ * A form for editing an existing market, designed to be used within a modal.
  * It handles form submission using a server action and displays success notifications.
  *
+ * @param {Object} marketToEdit - The market object to edit
  * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
  */
-export default function AddMarketForm({ onCloseModal }) {
+
+export default function EditMarketForm({ marketToEdit, onCloseModal }) {
   const existingMarkets = useAppStore((state) => state.market || []);
 
   const initialState = {
@@ -26,7 +28,7 @@ export default function AddMarketForm({ onCloseModal }) {
   };
 
   const [formState, formAction, pending] = useActionState(
-    createMarket,
+    updateMarket,
     initialState,
   );
   const [clientFormState, setClientFormState] = useState(initialState);
@@ -37,10 +39,8 @@ export default function AddMarketForm({ onCloseModal }) {
 
   useEffect(() => {
     if (formState?.success) {
-      toast.success(
-        `Market ${formState.formData?._market_name} has been created.`,
-      );
-      setClientFormState(initialState); //clear any client errors
+      toast.success(`Market ${formState.formData?._market_name} has been updated.`);
+      setClientFormState(initialState);
       onCloseModal?.();
     }
   }, [formState, onCloseModal]);
@@ -52,7 +52,7 @@ export default function AddMarketForm({ onCloseModal }) {
     const validationSchema = getClientValidationSchema(
       "market",
       existingMarkets,
-      "create"
+      "update"
     );
     const validationResults = validationSchema.safeParse(data);
 
@@ -62,7 +62,7 @@ export default function AddMarketForm({ onCloseModal }) {
         success: false,
         formData: data,
         zodErrors: validationResults.error.flatten().fieldErrors,
-        message: "Fix these errors to proceed.",
+        message: "Please fix the errors below.",
       });
     } else {
       setClientFormState(initialState);
@@ -71,9 +71,11 @@ export default function AddMarketForm({ onCloseModal }) {
 
   return (
     <Form action={formAction} onSubmit={handleSubmit}>
-      <Form.ZodErrors
-        error={formState?.["message"] || clientFormState?.message}
-      />
+      <Form.ZodErrors error={currentFormState?.message} />
+      
+      {/* Hidden ID field */}
+      <input type="hidden" name="_market_id" value={marketToEdit.id} />
+      
       <Form.InputSelect name={"_market_type_id"}>
         <Form.Label>Select Market Type *</Form.Label>
         <ParentSelector
@@ -81,36 +83,41 @@ export default function AddMarketForm({ onCloseModal }) {
           _col_name="_market_type_id"
           label="market type"
           required={true}
+          defaultValue={marketToEdit.market_type_id}
         />
       </Form.InputSelect>
+      
       <Form.InputWithLabel
         name={"_market_name"}
-        inputValue={currentFormState.formData?._market_name}
+        inputValue={currentFormState.formData?._market_name || marketToEdit.name}
         placeholder="Enter Market name"
         error={currentFormState?.zodErrors?._market_name}>
         Market Name *
       </Form.InputWithLabel>
+      
       <Form.InputWithLabel
         name={"_market_desc"}
-        inputValue={currentFormState.formData?._market_desc}
+        inputValue={currentFormState.formData?._market_desc || marketToEdit.description}
         placeholder="Enter Market description"
         error={currentFormState?.zodErrors?._market_desc}>
         Market Description *
       </Form.InputWithLabel>
+      
       <Form.InputWithLabel
         name={"_market_url"}
-        inputValue={currentFormState.formData?._market_url}
+        inputValue={currentFormState.formData?._market_url || marketToEdit.url}
         placeholder="Enter Market URL"
         error={currentFormState?.zodErrors?._market_url}>
         Market URL *
       </Form.InputWithLabel>
+      
       <Form.Footer>
         <Button disabled={pending} type="secondary" onClick={onCloseModal}>
-          <span>Cancel</span>
+          Cancel
         </Button>
-        <Button disabled={pending} type="secondary">
+        <Button disabled={pending} type="primary">
           {pending && <SpinnerMini />}
-          <span>Add Market</span>
+          Update Market
         </Button>
       </Form.Footer>
     </Form>

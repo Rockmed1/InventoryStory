@@ -7,48 +7,48 @@ import { createStore } from "zustand";
 export const initStore = () => {
   return {
     // Each data slice starts as an empty array
-    items: [],
-    itemClasses: [],
-    locations: [],
-    bins: [],
-    trxTypes: [],
+    item: [],
+    itemClass: [],
+    location: [],
+    bin: [],
+    trxType: [],
     itemTrx: [],
     trxDirections: [],
-    marketTypes: [],
-    markets: [],
+    marketType: [],
+    market: [],
   };
 };
 
 export const createAppStore = (initState = initStore()) => {
   return createStore((set) => ({
     // Each data slice starts as an empty array
-    // items: [],
-    // itemClasses: [],
-    // locations: [],
-    // bins: [],
-    // trxTypes: [],
+    // item: [],
+    // itemClass: [],
+    // location: [],
+    // bin: [],
+    // trxType: [],
     // itemTrx: [],
-    // marketTypes: [],
-    // markets: [],
+    // marketType: [],
+    // market: [],
 
     ...initState,
 
     // --- Actions to hydrate (update) the store on the client side from server-fetched data ---
-    setItems: (items) => set({ items }),
-    setItemClasses: (itemClasses) => set({ itemClasses }),
-    setLocations: (locations) => set({ locations }),
-    setBins: (bins) => set({ bins }),
-    setTrxTypes: (trxTypes) => set({ trxTypes }),
+    setItem: (item) => set({ item }),
+    setItemClass: (itemClass) => set({ itemClass }),
+    setLocation: (location) => set({ location }),
+    setBin: (bin) => set({ bin }),
+    setTrxType: (trxType) => set({ trxType }),
     setItemTrx: (itemTrx) => set({ itemTrx }),
     setTrxDirections: (trxDirections) => set({ trxDirections }),
-    setMarketTypes: (marketTypes) => set({ marketTypes }),
-    setMarkets: (markets) => set({ markets }),
+    setMarketType: (marketType) => set({ marketType }),
+    setMarket: (market) => set({ market }),
 
-    // --- Example of an optimistic update action ---
+    // --- LATER: Optimistic update action ---
     // This can be used for a snappier UI experience
     addItemOptimistic: (newItem) =>
       set((state) => ({
-        items: [...state.items, { ...newItem, id: `temp-${Date.now()}` }], // Add with a temporary ID
+        item: [...state.item, { ...newItem, id: `temp-${Date.now()}` }], // Add with a temporary ID
       })),
   }));
 };

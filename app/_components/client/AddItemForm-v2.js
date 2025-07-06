@@ -23,7 +23,7 @@ export default function AddItemForm({ onCloseModal }) {
   // const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
 
   // 1- Get existing items from the store for validation
-  const existingItems = useAppStore((state) => state.items || []);
+  const existingItems = useAppStore((state) => state.item || []);
 
   const initialState = {
     success: null,
@@ -56,7 +56,7 @@ export default function AddItemForm({ onCloseModal }) {
     // CLIENT VALIDATE FORM DATA
 
     // 2- Refresh the data used in validation
-    const itemSchemaWithValidation = schema.createClientSchemaValidation(
+    const itemSchemaWithValidation = schema.getClientValidationSchema(
       "items",
       existingItems,
     );
@@ -87,7 +87,7 @@ export default function AddItemForm({ onCloseModal }) {
       <Form.InputSelect name={"_item_class_id"}>
         <Form.Label>Select Item Class *</Form.Label>
         <ParentSelector
-          parent="itemClasses"
+          parent="itemClass"
           _col_name="_item_class_id"
           label="item class"
           required={true}

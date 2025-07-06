@@ -37,7 +37,7 @@ export default async function ItemsTable({ org_uuid }) {
   return (
     <>
       <Table data={data} labels={labels} rowActions={rowActions} />
-      <StoreHydrator items={data} itemClasses={dataDependency} />
+      <StoreHydrator item={data} itemClass={dataDependency} />
     </>
   );
 }

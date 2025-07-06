@@ -38,7 +38,7 @@ export default async function LocationsTable({ org_uuid }) {
 
   return (
     <>
-      <StoreHydrator locations={data} />
+      <StoreHydrator location={data} />
       <Table data={data} labels={labels} rowActions={rowActions} />
     </>
   );

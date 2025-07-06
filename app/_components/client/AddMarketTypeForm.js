@@ -2,7 +2,7 @@
 
 import Form from "@/app/_components/_ui/Form";
 import { createMarketType } from "@/app/_lib/actions";
-import { schema } from "@/app/_lib/ZodSchemas";
+import { getClientValidationSchema } from "@/app/_lib/ZodSchemas";
 import { useAppStore } from "@/app/_store/AppProvider";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -16,7 +16,7 @@ import SpinnerMini from "../_ui/SpinnerMini";
  * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
  */
 export default function AddMarketTypeForm({ onCloseModal }) {
-  const existingMarketTypes = useAppStore((state) => state.marketTypes || []);
+  const existingMarketTypes = useAppStore((state) => state.marketType || []);
 
   const initialState = {
     success: null,
@@ -48,11 +48,12 @@ export default function AddMarketTypeForm({ onCloseModal }) {
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData);
 
-    const marketTypeSchemaWithValidation = schema.createClientSchemaValidation(
-      "marketTypes",
+    const validationSchema = getClientValidationSchema(
+      "marketType",
       existingMarketTypes,
+      "create"
     );
-    const validationResults = marketTypeSchemaWithValidation.safeParse(data);
+    const validationResults = validationSchema.safeParse(data);
 
     if (!validationResults.success) {
       e.preventDefault();
@@ -77,14 +78,14 @@ export default function AddMarketTypeForm({ onCloseModal }) {
         inputValue={currentFormState.formData?._market_type_name}
         placeholder="Enter Market Type name"
         error={currentFormState?.zodErrors?._market_type_name}>
-        Market Type
+        Market Type Name *
       </Form.InputWithLabel>
       <Form.InputWithLabel
         name={"_market_type_desc"}
         inputValue={currentFormState.formData?._market_type_desc}
         placeholder="Enter Market Type description"
         error={currentFormState?.zodErrors?._market_type_desc}>
-        Market Type Description
+        Market Type Description *
       </Form.InputWithLabel>
       <Form.Footer>
         <Button disabled={pending} type="secondary" onClick={onCloseModal}>

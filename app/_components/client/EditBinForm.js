@@ -1,23 +1,25 @@
 "use client";
 
 import Form from "@/app/_components/_ui/Form";
-import { createTrxType } from "@/app/_lib/actions";
-import { getClientValidationSchema } from "@/app/_lib/ZodSchemas";
-import { useAppStore } from "@/app/_store/AppProvider";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { updateBin } from "../../_lib/actions";
+import { getClientValidationSchema } from "../../_lib/ZodSchemas";
+import { useAppStore } from "../../_store/AppProvider";
 import Button from "../_ui/Button";
 import { ParentSelector } from "../_ui/client/ParentSelector";
 import SpinnerMini from "../_ui/SpinnerMini";
 
 /**
- * A form for adding a new transaction type, designed to be used within a modal.
+ * A form for editing an existing bin, designed to be used within a modal.
  * It handles form submission using a server action and displays success notifications.
  *
+ * @param {Object} binToEdit - The bin object to edit
  * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
  */
-export default function AddTrxTypeForm({ onCloseModal }) {
-  const existingTrxTypes = useAppStore((state) => state.trxType || []);
+
+export default function EditBinForm({ binToEdit, onCloseModal }) {
+  const existingBins = useAppStore((state) => state.bin || []);
 
   const initialState = {
     success: null,
@@ -26,7 +28,7 @@ export default function AddTrxTypeForm({ onCloseModal }) {
   };
 
   const [formState, formAction, pending] = useActionState(
-    createTrxType,
+    updateBin,
     initialState,
   );
   const [clientFormState, setClientFormState] = useState(initialState);
@@ -37,10 +39,8 @@ export default function AddTrxTypeForm({ onCloseModal }) {
 
   useEffect(() => {
     if (formState?.success) {
-      toast.success(
-        `Transaction Type ${formState.formData?._trx_type_name} has been created.`,
-      );
-      setClientFormState(initialState); //clear any client errors
+      toast.success(`Bin ${formState.formData?._bin_name} has been updated.`);
+      setClientFormState(initialState);
       onCloseModal?.();
     }
   }, [formState, onCloseModal]);
@@ -50,9 +50,9 @@ export default function AddTrxTypeForm({ onCloseModal }) {
     const data = Object.fromEntries(formData);
 
     const validationSchema = getClientValidationSchema(
-      "trxType",
-      existingTrxTypes,
-      "create"
+      "bin",
+      existingBins,
+      "update"
     );
     const validationResults = validationSchema.safeParse(data);
 
@@ -62,7 +62,7 @@ export default function AddTrxTypeForm({ onCloseModal }) {
         success: false,
         formData: data,
         zodErrors: validationResults.error.flatten().fieldErrors,
-        message: "Fix these errors to proceed.",
+        message: "Please fix the errors below.",
       });
     } else {
       setClientFormState(initialState);
@@ -71,39 +71,45 @@ export default function AddTrxTypeForm({ onCloseModal }) {
 
   return (
     <Form action={formAction} onSubmit={handleSubmit}>
-      <Form.ZodErrors
-        error={formState?.["message"] || clientFormState?.message}
-      />
-      <Form.InputSelect name={"_trx_direction_id"}>
-        <Form.Label>Select Transaction Direction *</Form.Label>
+      <Form.ZodErrors error={currentFormState?.message} />
+      
+      {/* Hidden ID field */}
+      <input type="hidden" name="_bin_id" value={binToEdit.id} />
+      
+      <Form.InputSelect name={"_loc_id"}>
+        <Form.Label>Select Location *</Form.Label>
         <ParentSelector
-          parent="trxDirections"
-          _col_name="_trx_direction_id"
-          label="transaction direction"
+          parent="location"
+          _col_name="_loc_id"
+          label="location"
           required={true}
+          defaultValue={binToEdit.loc_id}
         />
       </Form.InputSelect>
+      
       <Form.InputWithLabel
-        name={"_trx_type_name"}
-        inputValue={currentFormState.formData?._trx_type_name}
-        placeholder="Enter Trx Type name"
-        error={currentFormState?.zodErrors?._trx_type_name}>
-        Transaction Type Name *
+        name={"_bin_name"}
+        inputValue={currentFormState.formData?._bin_name || binToEdit.name}
+        placeholder="Enter Bin name"
+        error={currentFormState?.zodErrors?._bin_name}>
+        Bin Name *
       </Form.InputWithLabel>
+      
       <Form.InputWithLabel
-        name={"_trx_type_desc"}
-        inputValue={currentFormState.formData?._trx_type_desc}
-        placeholder="Enter Transaction Type description"
-        error={currentFormState?.zodErrors?._trx_type_desc}>
-        Transaction Type Description *
+        name={"_bin_desc"}
+        inputValue={currentFormState.formData?._bin_desc || binToEdit.description}
+        placeholder="Enter Bin description"
+        error={currentFormState?.zodErrors?._bin_desc}>
+        Bin Description *
       </Form.InputWithLabel>
+      
       <Form.Footer>
         <Button disabled={pending} type="secondary" onClick={onCloseModal}>
-          <span>Cancel</span>
+          Cancel
         </Button>
-        <Button disabled={pending} type="secondary">
+        <Button disabled={pending} type="primary">
           {pending && <SpinnerMini />}
-          <span>Add Trx Type</span>
+          Update Bin
         </Button>
       </Form.Footer>
     </Form>

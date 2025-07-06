@@ -1,23 +1,26 @@
 "use client";
 
 import Form from "@/app/_components/_ui/Form";
-import { createTrxType } from "@/app/_lib/actions";
-import { getClientValidationSchema } from "@/app/_lib/ZodSchemas";
-import { useAppStore } from "@/app/_store/AppProvider";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { updateItem } from "../../_lib/actions";
+import { getClientValidationSchema } from "../../_lib/ZodSchemas";
+import { useAppStore } from "../../_store/AppProvider";
 import Button from "../_ui/Button";
 import { ParentSelector } from "../_ui/client/ParentSelector";
 import SpinnerMini from "../_ui/SpinnerMini";
 
 /**
- * A form for adding a new transaction type, designed to be used within a modal.
+ * A form for editing an existing item, designed to be used within a modal.
  * It handles form submission using a server action and displays success notifications.
  *
+ * @param {Object} itemToEdit - The item object to edit
  * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
  */
-export default function AddTrxTypeForm({ onCloseModal }) {
-  const existingTrxTypes = useAppStore((state) => state.trxType || []);
+
+export default function EditItemForm({ itemToEdit, onCloseModal }) {
+  // Get existing items from the store for validation
+  const existingItems = useAppStore((state) => state.item || []);
 
   const initialState = {
     success: null,
@@ -26,7 +29,7 @@ export default function AddTrxTypeForm({ onCloseModal }) {
   };
 
   const [formState, formAction, pending] = useActionState(
-    createTrxType,
+    updateItem,
     initialState,
   );
   const [clientFormState, setClientFormState] = useState(initialState);
@@ -37,10 +40,8 @@ export default function AddTrxTypeForm({ onCloseModal }) {
 
   useEffect(() => {
     if (formState?.success) {
-      toast.success(
-        `Transaction Type ${formState.formData?._trx_type_name} has been created.`,
-      );
-      setClientFormState(initialState); //clear any client errors
+      toast.success(`Item ${formState.formData?._item_name} has been updated.`);
+      setClientFormState(initialState);
       onCloseModal?.();
     }
   }, [formState, onCloseModal]);
@@ -49,11 +50,13 @@ export default function AddTrxTypeForm({ onCloseModal }) {
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData);
 
+    // CLIENT VALIDATE FORM DATA for UPDATE operation
     const validationSchema = getClientValidationSchema(
-      "trxType",
-      existingTrxTypes,
-      "create"
+      "item",
+      existingItems,
+      "update"
     );
+
     const validationResults = validationSchema.safeParse(data);
 
     if (!validationResults.success) {
@@ -62,7 +65,7 @@ export default function AddTrxTypeForm({ onCloseModal }) {
         success: false,
         formData: data,
         zodErrors: validationResults.error.flatten().fieldErrors,
-        message: "Fix these errors to proceed.",
+        message: "Please fix the errors below.",
       });
     } else {
       setClientFormState(initialState);
@@ -71,39 +74,45 @@ export default function AddTrxTypeForm({ onCloseModal }) {
 
   return (
     <Form action={formAction} onSubmit={handleSubmit}>
-      <Form.ZodErrors
-        error={formState?.["message"] || clientFormState?.message}
-      />
-      <Form.InputSelect name={"_trx_direction_id"}>
-        <Form.Label>Select Transaction Direction *</Form.Label>
+      <Form.ZodErrors error={currentFormState?.message} />
+      
+      {/* Hidden ID field */}
+      <input type="hidden" name="_item_id" value={itemToEdit.id} />
+      
+      <Form.InputSelect name={"_item_class_id"}>
+        <Form.Label>Select Item Class *</Form.Label>
         <ParentSelector
-          parent="trxDirections"
-          _col_name="_trx_direction_id"
-          label="transaction direction"
+          parent="itemClass"
+          _col_name="_item_class_id"
+          label="item class"
           required={true}
+          defaultValue={itemToEdit.item_class_id}
         />
       </Form.InputSelect>
+      
       <Form.InputWithLabel
-        name={"_trx_type_name"}
-        inputValue={currentFormState.formData?._trx_type_name}
-        placeholder="Enter Trx Type name"
-        error={currentFormState?.zodErrors?._trx_type_name}>
-        Transaction Type Name *
+        name={"_item_name"}
+        inputValue={currentFormState.formData?._item_name || itemToEdit.name}
+        placeholder="Enter Item name"
+        error={currentFormState?.zodErrors?._item_name}>
+        Item Name *
       </Form.InputWithLabel>
+      
       <Form.InputWithLabel
-        name={"_trx_type_desc"}
-        inputValue={currentFormState.formData?._trx_type_desc}
-        placeholder="Enter Transaction Type description"
-        error={currentFormState?.zodErrors?._trx_type_desc}>
-        Transaction Type Description *
+        name={"_item_desc"}
+        inputValue={currentFormState.formData?._item_desc || itemToEdit.description}
+        placeholder="Enter Item description"
+        error={currentFormState?.zodErrors?._item_desc}>
+        Item Description *
       </Form.InputWithLabel>
+      
       <Form.Footer>
         <Button disabled={pending} type="secondary" onClick={onCloseModal}>
-          <span>Cancel</span>
+          Cancel
         </Button>
-        <Button disabled={pending} type="secondary">
+        <Button disabled={pending} type="primary">
           {pending && <SpinnerMini />}
-          <span>Add Trx Type</span>
+          Update Item
         </Button>
       </Form.Footer>
     </Form>

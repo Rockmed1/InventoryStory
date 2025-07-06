@@ -4,7 +4,7 @@ import Form from "@/app/_components/_ui/Form";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { createLocation } from "../../_lib/actions";
-import { schema } from "../../_lib/ZodSchemas";
+import { getClientValidationSchema } from "../../_lib/ZodSchemas";
 import { useAppStore } from "../../_store/AppProvider";
 import Button from "../_ui/Button";
 import SpinnerMini from "../_ui/SpinnerMini";
@@ -16,7 +16,7 @@ import SpinnerMini from "../_ui/SpinnerMini";
  * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
  */
 export default function AddLocationForm({ onCloseModal }) {
-  const existingLocations = useAppStore((state) => state.locations || []);
+  const existingLocations = useAppStore((state) => state.location || []);
 
   const initialState = {
     success: null,
@@ -48,11 +48,12 @@ export default function AddLocationForm({ onCloseModal }) {
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData);
 
-    const locationSchemaWithValidation = schema.createClientSchemaValidation(
-      "locations",
+    const validationSchema = getClientValidationSchema(
+      "location",
       existingLocations,
+      "create"
     );
-    const validationResults = locationSchemaWithValidation.safeParse(data);
+    const validationResults = validationSchema.safeParse(data);
 
     if (!validationResults.success) {
       e.preventDefault();
@@ -77,14 +78,14 @@ export default function AddLocationForm({ onCloseModal }) {
         inputValue={currentFormState.formData?._loc_name}
         placeholder="Enter Location name"
         error={currentFormState?.zodErrors?._loc_name}>
-        Location Name
+        Location Name *
       </Form.InputWithLabel>
       <Form.InputWithLabel
         name={"_loc_desc"}
         inputValue={currentFormState.formData?._loc_desc}
         placeholder="Enter Location description"
         error={currentFormState?.zodErrors?._loc_desc}>
-        Location Description
+        Location Description *
       </Form.InputWithLabel>
       <Form.Footer>
         <Button disabled={pending} type="secondary" onClick={onCloseModal}>

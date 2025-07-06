@@ -40,7 +40,7 @@ export default async function TrxTypesTable({ org_uuid }) {
 
   return (
     <>
-      <StoreHydrator trxTypes={data} trxDirections={TRXDIRECTIONS} />
+      <StoreHydrator trxType={data} trxDirections={TRXDIRECTIONS} />
       <Table data={data} labels={labels} rowActions={rowActions} />
     </>
   );

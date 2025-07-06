@@ -4,7 +4,7 @@ import Form from "@/app/_components/_ui/Form";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { createItemClass } from "../../_lib/actions";
-import { schema } from "../../_lib/ZodSchemas";
+import { getClientValidationSchema } from "../../_lib/ZodSchemas";
 import { useAppStore } from "../../_store/AppProvider";
 import Button from "../_ui/Button";
 import SpinnerMini from "../_ui/SpinnerMini";
@@ -16,7 +16,7 @@ import SpinnerMini from "../_ui/SpinnerMini";
  * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
  */
 export default function AddItemClassForm({ onCloseModal }) {
-  const existingItemClasses = useAppStore((state) => state.itemClasses || []);
+  const existingItemClasses = useAppStore((state) => state.itemClass || []);
 
   const initialState = {
     success: null,
@@ -48,11 +48,12 @@ export default function AddItemClassForm({ onCloseModal }) {
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData);
 
-    const itemClassSchemaWithValidation = schema.createClientSchemaValidation(
-      "itemClasses",
+    const validationSchema = getClientValidationSchema(
+      "itemClass",
       existingItemClasses,
+      "create"
     );
-    const validationResults = itemClassSchemaWithValidation.safeParse(data);
+    const validationResults = validationSchema.safeParse(data);
 
     if (!validationResults.success) {
       e.preventDefault();
@@ -77,14 +78,14 @@ export default function AddItemClassForm({ onCloseModal }) {
         inputValue={currentFormState.formData?._item_class_name}
         placeholder="Enter Item Class name"
         error={currentFormState?.zodErrors?._item_class_name}>
-        Item Class Name
+        Item Class Name *
       </Form.InputWithLabel>
       <Form.InputWithLabel
         name={"_item_class_desc"}
         inputValue={currentFormState.formData?._item_class_desc}
         placeholder="Enter Item Class description"
         error={currentFormState?.zodErrors?._item_class_desc}>
-        Item Class Description
+        Item Class Description *
       </Form.InputWithLabel>
       <Form.Footer>
         <Button disabled={pending} type="secondary" onClick={onCloseModal}>

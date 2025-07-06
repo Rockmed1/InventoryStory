@@ -34,7 +34,7 @@ export default async function MarketTypesTable({ org_uuid }) {
 
   return (
     <>
-      <StoreHydrator marketTypes={data} />
+      <StoreHydrator marketType={data} />
       <Table data={data} labels={labels} rowActions={rowActions} />
     </>
   );

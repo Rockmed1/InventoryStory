@@ -4,7 +4,7 @@ import Form from "@/app/_components/_ui/Form";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { createBin } from "../../_lib/actions";
-import { schema } from "../../_lib/ZodSchemas";
+import { getClientValidationSchema } from "../../_lib/ZodSchemas";
 import { useAppStore } from "../../_store/AppProvider";
 import Button from "../_ui/Button";
 import { ParentSelector } from "../_ui/client/ParentSelector";
@@ -17,7 +17,7 @@ import SpinnerMini from "../_ui/SpinnerMini";
  * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
  */
 export default function AddBinForm({ onCloseModal }) {
-  const existingBins = useAppStore((state) => state.bins || []);
+  const existingBins = useAppStore((state) => state.bin || []);
 
   const initialState = {
     success: null,
@@ -47,11 +47,12 @@ export default function AddBinForm({ onCloseModal }) {
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData);
 
-    const binSchemaWithValidation = schema.createClientSchemaValidation(
-      "bins",
+    const validationSchema = getClientValidationSchema(
+      "bin",
       existingBins,
+      "create"
     );
-    const validationResults = binSchemaWithValidation.safeParse(data);
+    const validationResults = validationSchema.safeParse(data);
 
     if (!validationResults.success) {
       e.preventDefault();
@@ -74,7 +75,7 @@ export default function AddBinForm({ onCloseModal }) {
       <Form.InputSelect name={"_loc_id"}>
         <Form.Label>Select Location *</Form.Label>
         <ParentSelector
-          parent="locations"
+          parent="location"
           _col_name="_loc_id"
           label="location"
           required={true}
@@ -85,14 +86,14 @@ export default function AddBinForm({ onCloseModal }) {
         inputValue={currentFormState.formData?._bin_name}
         placeholder="Enter Bin name"
         error={currentFormState?.zodErrors?._bin_name}>
-        Bin Name
+        Bin Name *
       </Form.InputWithLabel>
       <Form.InputWithLabel
         name={"_bin_desc"}
         inputValue={currentFormState.formData?._bin_desc}
         placeholder="Enter Bin description"
         error={currentFormState?.zodErrors?._bin_desc}>
-        Bin Description
+        Bin Description *
       </Form.InputWithLabel>
       <Form.Footer>
         <Button disabled={pending} type="secondary" onClick={onCloseModal}>

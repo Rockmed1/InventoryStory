@@ -38,7 +38,7 @@ export default async function BinsTable({ org_uuid }) {
 
   return (
     <>
-      <StoreHydrator bins={data} />
+      <StoreHydrator bin={data} />
       <Table data={data} labels={labels} rowActions={rowActions} />
     </>
   );
