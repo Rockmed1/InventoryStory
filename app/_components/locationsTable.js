@@ -18,18 +18,18 @@ export default async function LocationsTable({ org_uuid }) {
       icon: <PencilIcon />,
       action: dummyServerAction.bind(null, "Edit"),
     },
-    {
-      id: "transact",
-      label: "Transact",
-      icon: <ArrowsRightLeftIcon />,
-      action: dummyServerAction.bind(null, "Transact"),
-    },
-    {
-      id: "delete",
-      label: "Delete",
-      icon: <TrashIcon />,
-      action: dummyServerAction.bind(null, "Delete"),
-    },
+    // {
+    //   id: "transact",
+    //   label: "Transact",
+    //   icon: <ArrowsRightLeftIcon />,
+    //   action: dummyServerAction.bind(null, "Transact"),
+    // },
+    // {
+    //   id: "delete",
+    //   label: "Delete",
+    //   icon: <TrashIcon />,
+    //   action: dummyServerAction.bind(null, "Delete"),
+    // },
   ];
 
   //1- fetch only the data for this view

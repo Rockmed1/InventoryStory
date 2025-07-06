@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
  * A styled input element. Part of the Form compound component.
  * @param {object} props - Any props to pass to the underlying input element.
  */
-function Input({ inputValue, ...props }) {
+function Input({ inputValue, placeholder, ...props }) {
   const [value, setValue] = useState(inputValue || "");
 
   useEffect(() => {
@@ -16,13 +16,17 @@ function Input({ inputValue, ...props }) {
   }, [inputValue]);
 
   return (
-    <input
-      className={`flex h-9 w-full min-w-0 rounded-md border border-neutral-200 px-3 py-1 shadow-xs transition-all outline-none selection:bg-neutral-400 focus-visible:border-neutral-500 focus-visible:ring-[3px] focus-visible:ring-neutral-500/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm`}
-      value={value}
-      onChange={(e) => setValue(e.target.value)}
-      {...props}
-      // onChange={(e) => setValue(e.currentTarget.value)}
-    />
+    <div className="">
+      <input
+        className={`flex h-9 w-full min-w-0 rounded-md border border-neutral-200 px-3 py-1 shadow-xs transition-all outline-none selection:bg-neutral-400 focus-visible:border-neutral-500 focus-visible:ring-[3px] focus-visible:ring-neutral-500/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm`}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        type="search"
+        {...props}
+        // onChange={(e) => setValue(e.currentTarget.value)}
+      />
+    </div>
   );
 }
 
@@ -50,18 +54,36 @@ function Description({ children }) {
   return <div className="-pt-1 text-sm text-neutral-500">{children}</div>;
 }
 
+function ZodErrors({ error }) {
+  if (!error) return null;
+  return <div className="-pt-1 text-sm text-red-400">{error}</div>;
+}
+
 /**
  * A convenient wrapper that combines a Label, Input, and Description. Part of the Form compound component.
  * @param {string} name - The name and ID for the input element.
  * @param {string} [description] - Optional help text to display below the input.
  * @param {React.ReactNode} children - The label text.
  */
-function InputWithLabel({ name, description, inputValue, children }) {
+function InputWithLabel({
+  name,
+  description,
+  inputValue,
+  error,
+  children,
+  placeholder,
+}) {
   return (
-    <div className="grid w-full items-center gap-3">
+    <div className="grid w-full items-center gap-2.5">
       <Label htmlFor={name}>{children}</Label>
-      <Input inputValue={inputValue} name={name} id={name} />
-      <Description>{description}</Description>
+      <Input
+        placeholder={placeholder}
+        inputValue={inputValue}
+        name={name}
+        id={name}
+      />
+      {/* <Description>{description}</Description> */}
+      <ZodErrors error={error} />
     </div>
   );
 }
@@ -71,7 +93,7 @@ function InputWithLabel({ name, description, inputValue, children }) {
  * @param {React.ReactNode} children - The select component and its label.
  */
 function InputSelect({ children }) {
-  return <div className="grid w-full items-center gap-3">{children}</div>;
+  return <div className="grid w-full items-center gap-2.5">{children}</div>;
 }
 
 /**
@@ -80,11 +102,6 @@ function InputSelect({ children }) {
  */
 function Footer({ children }) {
   return <div className="flex flex-row justify-end gap-2">{children}</div>;
-}
-
-function ZodErrors({ error }) {
-  if (!error) return null;
-  return <div className="mt-1 py-2 text-xs text-pink-500 italic">{error}</div>;
 }
 
 /**
@@ -99,7 +116,7 @@ export default function Form({ action, onSubmit, children }) {
   return (
     <form
       // onSubmit={(e) => e.preventDefault()}
-      className="flex flex-col gap-4"
+      className="flex flex-col gap-4.5"
       action={action}
       onSubmit={onSubmit}>
       {children}

@@ -303,12 +303,13 @@ FROM
 	items.item;
 
 DELETE FROM items.item
-WHERE item.item_name LIKE 'api%'
-	--* transaction types
-	SELECT
-		*
-	FROM
-		trans.trx_type;
+WHERE item.item_id = 1037
+	WHERE item.item_name LIKE 'api%'
+		--* transaction types
+		SELECT
+			*
+		FROM
+			trans.trx_type;
 
 SELECT
 	*
@@ -329,6 +330,17 @@ FROM
 					FROM orgs.org o
 					WHERE
 						o.org_name = 'test_org5')::TEXT))::JSONB);
+
+UPDATE
+	locations.location
+SET
+	loc_name = 'api_test3'
+	, loc_desc = 'lkhljhsfg'
+WHERE
+	loc_id = 898098;
+
+SELECT
+	utils.fn_update_location(jsonb_build_object('_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084' , '_loc_id' , '1033' , '_loc_name' , 'api_test4' , '_loc_desc' , 'lkjhkjhlasdf'));
 
 --* item transactions
 SELECT

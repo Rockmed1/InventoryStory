@@ -2,7 +2,9 @@
 
 import Form from "@/app/_components/_ui/Form";
 import { createMarketType } from "@/app/_lib/actions";
-import { useActionState, useEffect } from "react";
+import { schema } from "@/app/_lib/ZodSchemas";
+import { useAppStore } from "@/app/_store/AppProvider";
+import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Button from "../_ui/Button";
 import SpinnerMini from "../_ui/SpinnerMini";
@@ -14,65 +16,83 @@ import SpinnerMini from "../_ui/SpinnerMini";
  * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
  */
 export default function AddMarketTypeForm({ onCloseModal }) {
-    // const ORG_UUID = "ceba721b-b8dc-487d-a80c-15ae9d947084";
-  // const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
+  const existingMarketTypes = useAppStore((state) => state.marketTypes || []);
 
-  //const initialState = {
-    // _org_uuid: ORG_UUID,
-    // _usr_uuid: USR_UUID,
-  //};
-  const initialState = {};
-  const [state, formAction, pending] = useActionState(
+  const initialState = {
+    success: null,
+    zodErrors: null,
+    message: null,
+  };
+
+  const [formState, formAction, pending] = useActionState(
     createMarketType,
     initialState,
   );
+  const [clientFormState, setClientFormState] = useState(initialState);
 
-  //? evalute if useCallback is a better option
-  // const initialState = {
-  //   parentId: null,
-  // };
-
-  // const createMarketTypesWrapper = useCallback(
-  //   (prevState, formData) => {
-  //     return createMarketTypes({
-  //       _org_uuid: ORG_UUID,
-  //       _usr_uuid: USR_UUID,
-  //       ...prevState,
-  //       formData,
-  //     });
-  //   },
-  //   [ORG_UUID, USR_UUID],
-  // );
-
-  // const [state, formAction, pending] = useActionState(
-  //   createMarketTypesWrapper,
-  //   initialState,
-  // );
-
-  // console.log(state);
+  const currentFormState = clientFormState?.message
+    ? clientFormState
+    : formState;
 
   useEffect(() => {
-    if (state?.success === true) {
-      toast.success("Market Type has been created.");
+    if (formState?.success) {
+      toast.success(
+        `Market Type ${formState.formData?._market_type_name} has been created.`,
+      );
+      setClientFormState(initialState); //clear any client errors
       onCloseModal?.();
     }
-  }, [state, onCloseModal]);
+  }, [formState, onCloseModal]);
+
+  function handleSubmit(e) {
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData);
+
+    const marketTypeSchemaWithValidation = schema.createClientSchemaValidation(
+      "marketTypes",
+      existingMarketTypes,
+    );
+    const validationResults = marketTypeSchemaWithValidation.safeParse(data);
+
+    if (!validationResults.success) {
+      e.preventDefault();
+      setClientFormState({
+        success: false,
+        formData: data,
+        zodErrors: validationResults.error.flatten().fieldErrors,
+        message: "Fix these errors to proceed.",
+      });
+    } else {
+      setClientFormState(initialState);
+    }
+  }
 
   return (
-    <Form action={formAction}>
-      <Form.InputWithLabel name={"_market_type_name"} description="">
+    <Form action={formAction} onSubmit={handleSubmit}>
+      <Form.ZodErrors
+        error={formState?.["message"] || clientFormState?.message}
+      />
+      <Form.InputWithLabel
+        name={"_market_type_name"}
+        inputValue={currentFormState.formData?._market_type_name}
+        placeholder="Enter Market Type name"
+        error={currentFormState?.zodErrors?._market_type_name}>
         Market Type
       </Form.InputWithLabel>
-      <Form.InputWithLabel name={"_market_type_desc"} description="">
+      <Form.InputWithLabel
+        name={"_market_type_desc"}
+        inputValue={currentFormState.formData?._market_type_desc}
+        placeholder="Enter Market Type description"
+        error={currentFormState?.zodErrors?._market_type_desc}>
         Market Type Description
       </Form.InputWithLabel>
       <Form.Footer>
         <Button disabled={pending} type="secondary" onClick={onCloseModal}>
-          <span> Cancel</span>
+          <span>Cancel</span>
         </Button>
         <Button disabled={pending} type="secondary">
           {pending && <SpinnerMini />}
-          <span> Add Market Type</span>
+          <span>Add Market Type</span>
         </Button>
       </Form.Footer>
     </Form>

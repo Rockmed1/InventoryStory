@@ -352,3 +352,13 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom autofill styles */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px theme("colors.white") inset !important;
+  -webkit-text-fill-color: theme("colors.neutral.900") !important;
+  transition: background-color 5000s ease-in-out 0s;
+}

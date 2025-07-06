@@ -1,9 +1,9 @@
 "use client";
 
 import { useOutsideClick } from "@/app/_hooks/useOutsideClick";
-import { XMarkIcon } from "@heroicons/react/24/outline";
 import React, { cloneElement, createContext, use, useState } from "react";
 import { createPortal } from "react-dom";
+import CloseButton from "../CloseButton";
 
 function Overlay({ children }) {
   return (
@@ -81,7 +81,7 @@ function Modal({ children }) {
  */
 function Open({ children, opensWindowName }) {
   // iii-consume the context
-    const { open } = use(ModalContext);
+  const { open } = use(ModalContext);
   return cloneElement(children, { onClick: () => open(opensWindowName) });
 }
 
@@ -133,12 +133,7 @@ function Window({
         {/* <Button onClick={close} className="absolute top-4 right-4">
           <XMarkIcon className="size-5" />
         </Button> */}
-
-        <button
-          onClick={close}
-          className="text-md absolute top-4 right-4 inline-block h-8 rounded-xs text-neutral-950 opacity-70 transition-all duration-300 hover:opacity-100 disabled:pointer-events-none has-[>svg]:px-0.5 hover:[&_svg]:stroke-2">
-          <XMarkIcon className="size-4" />
-        </button>
+        <CloseButton onClick={close} />
 
         <div className="flex w-full flex-col gap-4 sm:max-w-[425px]">
           <div className="flex flex-col gap-2">

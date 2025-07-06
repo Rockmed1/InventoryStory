@@ -1,9 +1,11 @@
 "use client";
 
 import Form from "@/app/_components/_ui/Form";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { createMarket } from "../../_lib/actions";
+import { schema } from "../../_lib/ZodSchemas";
+import { useAppStore } from "../../_store/AppProvider";
 import Button from "../_ui/Button";
 import { ParentSelector } from "../_ui/client/ParentSelector";
 import SpinnerMini from "../_ui/SpinnerMini";
@@ -15,29 +17,62 @@ import SpinnerMini from "../_ui/SpinnerMini";
  * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
  */
 export default function AddMarketForm({ onCloseModal }) {
-    // const ORG_UUID = "ceba721b-b8dc-487d-a80c-15ae9d947084";
-  // const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
+  const existingMarkets = useAppStore((state) => state.markets || []);
 
-  //const initialState = {
-    // _org_uuid: ORG_UUID,
-    // _usr_uuid: USR_UUID,
-  //};
-  const initialState = {};
+  const initialState = {
+    success: null,
+    zodErrors: null,
+    message: null,
+  };
 
-  const [state, formAction, pending] = useActionState(
+  const [formState, formAction, pending] = useActionState(
     createMarket,
     initialState,
   );
+  const [clientFormState, setClientFormState] = useState(initialState);
+
+  const currentFormState = clientFormState?.message
+    ? clientFormState
+    : formState;
 
   useEffect(() => {
-    if (state?.success === true) {
-      toast.success("Market has been created.");
+    if (formState?.success) {
+      toast.success(
+        `Market ${formState.formData?._market_name} has been created.`,
+      );
+      setClientFormState(initialState); //clear any client errors
       onCloseModal?.();
     }
-  }, [state, onCloseModal]);
+  }, [formState, onCloseModal]);
+
+  function handleSubmit(e) {
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData);
+
+    const marketSchemaWithValidation = schema.createClientSchemaValidation(
+      "markets",
+      existingMarkets,
+    );
+    const validationResults = marketSchemaWithValidation.safeParse(data);
+
+    if (!validationResults.success) {
+      e.preventDefault();
+      setClientFormState({
+        success: false,
+        formData: data,
+        zodErrors: validationResults.error.flatten().fieldErrors,
+        message: "Fix these errors to proceed.",
+      });
+    } else {
+      setClientFormState(initialState);
+    }
+  }
 
   return (
-    <Form action={formAction}>
+    <Form action={formAction} onSubmit={handleSubmit}>
+      <Form.ZodErrors
+        error={formState?.["message"] || clientFormState?.message}
+      />
       <Form.InputSelect name={"_market_type_id"}>
         <Form.Label>Select Market Type *</Form.Label>
         <ParentSelector
@@ -47,22 +82,34 @@ export default function AddMarketForm({ onCloseModal }) {
           required={true}
         />
       </Form.InputSelect>
-      <Form.InputWithLabel name={"_market_name"} description="">
+      <Form.InputWithLabel
+        name={"_market_name"}
+        inputValue={currentFormState.formData?._market_name}
+        placeholder="Enter Market name"
+        error={currentFormState?.zodErrors?._market_name}>
         Market Name
       </Form.InputWithLabel>
-      <Form.InputWithLabel name={"_market_desc"} description="">
+      <Form.InputWithLabel
+        name={"_market_desc"}
+        inputValue={currentFormState.formData?._market_desc}
+        placeholder="Enter Market description"
+        error={currentFormState?.zodErrors?._market_desc}>
         Market Description
       </Form.InputWithLabel>
-      <Form.InputWithLabel name={"_market_url"} description="">
+      <Form.InputWithLabel
+        name={"_market_url"}
+        inputValue={currentFormState.formData?._market_url}
+        placeholder="Enter Market URL"
+        error={currentFormState?.zodErrors?._market_url}>
         Market URL
       </Form.InputWithLabel>
       <Form.Footer>
         <Button disabled={pending} type="secondary" onClick={onCloseModal}>
-          <span> Cancel</span>
+          <span>Cancel</span>
         </Button>
         <Button disabled={pending} type="secondary">
           {pending && <SpinnerMini />}
-          <span> Add Market</span>
+          <span>Add Market</span>
         </Button>
       </Form.Footer>
     </Form>

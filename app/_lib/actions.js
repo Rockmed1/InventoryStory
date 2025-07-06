@@ -99,7 +99,7 @@ function dbAction(rpcName, revalidateTagKey, actionSchema) {
       return {
         success: false,
         formData: destructuredFormData,
-        zodErrors: validatedData.Error?.flatten().fieldErrors,
+        zodErrors: validatedData.error?.flatten().fieldErrors,
         message: errorMessage,
       };
       // throw new Error(errorMessage);
@@ -124,15 +124,32 @@ function dbAction(rpcName, revalidateTagKey, actionSchema) {
 
 // --- Define and export your server actions using the factory ---
 
-export const createLocation = dbAction("fn_create_location", "locations");
-export const createBin = dbAction("fn_create_bin", "bins");
-export const createItemClass = dbAction("fn_create_item_class", "itemClasses");
+export const createLocation = dbAction(
+  "fn_create_location",
+  "locations",
+  "locationSchema",
+);
+export const createBin = dbAction("fn_create_bin", "bins", "binSchema");
+export const createItemClass = dbAction(
+  "fn_create_item_class",
+  "itemClasses",
+  "itemClassSchema",
+);
 export const createMarketType = dbAction(
   "fn_create_market_type",
   "marketTypes",
+  "marketTypeSchema",
 );
-export const createTrxType = dbAction("fn_create_trx_type", "trxTypes");
-export const createMarket = dbAction("fn_create_market", "markets");
+export const createTrxType = dbAction(
+  "fn_create_trx_type",
+  "trxTypes",
+  "trxTypeSchema",
+);
+export const createMarket = dbAction(
+  "fn_create_market",
+  "markets",
+  "marketSchema",
+);
 export const createItem = dbAction("fn_create_item", "items", "itemSchema");
 
 // --- Other Actions ---

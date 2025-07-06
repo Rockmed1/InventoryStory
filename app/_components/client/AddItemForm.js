@@ -9,7 +9,6 @@ import { useAppStore } from "../../_store/AppProvider";
 import Button from "../_ui/Button";
 import { ParentSelector } from "../_ui/client/ParentSelector";
 import SpinnerMini from "../_ui/SpinnerMini";
-import { ZodErrors } from "../_ui/ZodError";
 
 /**
  * A form for adding a new item, designed to be used within a modal.
@@ -19,10 +18,10 @@ import { ZodErrors } from "../_ui/ZodError";
  */
 
 export default function AddItemForm({ onCloseModal }) {
-  const ORG_UUID = "ceba721b-b8dc-487d-a80c-15ae9d947084";
-  const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
+  // const ORG_UUID = "ceba721b-b8dc-487d-a80c-15ae9d947084";
+  // const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
 
-  // Get existing items from the store for validation
+  // 1- Get existing items from the store for validation
   const existingItems = useAppStore((state) => state.items || []);
 
   const initialState = {
@@ -35,6 +34,7 @@ export default function AddItemForm({ onCloseModal }) {
     createItem,
     initialState,
   );
+
   const [clientFormState, setClientFormState] = useState(initialState);
 
   const currentFormState = clientFormState?.message
@@ -44,22 +44,27 @@ export default function AddItemForm({ onCloseModal }) {
   useEffect(() => {
     if (formState?.success) {
       toast.success(`Item ${formState.formData?._item_name} has been created.`);
+      setClientFormState(initialState); //reset client form state
       onCloseModal?.();
     }
   }, [formState, onCloseModal]);
 
   function handleSubmit(e) {
+    // CLIENT VALIDATE FORM DATA
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData);
     console.log(data);
 
-    // Use the enhanced schema with existing items validation
-    const itemSchemaWithValidation =
-      schema.clientItemSchemaValidation(existingItems);
+    // 2- Refresh the data used in validation
+    const itemSchemaWithValidation = schema.createClientSchemaValidation(
+      "items",
+      existingItems,
+    );
+
+    // 3- perform combined validation
     const validationResults = itemSchemaWithValidation.safeParse(data);
 
-    console.log(validationResults.error);
-
+    // 4- if form data did not pass client validation
     if (!validationResults.success) {
       e.preventDefault();
       setClientFormState({
@@ -69,10 +74,12 @@ export default function AddItemForm({ onCloseModal }) {
         message: "Fix these errors to proceed.",
       });
     } else {
+      // if passed client validation then reset form state
       setClientFormState(initialState);
     }
   }
 
+  console.log(currentFormState);
   return (
     <Form action={formAction} onSubmit={handleSubmit}>
       <Form.ZodErrors
@@ -90,17 +97,15 @@ export default function AddItemForm({ onCloseModal }) {
       <Form.InputWithLabel
         name={"_item_name"}
         inputValue={currentFormState.formData?._item_name}
-        description={
-          <ZodErrors error={currentFormState?.zodErrors?._item_name} />
-        }>
+        placeholder="Enter Item name"
+        error={currentFormState?.zodErrors?._item_name}>
         Item Name
       </Form.InputWithLabel>
       <Form.InputWithLabel
         name={"_item_desc"}
         inputValue={currentFormState.formData?._item_desc}
-        description={
-          <ZodErrors error={currentFormState?.zodErrors?._item_desc} />
-        }>
+        placeholder="Enter Item description"
+        error={currentFormState?.zodErrors?._item_desc}>
         Item Description
       </Form.InputWithLabel>
       <Form.Footer>

@@ -3,21 +3,27 @@
 import Form from "@/app/_components/_ui/Form";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { createBin } from "../../_lib/actions";
+import { createItem } from "../../_lib/actions";
 import { schema } from "../../_lib/ZodSchemas";
 import { useAppStore } from "../../_store/AppProvider";
 import Button from "../_ui/Button";
 import { ParentSelector } from "../_ui/client/ParentSelector";
 import SpinnerMini from "../_ui/SpinnerMini";
+import { ZodErrors } from "../_ui/ZodError";
 
 /**
- * A form for adding a new bin, designed to be used within a modal.
+ * A form for adding a new item, designed to be used within a modal.
  * It handles form submission using a server action and displays success notifications.
  *
  * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
  */
-export default function AddBinForm({ onCloseModal }) {
-  const existingBins = useAppStore((state) => state.bins || []);
+
+export default function AddItemForm({ onCloseModal }) {
+  // const ORG_UUID = "ceba721b-b8dc-487d-a80c-15ae9d947084";
+  // const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
+
+  // 1- Get existing items from the store for validation
+  const existingItems = useAppStore((state) => state.items || []);
 
   const initialState = {
     success: null,
@@ -26,7 +32,7 @@ export default function AddBinForm({ onCloseModal }) {
   };
 
   const [formState, formAction, pending] = useActionState(
-    createBin,
+    createItem,
     initialState,
   );
   const [clientFormState, setClientFormState] = useState(initialState);
@@ -37,8 +43,7 @@ export default function AddBinForm({ onCloseModal }) {
 
   useEffect(() => {
     if (formState?.success) {
-      toast.success(`Bin ${formState.formData?._bin_name} has been created.`);
-      setClientFormState(initialState); //clear any client errors
+      toast.success(`Item ${formState.formData?._item_name} has been created.`);
       onCloseModal?.();
     }
   }, [formState, onCloseModal]);
@@ -46,13 +51,20 @@ export default function AddBinForm({ onCloseModal }) {
   function handleSubmit(e) {
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData);
+    console.log(data);
 
-    const binSchemaWithValidation = schema.createClientSchemaValidation(
-      "bins",
-      existingBins,
+    // CLIENT VALIDATE FORM DATA
+
+    // 2- Refresh the data used in validation
+    const itemSchemaWithValidation = schema.createClientSchemaValidation(
+      "items",
+      existingItems,
     );
-    const validationResults = binSchemaWithValidation.safeParse(data);
 
+    // 3- perform combined validation
+    const validationResults = itemSchemaWithValidation.safeParse(data);
+
+    // 4- if form data did not pass validation
     if (!validationResults.success) {
       e.preventDefault();
       setClientFormState({
@@ -62,6 +74,7 @@ export default function AddBinForm({ onCloseModal }) {
         message: "Fix these errors to proceed.",
       });
     } else {
+      // if passed validation then reset form state
       setClientFormState(initialState);
     }
   }
@@ -71,36 +84,36 @@ export default function AddBinForm({ onCloseModal }) {
       <Form.ZodErrors
         error={formState?.["message"] || clientFormState?.message}
       />
-      <Form.InputSelect name={"_loc_id"}>
-        <Form.Label>Select Location *</Form.Label>
+      <Form.InputSelect name={"_item_class_id"}>
+        <Form.Label>Select Item Class *</Form.Label>
         <ParentSelector
-          parent="locations"
-          _col_name="_loc_id"
-          label="location"
+          parent="itemClasses"
+          _col_name="_item_class_id"
+          label="item class"
           required={true}
         />
       </Form.InputSelect>
       <Form.InputWithLabel
-        name={"_bin_name"}
-        inputValue={currentFormState.formData?._bin_name}
-        placeholder="Enter Bin name"
-        error={currentFormState?.zodErrors?._bin_name}>
-        Bin Name
+        name={"_item_name"}
+        inputValue={currentFormState.formData?._item_name}
+        placeholder="Enter Item name"
+        error={<ZodErrors error={currentFormState?.zodErrors?._item_name} />}>
+        Item Name
       </Form.InputWithLabel>
       <Form.InputWithLabel
-        name={"_bin_desc"}
-        inputValue={currentFormState.formData?._bin_desc}
-        placeholder="Enter Bin description"
-        error={currentFormState?.zodErrors?._bin_desc}>
-        Bin Description
+        name={"_item_desc"}
+        inputValue={currentFormState.formData?._item_desc}
+        placeholder="Enter Item description"
+        error={<ZodErrors error={currentFormState?.zodErrors?._item_desc} />}>
+        Item Description
       </Form.InputWithLabel>
       <Form.Footer>
         <Button disabled={pending} type="secondary" onClick={onCloseModal}>
-          <span>Cancel</span>
+          <span> Cancel</span>
         </Button>
         <Button disabled={pending} type="secondary">
           {pending && <SpinnerMini />}
-          <span>Add Bin</span>
+          <span> Add Item</span>
         </Button>
       </Form.Footer>
     </Form>

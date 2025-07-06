@@ -1,8 +1,4 @@
-import {
-  ArrowsRightLeftIcon,
-  PencilIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
+import { PencilIcon } from "@heroicons/react/24/outline";
 import { dummyServerAction } from "../_lib/actions";
 import { createDataService } from "../_lib/dataServices";
 import StoreHydrator from "../_store/StoreHydrator";
@@ -18,18 +14,18 @@ export default async function MarketTypesTable({ org_uuid }) {
       icon: <PencilIcon />,
       action: dummyServerAction.bind(null, "Edit"),
     },
-    {
-      id: "transact",
-      label: "Transact",
-      icon: <ArrowsRightLeftIcon />,
-      action: dummyServerAction.bind(null, "Transact"),
-    },
-    {
-      id: "delete",
-      label: "Delete",
-      icon: <TrashIcon />,
-      action: dummyServerAction.bind(null, "Delete"),
-    },
+    // {
+    //   id: "transact",
+    //   label: "Transact",
+    //   icon: <ArrowsRightLeftIcon />,
+    //   action: dummyServerAction.bind(null, "Transact"),
+    // },
+    // {
+    //   id: "delete",
+    //   label: "Delete",
+    //   icon: <TrashIcon />,
+    //   action: dummyServerAction.bind(null, "Delete"),
+    // },
   ];
 
   //1- fetch only the data for this view
