@@ -1,45 +1,31 @@
-import {
-  ArrowsRightLeftIcon,
-  PencilIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
-import { dummyServerAction } from "../_lib/actions";
-import { createDataService } from "../_lib/dataServices";
+import { PencilIcon } from "@heroicons/react/24/outline";
+import { getData } from "../_utils/helpers-server";
 import StoreHydrator from "../_store/StoreHydrator";
 import Table from "./_ui/client/Table";
+import EditLocationForm from "./client/EditLocationForm";
 
 const labels = ["Location ID", "Location Name", "Description"];
 
 export default async function LocationsTable({ org_uuid }) {
   const rowActions = [
     {
-      id: "edit",
-      label: "Edit",
+      buttonLabel: "Edit",
+      windowName: "Edit Location",
       icon: <PencilIcon />,
-      action: dummyServerAction.bind(null, "Edit"),
+      action: <EditLocationForm />,
+      /* here goes the form component or server action as needed. it will be passed from the Table to the MenuWithModal*/
     },
-    // {
-    //   id: "transact",
-    //   label: "Transact",
-    //   icon: <ArrowsRightLeftIcon />,
-    //   action: dummyServerAction.bind(null, "Transact"),
-    // },
-    // {
-    //   id: "delete",
-    //   label: "Delete",
-    //   icon: <TrashIcon />,
-    //   action: dummyServerAction.bind(null, "Delete"),
-    // },
   ];
 
   //1- fetch only the data for this view
-  const dataService = createDataService(org_uuid);
-  const data = await dataService.getLocations();
+  const data = await getData("location");
 
   return (
     <>
-      <StoreHydrator location={data} />
-      <Table data={data} labels={labels} rowActions={rowActions} />
+      <Table tableData={data} labels={labels} rowActions={rowActions} />
+      <StoreHydrator entities={{
+        location: data
+      }} />
     </>
   );
 }

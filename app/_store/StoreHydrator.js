@@ -3,20 +3,7 @@
 import { useEffect } from "react";
 import { useAppStore } from "./AppProvider";
 
-export default function StoreHydrator({
-  item,
-  itemClass,
-  location,
-  bin,
-  trxType,
-  trxDirections,
-  itemTrx,
-  marketType,
-  market,
-}) {
-  // We use useEffect to ensure this runs only on the client, after the component mounts.
-  // The props (items, locations) are passed down from a Server Component.
-
+export default function StoreHydrator({ entities }) {
   const setItem = useAppStore((state) => state.setItem);
   const setItemClass = useAppStore((state) => state.setItemClass);
   const setLocation = useAppStore((state) => state.setLocation);
@@ -27,45 +14,31 @@ export default function StoreHydrator({
   const setMarketType = useAppStore((state) => state.setMarketType);
   const setMarket = useAppStore((state) => state.setMarket);
 
+  const addItemTrxDetails = useAppStore((state) => state.addItemTrxDetails);
+
+  // Mapping of entity names to their setter functions
+  const entitySetters = {
+    item: setItem,
+    itemClass: setItemClass,
+    location: setLocation,
+    bin: setBin,
+    trxType: setTrxType,
+    trxDirections: setTrxDirections,
+    itemTrx: setItemTrx,
+    marketType: setMarketType,
+    market: setMarket,
+    itemTrxDetails: addItemTrxDetails, // Special case - uses add instead of set
+  };
+
   useEffect(() => {
-    if (item) {
-      setItem(item);
+    if (entities && typeof entities === "object") {
+      Object.entries(entities).forEach(([entityName, entityData]) => {
+        if (entityData && entitySetters[entityName]) {
+          entitySetters[entityName](entityData);
+        }
+      });
     }
-    if (itemClass) {
-      setItemClass(itemClass);
-    }
-    if (location) {
-      setLocation(location);
-    }
-    if (bin) {
-      setBin(bin);
-    }
-    if (trxType) {
-      setTrxType(trxType);
-    }
-    if (trxDirections) {
-      setTrxDirections(trxDirections);
-    }
-    if (itemTrx) {
-      setItemTrx(itemTrx);
-    }
-    if (marketType) {
-      setMarketType(marketType);
-    }
-    if (market) {
-      setMarket(market);
-    }
-  }, [
-    item,
-    itemClass,
-    location,
-    bin,
-    trxType,
-    trxDirections,
-    itemTrx,
-    marketType,
-    market,
-  ]);
+  }, []);
 
   return null;
 }

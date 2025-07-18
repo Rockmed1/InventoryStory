@@ -24,12 +24,12 @@ export function AppProvider({ children }) {
 }
 
 //4- create the hook for consuming the store
-export function useAppStore(selector) {
+export function useAppStore(DropDown) {
   const storeContext = useContext(AppStoreContext);
 
   if (!storeContext) {
     throw new Error(`useAppStore must be used within an AppProvider`);
   }
 
-  return useStore(storeContext, selector);
+  return useStore(storeContext, DropDown);
 }

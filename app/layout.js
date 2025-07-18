@@ -1,7 +1,6 @@
 import Footer from "@/app/_components/_ui/Footer";
 import Loader from "@/app/_components/_ui/Loader";
 import Navigation from "@/app/_components/_ui/Navigation";
-
 import "@/app/_styles/globals.css";
 //fonts using nextJs
 import { Geist } from "next/font/google";
@@ -19,13 +18,23 @@ const mainFont = Geist({
   display: "swap",
 });
 
+// export const metadata = {
+//   title: "Inventory Story",
+//   description: "Smart inventory management is here!",
+// };
+
 export const metadata = {
-  title: "Inventory Story",
+  title: {
+    default: "Inventory Story",
+    template: "%s | Story",
+  },
   description: "Smart inventory management is here!",
 };
 
 export default async function RootLayout({ children }) {
   let isLoading = false;
+
+  //2- Wrap the entire layout in the provider to create an empty store
 
   return (
     <html lang="en">

@@ -27,7 +27,6 @@ export default async function Items() {
         </AddButtonModal>
       </div>
       <Suspense fallback={<ItemsTable.Fallback />}>
-        {/* <ItemsTable org_uuid={_org_uuid} /> */}
         <ItemsTable org_uuid={_org_uuid} />
       </Suspense>
     </div>

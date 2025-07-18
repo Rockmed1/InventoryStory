@@ -5,7 +5,7 @@ import SpinnerMini from "./SpinnerMini";
  *
  * @param {React.ReactNode} children - The content to display inside the button.
  * @param {boolean} [disabled=false] - Whether the button is disabled.
- * @param {'primary' | 'secondary' | 'danger' | 'menu' | 'cancel'} [type='secondary'] - The visual style of the button.
+ * @param {'primary' | 'secondary' | 'danger' | 'menu' | 'cancel'} [variant='secondary'] - The visual style of the button.
  * @param {Function} [onClick] - The function to call when the button is clicked.
  * @param {boolean} [pending=false] - If true, shows a spinner and disables the button.
  * @param {object} props - Any other props to pass to the underlying button element.
@@ -13,9 +13,10 @@ import SpinnerMini from "./SpinnerMini";
 function Button({
   children,
   disabled = false,
-  type = "secondary",
+  variant = "secondary",
   onClick,
   pending,
+  type = "button",
   ...props
 }) {
   const sizes = {
@@ -24,7 +25,7 @@ function Button({
     full: "text-base px-6 py-3 font-medium",
   };
 
-  const types = {
+  const variations = {
     primary:
       "border border-neutral-200 bg-white text-neutral-950  hover:bg-neutral-100 active:bg-neutral-200 disabled:bg-neutral-500 disabled:text-neutral-400 ",
     secondary:
@@ -34,13 +35,14 @@ function Button({
     cancel: "",
   };
 
-  const buttonType = types[type];
+  const buttonVariant = variations[variant];
 
   return (
     <button
+      type={type}
       disabled={disabled || pending}
       onClick={onClick}
-      className={`text-md inline-block h-8 rounded-md px-3 py-1 tracking-wide transition-colors duration-300 disabled:cursor-not-allowed has-[>svg]:px-2.5 [&_svg]:shrink-0 ${buttonType}`}
+      className={`text-md inline-block h-8 rounded-md px-3 py-1 tracking-wide transition-colors duration-300 disabled:cursor-not-allowed has-[>svg]:px-2.5 [&_svg]:shrink-0 ${buttonVariant}`}
       {...props}>
       {pending && <SpinnerMini />}
       {children}

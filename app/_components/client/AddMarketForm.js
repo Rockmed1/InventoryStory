@@ -1,13 +1,13 @@
 "use client";
 
-import Form from "@/app/_components/_ui/Form";
+import Form from "@/app/_components/_ui/client/Form";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { createMarket } from "../../_lib/actions";
 import { getClientValidationSchema } from "../../_lib/ZodSchemas";
 import { useAppStore } from "../../_store/AppProvider";
 import Button from "../_ui/Button";
-import { ParentSelector } from "../_ui/client/ParentSelector";
+import { DropDown } from "../_ui/client/DropDown";
 import SpinnerMini from "../_ui/SpinnerMini";
 
 /**
@@ -52,7 +52,7 @@ export default function AddMarketForm({ onCloseModal }) {
     const validationSchema = getClientValidationSchema(
       "market",
       existingMarkets,
-      "create"
+      "create",
     );
     const validationResults = validationSchema.safeParse(data);
 
@@ -76,9 +76,9 @@ export default function AddMarketForm({ onCloseModal }) {
       />
       <Form.InputSelect name={"_market_type_id"}>
         <Form.Label>Select Market Type *</Form.Label>
-        <ParentSelector
+        <DropDown
           parent="marketType"
-          _col_name="_market_type_id"
+          name="_market_type_id"
           label="market type"
           required={true}
         />
@@ -105,10 +105,10 @@ export default function AddMarketForm({ onCloseModal }) {
         Market URL *
       </Form.InputWithLabel>
       <Form.Footer>
-        <Button disabled={pending} type="secondary" onClick={onCloseModal}>
+        <Button disabled={pending} variant="secondary" onClick={onCloseModal}>
           <span>Cancel</span>
         </Button>
-        <Button disabled={pending} type="secondary">
+        <Button disabled={pending} variant="secondary" type="submit">
           {pending && <SpinnerMini />}
           <span>Add Market</span>
         </Button>

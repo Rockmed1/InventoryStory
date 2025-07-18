@@ -11,7 +11,7 @@ export default function Home() {
       />
       <h1 className="block text-xl font-semibold">Hello Inventory</h1>
       <input className="input w-36" value="Item Name" readOnly />
-      <Button type="secondary">Add Item</Button>
+      <Button variant="secondary">Add Item</Button>
     </div>
   );
 }

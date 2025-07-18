@@ -1,13 +1,13 @@
 "use client";
 
-import Form from "@/app/_components/_ui/Form";
+import Form from "@/app/_components/_ui/client/Form";
 import { createTrxType } from "@/app/_lib/actions";
 import { getClientValidationSchema } from "@/app/_lib/ZodSchemas";
 import { useAppStore } from "@/app/_store/AppProvider";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Button from "../_ui/Button";
-import { ParentSelector } from "../_ui/client/ParentSelector";
+import { DropDown } from "../_ui/client/DropDown";
 import SpinnerMini from "../_ui/SpinnerMini";
 
 /**
@@ -52,7 +52,7 @@ export default function AddTrxTypeForm({ onCloseModal }) {
     const validationSchema = getClientValidationSchema(
       "trxType",
       existingTrxTypes,
-      "create"
+      "create",
     );
     const validationResults = validationSchema.safeParse(data);
 
@@ -76,9 +76,9 @@ export default function AddTrxTypeForm({ onCloseModal }) {
       />
       <Form.InputSelect name={"_trx_direction_id"}>
         <Form.Label>Select Transaction Direction *</Form.Label>
-        <ParentSelector
+        <DropDown
           parent="trxDirections"
-          _col_name="_trx_direction_id"
+          name="_trx_direction_id"
           label="transaction direction"
           required={true}
         />
@@ -98,10 +98,10 @@ export default function AddTrxTypeForm({ onCloseModal }) {
         Transaction Type Description *
       </Form.InputWithLabel>
       <Form.Footer>
-        <Button disabled={pending} type="secondary" onClick={onCloseModal}>
+        <Button disabled={pending} variant="secondary" onClick={onCloseModal}>
           <span>Cancel</span>
         </Button>
-        <Button disabled={pending} type="secondary">
+        <Button disabled={pending} variant="secondary" type="submit">
           {pending && <SpinnerMini />}
           <span>Add Trx Type</span>
         </Button>

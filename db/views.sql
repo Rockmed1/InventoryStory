@@ -74,6 +74,7 @@ CREATE OR REPLACE VIEW locations.v_bin AS
 SELECT
 	b.bin_id
 	, b.bin_name
+	, b.loc_id
 	, l.loc_name
 	, b.bin_desc
 FROM
@@ -124,6 +125,7 @@ CREATE OR REPLACE VIEW markets.v_market AS
 SELECT
 	m.market_id
 	, m.market_name
+	, m.market_type_id
 	, t.market_type_name
 	, m.market_desc
 	, m.market_url
@@ -149,7 +151,55 @@ FROM
 	trans.trx_type t
 	JOIN trans.trx_direction d ON t.trx_direction_id = d.trx_direction_id;
 
+----------------
+--------------
+-----------
+--------
+-----
+---
+DROP VIEW IF EXISTS trans.v_item_trx;
+
+CREATE OR REPLACE VIEW trans.v_item_trx AS
 SELECT
-	*
+	t.item_trx_id
+	, t.trx_date
+	, t.trx_desc
+	, t.trx_type_id
+	, y.trx_type_name
+	, d.trx_direction
+	, t.market_id
+	, m.market_name
+	, m.market_url
 FROM
-	trans.trx_direction;
+	trans.item_trx t
+	JOIN trans.trx_type y ON y.trx_type_id = t.trx_type_id
+	JOIN trans.trx_direction d ON d.trx_direction_id = y.trx_direction_id
+	JOIN markets.market m ON m.market_id = t.market_id;
+
+----------------
+--------------
+-----------
+--------
+-----
+---
+DROP VIEW IF EXISTS trans.v_item_trx_detail;
+
+CREATE OR REPLACE VIEW trans.v_item_trx_detail AS
+SELECT
+	d.item_trx_detail_id
+	, d.item_trx_id
+	, d.trx_line_num
+	, d.item_trx_desc
+	, d.item_id
+	, i.item_name
+	, d.from_bin
+	, b.bin_desc AS from_bin_desc
+	, d.to_bin
+	, n.bin_desc AS to_bin_desc
+	, d.qty_in
+	, d.qty_out
+FROM
+	trans.item_trx_detail d
+	JOIN items.item i ON i.item_id = d.item_id
+	LEFT JOIN locations.bin b ON b.bin_id = d.from_bin
+	LEFT JOIN locations.bin n ON n.bin_id = d.to_bin;

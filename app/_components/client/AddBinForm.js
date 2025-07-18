@@ -1,13 +1,13 @@
 "use client";
 
-import Form from "@/app/_components/_ui/Form";
+import Form from "@/app/_components/_ui/client/Form";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { createBin } from "../../_lib/actions";
 import { getClientValidationSchema } from "../../_lib/ZodSchemas";
 import { useAppStore } from "../../_store/AppProvider";
 import Button from "../_ui/Button";
-import { ParentSelector } from "../_ui/client/ParentSelector";
+import { DropDown } from "../_ui/client/DropDown";
 import SpinnerMini from "../_ui/SpinnerMini";
 
 /**
@@ -50,7 +50,7 @@ export default function AddBinForm({ onCloseModal }) {
     const validationSchema = getClientValidationSchema(
       "bin",
       existingBins,
-      "create"
+      "create",
     );
     const validationResults = validationSchema.safeParse(data);
 
@@ -74,9 +74,9 @@ export default function AddBinForm({ onCloseModal }) {
       />
       <Form.InputSelect name={"_loc_id"}>
         <Form.Label>Select Location *</Form.Label>
-        <ParentSelector
+        <DropDown
           parent="location"
-          _col_name="_loc_id"
+          name="_loc_id"
           label="location"
           required={true}
         />
@@ -96,10 +96,10 @@ export default function AddBinForm({ onCloseModal }) {
         Bin Description *
       </Form.InputWithLabel>
       <Form.Footer>
-        <Button disabled={pending} type="secondary" onClick={onCloseModal}>
+        <Button disabled={pending} variant="secondary" onClick={onCloseModal}>
           <span>Cancel</span>
         </Button>
-        <Button disabled={pending} type="secondary">
+        <Button disabled={pending} variant="secondary" type="submit">
           {pending && <SpinnerMini />}
           <span>Add Bin</span>
         </Button>

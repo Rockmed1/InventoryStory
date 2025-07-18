@@ -255,7 +255,7 @@ FROM
 SELECT
 	*
 FROM
-	locations.bin;
+	locations.v_bin;
 
 SELECT
 	json_build_object('bins' , json_agg(json_build_object('bin_id' , t.bin_id , 'bin_name' , t.bin_name 'bin_desc' , t.bin_desc)))
@@ -284,6 +284,11 @@ SELECT
 	*
 FROM
 	markets.market;
+
+SELECT
+	*
+FROM
+	markets.v_market;
 
 SELECT
 	*
@@ -374,15 +379,41 @@ END;
 
 $$;
 
-ROLLBACK
-----------
---------
-------
----
+ROLLBACK;
+
 SELECT
-	*
+	' {"_org_uuid" :"ceba721b-b8dc-487d-a80c-15ae9d947084"
+	, "_usr_uuid" :"2bfdec48-d917-41ee-99ff-123757d59df1"
+	, "_trx_header" : { "_trx_date" :"7/1/2025"
+	, "_trx_desc" :"kjhskjdhfsdkh"
+	, "_market_id" :"1000"
+	, "_trx_type_id" :"1000"
+	, "_num_of_lines" :"2" }
+	, "_trx_details" :[{ "_trx_line_num" :"1" , "_to_bin" :"1001" , "_item_id" :"1000" , "_from_bin" :null , "_qty_in" :8.0 , "_qty_out" :null , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" } , { "_trx_line_num" :"2" , "_to_bin" :"1001" , "_item_id" :"1001" , "_from_bin" :null , "_qty_in" :10.0 , "_qty_out" :null , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" }] }'::JSONB
+	----------
+	--------
+	------
+	---
+	SELECT
+		*
+	FROM
+		trans.item_trx;
+
+SELECT
+	t.item_trx_id
+	, t.trx_date
+	, t.trx_desc
+	, t.trx_type_id
+	, y.trx_type_name
+	, d.trx_direction
+	, t.market_id
+	, m.market_name
+	, m.market_url
 FROM
-	trans.item_trx;
+	trans.item_trx t
+	JOIN trans.trx_type y ON y.trx_type_id = t.trx_type_id
+	JOIN trans.trx_direction d ON d.trx_direction_id = y.trx_direction_id
+	JOIN markets.market m ON m.market_id = t.market_id;
 
 SELECT
 	*
@@ -402,7 +433,7 @@ FROM
 SELECT
 	*
 FROM
-	items.item;
+	items.v_item;
 
 SELECT
 	i.item_id
@@ -423,11 +454,6 @@ GROUP BY
 	, c.item_class_name
 	, c.item_class_desc;
 
-SELECT
-	json_agg(json_build_object('item_id' , i.item_id , 'item_name' , i.item_name , 'item_desc' , i.item_desc , 'item_class_name' , i.item_class_name , 'item_QOH' , COALESCE(i.qoh , 0)))
-FROM
-	items.v_item i;
-
 -- CREATE TABLE public."test"(
 -- 	id INT
 -- 	, name VARCHAR(255)
@@ -436,3 +462,54 @@ FROM
 -- 	, "updatedAt" TIMESTAMP
 -- );
 -- DROP TABLE test;
+SELECT
+	utils.fn_get_item_trx_details(jsonb_build_object('_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084' , 'item_trx_id' , '10000'));
+
+SELECT
+	d.item_trx_detail_id
+	, d.item_trx_id
+	, d.trx_line_num
+	, d.item_trx_desc
+	, d.item_id
+	, i.item_name
+	, d.from_bin
+	, b.bin_desc
+	, d.to_bin
+	, n.bin_desc
+	, d.qty_in
+	, d.qty_out
+FROM
+	trans.item_trx_detail d
+	JOIN items.item i ON i.item_id = d.item_id
+	LEFT JOIN locations.bin b ON b.bin_id = d.from_bin
+	LEFT JOIN locations.bin n ON n.bin_id = d.to_bin;
+
+SELECT
+	*
+FROM
+	trans.v_item_trx_detail;
+
+SELECT
+	json_build_object('item_trx_id' , d.item_trx_id , 'item_trx_details' , json_agg(json_build_object('item_trx_detail_id' , d.item_trx_detail_id , 'trx_line_num' , d.trx_line_num , 'item_trx_desc' , d.item_trx_desc , 'item_id' , d.item_id , 'item_name' , d.item_name , 'from_bin' , d.from_bin , 'from_bin_desc' , d.from_bin_desc , 'to_bin' , d.to_bin , 'to_bin_desc' , d.to_bin_desc , 'qty_in' , d.qty_in , 'qty_out' , d.qty_out)))
+FROM
+	trans.v_item_trx_detail d
+WHERE
+	d.item_trx_id = 10000
+GROUP BY
+	d.item_trx_id;
+
+-----------
+--------
+-----
+---
+--
+SELECT
+	*
+FROM
+	utils.fn_get_item_trans(jsonb_build_object('_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084'));
+
+-----------
+SELECT
+	*
+FROM
+	utils.fn_get_item_trans(jsonb_build_object('_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084' , 'item_trx_id' , '10000'));

@@ -1,9 +1,9 @@
 "use client";
 
-import { useOutsideClick } from "../../../_hooks/useOutsideClick";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { createContext, use, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useOutsideClick } from "../../../_hooks/useOutsideClick";
 
 //translate-x-3.5
 function StyledToggle({ onClick, children, isActive }) {
@@ -137,7 +137,7 @@ function MenuList({ id, children }) {
  * @param {React.ReactNode} children - The content of the button (icon and text).
  * @param {Function} [onClick] - A function to call when the button is clicked.
  */
-function MenuButton({ children, onClick }) {
+function MenuButton({ children, onClick, ...props }) {
   const { close } = use(MenusContext);
 
   function handleClick() {
@@ -147,7 +147,9 @@ function MenuButton({ children, onClick }) {
 
   return (
     <li>
-      <StyledButton onClick={handleClick}>{children}</StyledButton>
+      <StyledButton onClick={handleClick} {...props}>
+        {children}
+      </StyledButton>
     </li>
   );
 }

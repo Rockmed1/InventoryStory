@@ -22,3 +22,4 @@ export function removeLocDesc(data) {
     name: item.name,
   }));
 }
+

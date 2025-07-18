@@ -1,12 +1,19 @@
 "use client";
 
+import { cn } from "@/app/_utils/utils";
 import { useEffect, useState } from "react";
 
 /**
  * A styled input element. Part of the Form compound component.
  * @param {object} props - Any props to pass to the underlying input element.
  */
-function Input({ inputValue, placeholder, ...props }) {
+export function Input({
+  inputValue,
+  placeholder,
+  className,
+  onChange,
+  ...props
+}) {
   const [value, setValue] = useState(inputValue || "");
 
   useEffect(() => {
@@ -15,13 +22,17 @@ function Input({ inputValue, placeholder, ...props }) {
     }
   }, [inputValue]);
 
+  console.log("input render");
   return (
     <div className="">
       <input
-        className={`flex h-9 w-full min-w-0 rounded-md border border-neutral-200 px-3 py-1 shadow-xs transition-all outline-none selection:bg-neutral-400 focus-visible:border-neutral-500 focus-visible:ring-[3px] focus-visible:ring-neutral-500/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm`}
+        className={cn(
+          `flex h-9 w-full min-w-0 rounded-md border border-neutral-200 px-3 py-1 shadow-xs transition-all outline-none selection:bg-neutral-400 focus-visible:border-neutral-500 focus-visible:ring-[3px] focus-visible:ring-neutral-500/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm`,
+          className,
+        )}
         placeholder={placeholder}
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={onChange || ((e) => setValue(e.target.value))}
         type="search"
         {...props}
         // onChange={(e) => setValue(e.currentTarget.value)}
@@ -35,7 +46,8 @@ function Input({ inputValue, placeholder, ...props }) {
  * @param {string} htmlFor - The ID of the input element this label is for.
  * @param {React.ReactNode} children - The content of the label.
  */
-function Label({ htmlFor, children, ...props }) {
+export function Label({ htmlFor, children, ...props }) {
+  console.log("label render");
   return (
     <label
       className="flex items-center gap-2 text-sm leading-none font-[500] text-neutral-950 select-none"
@@ -72,6 +84,7 @@ function InputWithLabel({
   error,
   children,
   placeholder,
+  ...props
 }) {
   return (
     <div className="grid w-full items-center gap-2.5">
@@ -81,8 +94,8 @@ function InputWithLabel({
         inputValue={inputValue}
         name={name}
         id={name}
+        {...props}
       />
-      {/* <Description>{description}</Description> */}
       <ZodErrors error={error} />
     </div>
   );
@@ -92,8 +105,13 @@ function InputWithLabel({
  * A wrapper for select inputs within the form. Part of the Form compound component.
  * @param {React.ReactNode} children - The select component and its label.
  */
-function InputSelect({ children }) {
-  return <div className="grid w-full items-center gap-2.5">{children}</div>;
+function InputSelect({ children, error }) {
+  return (
+    <div className="grid w-full items-center gap-2.5">
+      {children}
+      <ZodErrors error={error} />
+    </div>
+  );
 }
 
 /**
@@ -113,6 +131,7 @@ function Footer({ children }) {
  * @param {React.ReactNode} children - The content of the form.
  */
 export default function Form({ action, onSubmit, children }) {
+  console.log("form render");
   return (
     <form
       // onSubmit={(e) => e.preventDefault()}

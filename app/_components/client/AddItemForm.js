@@ -1,13 +1,13 @@
 "use client";
 
-import Form from "@/app/_components/_ui/Form";
+import Form from "@/app/_components/_ui/client/Form";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { createItem } from "../../_lib/actions";
 import { getClientValidationSchema } from "../../_lib/ZodSchemas";
 import { useAppStore } from "../../_store/AppProvider";
 import Button from "../_ui/Button";
-import { ParentSelector } from "../_ui/client/ParentSelector";
+import { DropDown } from "../_ui/client/DropDown";
 import SpinnerMini from "../_ui/SpinnerMini";
 
 /**
@@ -91,9 +91,9 @@ export default function AddItemForm({ onCloseModal }) {
       />
       <Form.InputSelect name={"_item_class_id"}>
         <Form.Label>Select Item Class *</Form.Label>
-        <ParentSelector
+        <DropDown
           parent="itemClass"
-          _col_name="_item_class_id"
+          name="_item_class_id"
           label="item class"
           required={true}
         />
@@ -113,10 +113,10 @@ export default function AddItemForm({ onCloseModal }) {
         Item Description *
       </Form.InputWithLabel>
       <Form.Footer>
-        <Button disabled={pending} type="secondary" onClick={onCloseModal}>
+        <Button disabled={pending} variant="secondary" onClick={onCloseModal}>
           <span> Cancel</span>
         </Button>
-        <Button disabled={pending} type="secondary">
+        <Button disabled={pending} variant="secondary" type="submit">
           {pending && <SpinnerMini />}
           <span> Add Item</span>
         </Button>

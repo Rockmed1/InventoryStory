@@ -1,6 +1,6 @@
 "use client";
 
-import Form from "@/app/_components/_ui/Form";
+import Form from "@/app/_components/_ui/client/Form";
 import { createMarketType } from "@/app/_lib/actions";
 import { getClientValidationSchema } from "@/app/_lib/ZodSchemas";
 import { useAppStore } from "@/app/_store/AppProvider";
@@ -51,7 +51,7 @@ export default function AddMarketTypeForm({ onCloseModal }) {
     const validationSchema = getClientValidationSchema(
       "marketType",
       existingMarketTypes,
-      "create"
+      "create",
     );
     const validationResults = validationSchema.safeParse(data);
 
@@ -88,10 +88,10 @@ export default function AddMarketTypeForm({ onCloseModal }) {
         Market Type Description *
       </Form.InputWithLabel>
       <Form.Footer>
-        <Button disabled={pending} type="secondary" onClick={onCloseModal}>
+        <Button disabled={pending} variant="secondary" onClick={onCloseModal}>
           <span>Cancel</span>
         </Button>
-        <Button disabled={pending} type="secondary">
+        <Button disabled={pending} variant="secondary" type="submit">
           {pending && <SpinnerMini />}
           <span>Add Market Type</span>
         </Button>

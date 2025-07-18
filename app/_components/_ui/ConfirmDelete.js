@@ -22,10 +22,10 @@ export default function ConfirmDelete({
         action cannot be undone.
       </p>
       <div>
-        <Button onClick={onCloseModal} disabled={disabled} type="secondary">
+        <Button onClick={onCloseModal} disabled={disabled} variant="secondary">
           Cancel
         </Button>
-        <Button onClick={onConfirm} disabled={disabled} type="danger">
+        <Button onClick={onConfirm} disabled={disabled} variant="danger">
           Delete
         </Button>
       </div>

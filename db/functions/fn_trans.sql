@@ -555,10 +555,10 @@ ALTER FUNCTION utils.fn_create_item_trx OWNER TO utils_admin;
 --------
 ------
 ---
-/* ## fn_get_item_trxs */
-DROP FUNCTION IF EXISTS utils.fn_get_item_trxs;
+/* ## fn_get_item_trans */
+DROP FUNCTION IF EXISTS utils.fn_get_item_trans;
 
-CREATE OR REPLACE FUNCTION utils.fn_get_item_trxs(IN _data JSONB)
+CREATE OR REPLACE FUNCTION utils.fn_get_item_trans(IN _data JSONB)
 	RETURNS JSON
 	LANGUAGE plpgsql
 	SECURITY DEFINER
@@ -577,17 +577,18 @@ BEGIN
 		, _org_id
 		, _is_context_set
 	FROM
-		_fn_set_app_context(_data , _data_keys , 'fn_get_item_trxs');
+		_fn_set_app_context(_data , _data_keys , 'fn_get_item_trans');
 	-- if all set:
 	IF NOT _is_context_set THEN
 		RAISE EXCEPTION 'Context could not be set.';
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_agg(json_build_object('item_trx_id' , t.item_trx_id , 'trx_date' , t.trx_date , 'trx_type_id' , t.trx_type_id , 'market_id' , t.market_id))
+		INTO _result json_agg(json_build_object('id' , t.item_trx_id , 'date' , t.trx_date , 'description' , t.trx_desc , 'trx_type_id' , t.trx_type_id , 'trx_type_name' , t.trx_type_name , 'direction' , trx_direction , 'market_id' , t.market_id , 'market_name' , t.market_name , 'URL' , t.market_url))
 	FROM
-		trans.item_trx t;
-
+		trans.v_item_trx t
+	WHERE (_data ->> 'item_trx_id' IS NULL)
+		OR t.item_trx_id =(_data ->> 'item_trx_id')::INTEGER;
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'No records found in trans.item_trx!';
 	END IF;
@@ -600,17 +601,17 @@ END;
 
 $$;
 
-ALTER FUNCTION utils.fn_get_item_trxs OWNER TO utils_admin;
+ALTER FUNCTION utils.fn_get_item_trans OWNER TO utils_admin;
 
 ------------
 ----------
 --------
 ------
 ---
-/* ## fn_get_item_transction_details */
-DROP FUNCTION IF EXISTS utils.fn_get_item_transction_details;
+/* ## fn_get_item_trx_details */
+DROP FUNCTION IF EXISTS utils.fn_get_item_trx_details;
 
-CREATE OR REPLACE FUNCTION utils.fn_get_item_transction_details(IN _data JSONB)
+CREATE OR REPLACE FUNCTION utils.fn_get_item_trx_details(IN _data JSONB)
 	RETURNS JSON
 	LANGUAGE plpgsql
 	SECURITY DEFINER
@@ -629,16 +630,20 @@ BEGIN
 		, _org_id
 		, _is_context_set
 	FROM
-		_fn_set_app_context(_data , _data_keys , 'fn_get_item_transction_details');
+		_fn_set_app_context(_data , _data_keys , 'fn_get_item_trx_details');
 	-- if all set:
 	IF NOT _is_context_set THEN
 		RAISE EXCEPTION 'Context could not be set.';
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_agg(json_build_object('item_trx_id' , t.item_trx_id , 'item_id' , t.item_id , 'item_trx_desc' , t.item_trx_desc , 'from_bin' , t.from_bin , 'to_bin' , t.to_bin , 'qty_in' , t.qty_in , 'qty_out' , t.qty_out))
+		json_build_object('item_trx_id' , d.item_trx_id , 'item_trx_details' , json_agg(json_build_object('id' , d.trx_line_num , 'item_trx_desc' , d.item_trx_desc , 'item_id' , d.item_id , 'item_name' , d.item_name , 'from_bin' , d.from_bin , 'from_bin_desc' , d.from_bin_desc , 'to_bin' , d.to_bin , 'to_bin_desc' , d.to_bin_desc , 'qty_in' , d.qty_in , 'qty_out' , d.qty_out))) INTO _result
 	FROM
-		trans.item_trx_detail t;
+		trans.v_item_trx_detail d
+	WHERE
+		d.item_trx_id =(_data ->> 'item_trx_id')::INTEGER
+	GROUP BY
+		d.item_trx_id;
 
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'No records found in trans.item_trx_detail!';
@@ -652,4 +657,4 @@ END;
 
 $$;
 
-ALTER FUNCTION utils.fn_get_item_transction_details OWNER TO utils_admin;
+ALTER FUNCTION utils.fn_get_item_trx_details OWNER TO utils_admin;

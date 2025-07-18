@@ -14,7 +14,7 @@ export default function AddButtonModal({
     <div>
       <Modal>
         <Modal.Open opensWindowName={opensWindowName}>
-          <Button type="secondary">
+          <Button variant="secondary">
             <div className="flex items-center justify-between gap-1">
               {/* <PlusIcon className="size-4" /> */}
               {/* <span>{buttonLabel}</span> */}

@@ -3,7 +3,7 @@
 import { useOutsideClick } from "@/app/_hooks/useOutsideClick";
 import React, { cloneElement, createContext, use, useState } from "react";
 import { createPortal } from "react-dom";
-import CloseButton from "../CloseButton";
+import CloseButton from "./CloseButton";
 
 function Overlay({ children }) {
   return (
@@ -40,7 +40,7 @@ function StyledModal({ children, ref }) {
 //       </StyledModal>
 //     </Overlay>,
 //     //: the second argument is for where we want to place it in the dom tree:
-//     //: document.queryselector(...)
+//     //: document.queryDropDown(...)
 //     document.body,
 //   );
 // }
@@ -82,7 +82,12 @@ function Modal({ children }) {
 function Open({ children, opensWindowName }) {
   // iii-consume the context
   const { open } = use(ModalContext);
-  return cloneElement(children, { onClick: () => open(opensWindowName) });
+  return cloneElement(children, {
+    onClick: (e) => {
+      children.props.onClick?.(e);
+      open(opensWindowName);
+    },
+  });
 }
 
 /**
@@ -135,7 +140,7 @@ function Window({
         </Button> */}
         <CloseButton onClick={close} />
 
-        <div className="flex w-full flex-col gap-4 sm:max-w-[425px]">
+        <div className="flex w-full flex-col gap-4 sm:max-w-[600px]">
           <div className="flex flex-col gap-2">
             <Title>{title}</Title>
             <Description>{description}</Description>
@@ -183,7 +188,7 @@ export default Modal;
 // //       {openModal && (
 // //         <Modal handleCloseModal={() => setOpenModal(false)}>
 // //           <p>This is Modal</p>
-// //           <Button type="cancel" onClick={() => setOpenModal(false)}>
+// //           <Button variant="cancel" onClick={() => setOpenModal(false)}>
 // //             Cancel
 // //           </Button>
 // //         </Modal>

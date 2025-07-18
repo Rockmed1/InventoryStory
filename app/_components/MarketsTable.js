@@ -1,45 +1,36 @@
-import {
-  ArrowsRightLeftIcon,
-  PencilIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
-import { dummyServerAction } from "../_lib/actions";
-import { createDataService } from "../_lib/dataServices";
+import { PencilIcon } from "@heroicons/react/24/outline";
+import { getData } from "../_utils/helpers-server";
 import StoreHydrator from "../_store/StoreHydrator";
 import Table from "./_ui/client/Table";
+import EditMarketForm from "./client/EditMarketForm";
 
 const labels = ["Market ID", "Market", "Market Type", "Description", "URL"];
 
 export default async function MarketsTable({ org_uuid }) {
   const rowActions = [
     {
-      id: "edit",
-      label: "Edit",
+      buttonLabel: "Edit",
+      windowName: "Edit Market",
       icon: <PencilIcon />,
-      action: dummyServerAction.bind(null, "Edit"),
+      action: <EditMarketForm />,
+      /* here goes the form component or server action as needed. it will be passed from the Table to the MenuWithModal*/
     },
-    // {
-    //   id: "transact",
-    //   label: "Transact",
-    //   icon: <ArrowsRightLeftIcon />,
-    //   action: dummyServerAction.bind(null, "Transact"),
-    // },
-    // {
-    //   id: "delete",
-    //   label: "Delete",
-    //   icon: <TrashIcon />,
-    //   action: dummyServerAction.bind(null, "Delete"),
-    // },
   ];
 
   //1- fetch only the data for this view
-  const dataService = createDataService(org_uuid);
-  const data = await dataService.getMarkets();
+  const data = await getData("market");
+  const displayData = data.map(
+    ({ market_type_id, ...displayFields }) => displayFields,
+  );
+  const dataDependency = await getData("marketType");
 
   return (
     <>
-      <StoreHydrator market={data} />
-      <Table data={data} labels={labels} rowActions={rowActions} />
+      <Table tableData={displayData} labels={labels} rowActions={rowActions} />
+      <StoreHydrator entities={{
+        market: data,
+        marketType: dataDependency
+      }} />
     </>
   );
 }

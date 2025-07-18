@@ -1,36 +1,27 @@
 import { PencilIcon } from "@heroicons/react/24/outline";
-import { dummyServerAction } from "../_lib/actions";
-import { createDataService } from "../_lib/dataServices";
+import { getData } from "../_utils/helpers-server";
 import StoreHydrator from "../_store/StoreHydrator";
 import Table from "./_ui/client/Table";
+import EditTrxTypeForm from "./client/EditTrxTypeForm";
 
 const labels = ["Trx Type ID", "Trx Type", "Direction", "Description"];
 
 export default async function TrxTypesTable({ org_uuid }) {
   const rowActions = [
     {
-      id: "edit",
-      label: "Edit",
+      buttonLabel: "Edit",
+      windowName: "Edit Transaction Type",
       icon: <PencilIcon />,
-      action: dummyServerAction.bind(null, "Edit"),
+      action: <EditTrxTypeForm />,
+      /* here goes the form component or server action as needed. it will be passed from the Table to the MenuWithModal*/
     },
-    // {
-    //   id: "transact",
-    //   label: "Transact",
-    //   icon: <ArrowsRightLeftIcon />,
-    //   action: dummyServerAction.bind(null, "Transact"),
-    // },
-    // {
-    //   id: "delete",
-    //   label: "Delete",
-    //   icon: <TrashIcon />,
-    //   action: dummyServerAction.bind(null, "Delete"),
-    // },
   ];
 
   //1- fetch only the data for this view
-  const dataService = createDataService(org_uuid);
-  const data = await dataService.getTrxTypes();
+  const data = await getData("trxType");
+  const displayData = data.map(
+    ({ trx_direction_id, ...displayFields }) => displayFields,
+  );
 
   const TRXDIRECTIONS = [
     { id: 1, name: "in" },
@@ -40,8 +31,11 @@ export default async function TrxTypesTable({ org_uuid }) {
 
   return (
     <>
-      <StoreHydrator trxType={data} trxDirections={TRXDIRECTIONS} />
-      <Table data={data} labels={labels} rowActions={rowActions} />
+      <Table tableData={displayData} labels={labels} rowActions={rowActions} />
+      <StoreHydrator entities={{
+        trxType: data,
+        trxDirections: TRXDIRECTIONS
+      }} />
     </>
   );
 }
