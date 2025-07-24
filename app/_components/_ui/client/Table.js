@@ -7,7 +7,7 @@ import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { createContext, use, useCallback, useMemo, useRef } from "react";
+import { createContext, use, useCallback, useMemo } from "react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -135,7 +135,7 @@ function TableCell({ row, fieldKey }) {
       <td key={fieldKey} className="p-2">
         {
           /* then create links for the id and name cells only if the real data  TODO: make this part modular */
-          fieldKey === "id" || fieldKey === "name" ? (
+          (fieldKey === "id" || fieldKey === "name") && redirectTo ? (
             <Link
               href={`/${redirectTo}/${row["id"]}`}
               className="transition-all duration-200 hover:underline">
@@ -240,13 +240,13 @@ function TableRowDetail({ children }) {
 function TableBodyLoading({ children }) {
   const { tableData, type } = useTableState();
   // Debug re-renders
-  const renderCount = useRef(0);
-  renderCount.current++;
+  // const renderCount = useRef(0);
+  // renderCount.current++;
 
-  console.log(`TableBodyLoading render #${renderCount.current}`, {
-    tableDataLength: tableData.length,
-    type,
-  });
+  // console.log(`TableBodyLoading render #${renderCount.current}`, {
+  //   tableDataLength: tableData.length,
+  //   type,
+  // });
 
   return (
     <>

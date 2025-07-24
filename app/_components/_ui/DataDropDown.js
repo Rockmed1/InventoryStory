@@ -9,7 +9,7 @@ export default async function DataDropDown({ entity, ...params }) {
     <>
       <DropDown entity={entity} {...params} />
 
-      <StoreHydrator entities={{ [entity]: entityData }} />
+      <StoreHydrator entitiesData={{ [entity]: entityData }} />
     </>
   );
 }

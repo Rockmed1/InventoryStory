@@ -14,7 +14,7 @@ import SpinnerMini from "../_ui/SpinnerMini";
  * A form for adding a new item, designed to be used within a modal.
  * It handles form submission using a server action and displays success notifications.
  *
- * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
+ * @param {Function} [onCloseModal] - An optional function to close the parent modal on successful submission.
  */
 
 export default function AddItemForm({ onCloseModal }) {
@@ -83,7 +83,7 @@ export default function AddItemForm({ onCloseModal }) {
     }
   }
 
-  console.log(currentFormState);
+  // console.log(currentFormState);
   return (
     <Form action={formAction} onSubmit={handleSubmit}>
       <Form.ZodErrors

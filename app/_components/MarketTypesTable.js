@@ -1,37 +1,28 @@
-import { PencilIcon } from "@heroicons/react/24/outline";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { getQueryClient } from "../_store/queryClient";
 import { getData } from "../_utils/helpers-server";
-import StoreHydrator from "../_store/StoreHydrator";
-import Table from "./_ui/client/Table";
-import EditMarketTypeForm from "./client/EditMarketTypeForm";
+import TableLoading from "./_ui/client/TableLoading";
+import MarketTypesTableClient from "./client/MarketTypesTableClient";
 
-const labels = ["Market Type ID", "Market Type Name", "Description"];
+const labels = ["Market Type ID", "Name", "Description"];
 
-export default async function MarketTypesTable({ org_uuid }) {
-  const rowActions = [
-    {
-      buttonLabel: "Edit",
-      windowName: "Edit Market Type",
-      icon: <PencilIcon />,
-      action: <EditMarketTypeForm />,
-      /* here goes the form component or server action as needed. it will be passed from the Table to the MenuWithModal*/
-    },
-  ];
+export default async function MarketTypesTable() {
+  const queryClient = getQueryClient();
 
-  //1- fetch only the data for this view
-  const data = await getData("marketType");
+  queryClient.prefetchQuery({
+    queryKey: ["marketType"],
+    queryFn: () => getData("marketType"),
+  });
 
   return (
-    <>
-      <Table tableData={data} labels={labels} rowActions={rowActions} />
-      <StoreHydrator entities={{
-        marketType: data
-      }} />
-    </>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <MarketTypesTableClient />
+    </HydrationBoundary>
   );
 }
 
 function Fallback() {
-  return <Table labels={labels} />;
+  return <TableLoading labels={labels} />;
 }
 
 MarketTypesTable.Fallback = Fallback;

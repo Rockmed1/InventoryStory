@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 /**
  * @deprecated This is a temporary hook for development and should be replaced by a proper server-side authentication system.
  * Retrieves a static, hardcoded user and organization session object.

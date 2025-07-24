@@ -210,7 +210,7 @@ const schemas = {
     ),
   ),
 
-  itemTrans: z.object({
+  ItemTrx: z.object({
     _trx_header: z.lazy(() => schemas.itemTrxHeader),
     _trx_details: z
       .array(z.lazy(() => schemas.itemTrxDetail))
@@ -263,7 +263,7 @@ export const getClientValidationSchema = (
   }
 
   // For item transactions, add dynamic validation for existing items/bins/markets/trxTypes
-  if (entity === "itemTrans") {
+  if (entity === "ItemTrx") {
     const existingBins = dataDependencies.bin || [];
     const existingItems = dataDependencies.item || [];
     const existingMarkets = dataDependencies.market || [];
@@ -336,7 +336,7 @@ export const getClientValidationSchema = (
   }
 
   // For other entities with name validation (existing logic)
-  if (nameField && entity !== "itemTrans") {
+  if (nameField && entity !== "ItemTrx") {
     const mainEntityData = dataDependencies[entity] || [];
     enhancedSchema = enhancedSchema.extend({
       [nameField]: baseSchema.shape[nameField]
@@ -349,13 +349,13 @@ export const getClientValidationSchema = (
 
             if (operation === "create") {
               return !mainEntityData.some(
-                (item) => item.name.toLowerCase().trim() === normalizedName,
+                (entity) => entity.name.toLowerCase().trim() === normalizedName,
               );
             } else if (operation === "update") {
               return !mainEntityData.some(
-                (item) =>
-                  item.name.toLowerCase().trim() === normalizedName &&
-                  item.id !== parseInt(editedEntityId),
+                (entity) =>
+                  entity.name.toLowerCase().trim() === normalizedName &&
+                  entity.id !== parseInt(editedEntityId),
               );
             }
             return true;
@@ -367,25 +367,3 @@ export const getClientValidationSchema = (
 
   return enhancedSchema;
 };
-
-// // 6. Export everythingionl
-// export const schema = {
-//   appContextSchema,
-
-//   // Base schemas for server-side validation
-//   itemSchema: schemas.item.omit({ _item_id: true }),
-//   locationSchema: schemas.location.omit({ _loc_id: true }),
-//   binSchema: schemas.bin.omit({ _bin_id: true }),
-//   itemClassSchema: schemas.itemClass.omit({ _item_class_id: true }),
-//   marketTypeSchema: schemas.marketType.omit({ _market_type_id: true }),
-//   marketSchema: schemas.market.omit({ _market_id: true }),
-//   trxTypeSchema: schemas.trxType.omit({ _trx_type_id: true }),
-
-//   // Factory functions
-//   getSchema,
-//   getClientValidationSchema,
-
-//   // Utilities
-//   fieldMappings,
-//   errorMessages,
-// };

@@ -4,7 +4,7 @@ import Form from "@/app/_components/_ui/client/Form";
 import { useAppStore } from "@/app/_store/AppProvider";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { createItemTrans } from "../../_lib/actions";
+import { createItemTrx } from "../../_lib/actions";
 import { formDataTransformer } from "../../_lib/transformers";
 import { getClientValidationSchema } from "../../_lib/ZodSchemas";
 import Button from "../_ui/Button";
@@ -27,7 +27,7 @@ export default function AddItemTrxForm({ onCloseModal }) {
   };
 
   const [formState, formAction, pending] = useActionState(
-    createItemTrans,
+    createItemTrx,
     initialState,
   );
 
@@ -84,7 +84,7 @@ export default function AddItemTrxForm({ onCloseModal }) {
     };
 
     const schema = getClientValidationSchema(
-      "itemTrans",
+      "itemTrx",
       dataDependencies,
       "create",
     );
@@ -210,6 +210,20 @@ export default function AddItemTrxForm({ onCloseModal }) {
                   />
                 </Form.InputSelect>
 
+                <Form.InputSelect
+                  name={`_trx_details[${index}]._from_bin`}
+                  error={
+                    currentFormState?.zodErrors?.[
+                      `_trx_details.${index}._from_bin`
+                    ]
+                  }>
+                  <Form.Label>From Bin</Form.Label>
+                  <DropDown
+                    entity="bin"
+                    name={`_trx_details[${index}]._from_bin`}
+                  />
+                </Form.InputSelect>
+
                 <Form.InputWithLabel
                   name={`_trx_details[${index}]._qty_in`}
                   type="number"
@@ -225,6 +239,20 @@ export default function AddItemTrxForm({ onCloseModal }) {
                   Quantity In
                 </Form.InputWithLabel>
 
+                <Form.InputSelect
+                  name={`_trx_details[${index}]._to_bin`}
+                  error={
+                    currentFormState?.zodErrors?.[
+                      `_trx_details.${index}._to_bin`
+                    ]
+                  }>
+                  <Form.Label>To Bin</Form.Label>
+                  <DropDown
+                    entity="bin"
+                    name={`_trx_details[${index}]._to_bin`}
+                  />
+                </Form.InputSelect>
+
                 <Form.InputWithLabel
                   name={`_trx_details[${index}]._qty_out`}
                   type="number"
@@ -239,34 +267,6 @@ export default function AddItemTrxForm({ onCloseModal }) {
                   }>
                   Quantity Out
                 </Form.InputWithLabel>
-
-                <Form.InputSelect
-                  name={`_trx_details[${index}]._from_bin`}
-                  error={
-                    currentFormState?.zodErrors?.[
-                      `_trx_details.${index}._from_bin`
-                    ]
-                  }>
-                  <Form.Label>From Bin</Form.Label>
-                  <DropDown
-                    entity="bin"
-                    name={`_trx_details[${index}]._from_bin`}
-                  />
-                </Form.InputSelect>
-
-                <Form.InputSelect
-                  name={`_trx_details[${index}]._to_bin`}
-                  error={
-                    currentFormState?.zodErrors?.[
-                      `_trx_details.${index}._to_bin`
-                    ]
-                  }>
-                  <Form.Label>To Bin</Form.Label>
-                  <DropDown
-                    entity="bin"
-                    name={`_trx_details[${index}]._to_bin`}
-                  />
-                </Form.InputSelect>
               </div>
 
               <div className="mt-4">

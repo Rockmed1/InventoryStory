@@ -1,47 +1,28 @@
-import { PencilIcon } from "@heroicons/react/24/outline";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { getQueryClient } from "../_store/queryClient";
 import { getData } from "../_utils/helpers-server";
-import StoreHydrator from "../_store/StoreHydrator";
-import Table from "./_ui/client/Table";
-import EditTrxTypeForm from "./client/EditTrxTypeForm";
+import TableLoading from "./_ui/client/TableLoading";
+import TrxTypesTableClient from "./client/TrxTypesTableClient";
 
-const labels = ["Trx Type ID", "Trx Type", "Direction", "Description"];
+const labels = ["Trx Type ID", "Name", "Description", "Direction"];
 
-export default async function TrxTypesTable({ org_uuid }) {
-  const rowActions = [
-    {
-      buttonLabel: "Edit",
-      windowName: "Edit Transaction Type",
-      icon: <PencilIcon />,
-      action: <EditTrxTypeForm />,
-      /* here goes the form component or server action as needed. it will be passed from the Table to the MenuWithModal*/
-    },
-  ];
+export default async function TrxTypesTable() {
+  const queryClient = getQueryClient();
 
-  //1- fetch only the data for this view
-  const data = await getData("trxType");
-  const displayData = data.map(
-    ({ trx_direction_id, ...displayFields }) => displayFields,
-  );
-
-  const TRXDIRECTIONS = [
-    { id: 1, name: "in" },
-    { id: 2, name: "out" },
-    { id: 3, name: "in-out" },
-  ];
+  queryClient.prefetchQuery({
+    queryKey: ["trxType"],
+    queryFn: () => getData("trxType"),
+  });
 
   return (
-    <>
-      <Table tableData={displayData} labels={labels} rowActions={rowActions} />
-      <StoreHydrator entities={{
-        trxType: data,
-        trxDirections: TRXDIRECTIONS
-      }} />
-    </>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <TrxTypesTableClient />
+    </HydrationBoundary>
   );
 }
 
 function Fallback() {
-  return <Table labels={labels} />;
+  return <TableLoading labels={labels} />;
 }
 
 TrxTypesTable.Fallback = Fallback;

@@ -8,7 +8,7 @@ export const metadata = {
   title: "items",
 };
 
-// export const revalidate = 0; // this will make the page dynamic and revalidate cache every request
+export const revalidate = 0; // this will make the page dynamic and revalidate cache every request
 
 export default async function Items() {
   // cookies(); //headers() //
@@ -27,7 +27,7 @@ export default async function Items() {
         </AddButtonModal>
       </div>
       <Suspense fallback={<ItemsTable.Fallback />}>
-        <ItemsTable org_uuid={_org_uuid} />
+        <ItemsTable />
       </Suspense>
     </div>
   );

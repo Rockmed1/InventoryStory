@@ -1,17 +1,4 @@
 {
-  "dotenv.enableAutocloaking": false,
-  "sqltools.connections": [
-    {
-      "previewLimit": 100,
-      "server": "localhost",
-      "port": 5432,
-      "driver": "PostgreSQL",
-      "name": "local",
-      "username": "aa",
-      "database": "testdb",
-      "password": ""
-    }
-  ],
   "workbench.colorTheme": "One Dark Pro Monokai Darker Reloaded",
   "[sql]": {
     "editor.defaultFormatter": "bradymholt.pgformatter"

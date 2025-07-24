@@ -1,4 +1,4 @@
-import "server-only";
+"server-only";
 
 import { revalidateTag, unstable_cache } from "next/cache";
 import { redirect } from "next/navigation";
@@ -62,7 +62,7 @@ export function createDataService() {
         {
           tags: [`item-${_org_uuid}`],
           revalidate: cacheTTL,
-        }
+        },
       )();
     },
 
@@ -88,7 +88,7 @@ export function createDataService() {
         {
           tags: [`location-${_org_uuid}`],
           revalidate: cacheTTL,
-        }
+        },
       )();
     },
 
@@ -112,7 +112,7 @@ export function createDataService() {
         {
           tags: [`bin-${_org_uuid}`],
           revalidate: cacheTTL,
-        }
+        },
       )();
     },
 
@@ -138,7 +138,7 @@ export function createDataService() {
         {
           tags: [`itemClass-${_org_uuid}`],
           revalidate: cacheTTL,
-        }
+        },
       )();
     },
 
@@ -164,7 +164,7 @@ export function createDataService() {
         {
           tags: [`marketType-${_org_uuid}`],
           revalidate: cacheTTL,
-        }
+        },
       )();
     },
 
@@ -190,7 +190,7 @@ export function createDataService() {
         {
           tags: [`market-${_org_uuid}`],
           revalidate: cacheTTL,
-        }
+        },
       )();
     },
 
@@ -216,7 +216,7 @@ export function createDataService() {
         {
           tags: [`trxType-${_org_uuid}`],
           revalidate: cacheTTL,
-        }
+        },
       )();
     },
 
@@ -224,15 +224,15 @@ export function createDataService() {
       const { forceRefresh = false, cacheTTL = 300 } = options;
 
       if (forceRefresh) {
-        revalidateTag(`itemTrans-${_org_uuid}`);
+        revalidateTag(`ItemTrx-${_org_uuid}`);
       }
 
       return unstable_cache(
         async () => {
-          const updatedData = item_trx_id ? { item_trx_id, ..._data } : _data;
+          const filteredData = item_trx_id ? { item_trx_id, ..._data } : _data;
 
           const { data, error } = await supabase.rpc("fn_get_item_trans", {
-            _data: updatedData,
+            _data: filteredData,
           });
           // console.log(data, error);
           if (error) {
@@ -241,19 +241,15 @@ export function createDataService() {
           }
           return data || [];
         },
-        [
-          `${
-            item_trx_id ? "itemTrx-" + item_trx_id : "itemTrans"
-          }-${_org_uuid}`,
-        ],
+        [`${item_trx_id ? "itemTrx-" + item_trx_id : "ItemTrx"}-${_org_uuid}`],
         {
           tags: [
             `${
-              item_trx_id ? "itemTrx-" + item_trx_id : "itemTrans"
+              item_trx_id ? "itemTrx-" + item_trx_id : "ItemTrx"
             }-${_org_uuid}`,
           ],
           revalidate: cacheTTL,
-        }
+        },
       )();
     },
 
@@ -266,13 +262,13 @@ export function createDataService() {
 
       return unstable_cache(
         async () => {
-          const updatedData = { item_trx_id, ..._data };
+          const filteredData = { item_trx_id, ..._data };
 
           const { data, error } = await supabase.rpc(
             "fn_get_item_trx_details",
             {
-              _data: updatedData,
-            }
+              _data: filteredData,
+            },
           );
           // console.log(data, error);
           if (error) {
@@ -285,7 +281,7 @@ export function createDataService() {
         {
           tags: [`itemTrxDetails-${item_trx_id}-${_org_uuid}`],
           revalidate: cacheTTL,
-        }
+        },
       )();
     },
   };

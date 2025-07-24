@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useAppStore } from "./AppProvider";
 
-export default function StoreHydrator({ entities }) {
+export default function StoreHydrator({ entitiesData }) {
   const setItem = useAppStore((state) => state.setItem);
   const setItemClass = useAppStore((state) => state.setItemClass);
   const setLocation = useAppStore((state) => state.setLocation);
@@ -31,14 +31,14 @@ export default function StoreHydrator({ entities }) {
   };
 
   useEffect(() => {
-    if (entities && typeof entities === "object") {
-      Object.entries(entities).forEach(([entityName, entityData]) => {
+    if (entitiesData && typeof entitiesData === "object") {
+      Object.entries(entitiesData).forEach(([entityName, entityData]) => {
         if (entityData && entitySetters[entityName]) {
           entitySetters[entityName](entityData);
         }
       });
     }
-  }, []);
+  }, [entitiesData]);
 
   return null;
 }

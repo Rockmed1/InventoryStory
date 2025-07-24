@@ -43,11 +43,11 @@ function dbAction(rpcName, entity, operation) {
     // prepare and validate the form data
     let destructuredFormData;
 
-    // Special handling for itemTrans entity
-    if (entity === "itemTrans") {
+    // Special handling for ItemTrx entity
+    if (entity === "ItemTrx") {
       // Transform FormData using unified pipeline for complex transactions
       destructuredFormData = formDataTransformer.transform(formData);
-      console.log("Transformed itemTrans data:", destructuredFormData);
+      console.log("Transformed ItemTrx data:", destructuredFormData);
     } else {
       // Standard FormData handling for other entities
       destructuredFormData = Object.fromEntries(formData);
@@ -187,9 +187,9 @@ export const updateTrxType = dbAction(
 
 // --- Other Actions ---
 
-export const createItemTrans = dbAction(
+export const createItemTrx = dbAction(
   "fn_create_item_trx",
-  "itemTrans",
+  "ItemTrx",
   "create",
 );
 

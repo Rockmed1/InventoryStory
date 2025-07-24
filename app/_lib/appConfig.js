@@ -73,7 +73,7 @@ export default function entityConfig(entity) {
       },
       dependencies: [],
     },
-    itemTrans: {
+    itemTrx: {
       label: "Item Trx",
       displayName: "Item Transaction",
       get: "getItemTrx",

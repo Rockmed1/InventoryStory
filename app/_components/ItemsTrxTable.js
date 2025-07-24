@@ -1,10 +1,8 @@
-import { ArrowsRightLeftIcon, PencilIcon } from "@heroicons/react/24/outline";
-import { dummyServerAction } from "../_lib/actions";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { getQueryClient } from "../_store/queryClient";
 import { getData } from "../_utils/helpers-server";
-import StoreHydrator from "../_store/StoreHydrator";
-import Table from "./_ui/client/Table";
 import TableLoading from "./_ui/client/TableLoading";
-import EditItemForm from "./client/EditItemForm";
+import ItemsTrxTableClient from "./client/ItemsTrxTableClient";
 import ItemsTrxDetailsTable from "./ItemsTrxDetailsTable";
 
 const labels = [
@@ -17,70 +15,41 @@ const labels = [
   "URL",
 ];
 
-const rowActions = [
-  {
-    buttonLabel: "Edit",
-    windowName: "Edit Item",
-    icon: <PencilIcon />,
-    action: <EditItemForm />,
-    /* here goes the form component or server action as needed. it will be passed from the Table to the MenuWithModal*/
-  },
-  {
-    buttonLabel: "Transact",
-    windowName: "Item Transaction",
-    icon: <ArrowsRightLeftIcon />,
-    action: dummyServerAction.bind(null, "Transact"),
-  },
-];
-
 export default async function ItemsTrxTable({
   type = "compound",
   item_trx_id,
 }) {
-  // const labels = [
-  //   "Trx ID",
-  //   "Date",
-  //   "Description",
-  //   "Trx Type",
-  //   "Direction",
-  //   "Market",
-  //   "URL",
-  // ];
+  const queryClient = getQueryClient();
 
-  //1- fetch only the data for this view
-  // console.log("item_trx_id itemTrxTable: ", item_trx_id);
-  const data = await getData("itemTrans", type === "simple" && item_trx_id);
+  // DO NOT AWAIT. This starts the fetch and lets rendering continue.
+  queryClient.prefetchQuery({
+    queryKey: ["itemTrx", type === "simple" ? item_trx_id : "all"],
+    queryFn: () => {
+      if (type === "simple" && item_trx_id) {
+        return getData("itemTrx", item_trx_id);
+      } else {
+        return getData("itemTrx");
+      }
+    },
+  });
 
-  const displayData = data.map(
-    ({ trx_type_id, market_id, ...displayFields }) => displayFields,
-  );
+  // Also prefetch itemTrxDetails if we have an item_trx_id
+  if (item_trx_id) {
+    queryClient.prefetchQuery({
+      queryKey: ["itemTrxDetails", item_trx_id],
+      queryFn: () => getData("itemTrxDetails", item_trx_id),
+    });
+  }
 
-  const itemDependency = await getData("item");
-  const binDependency = await getData("bin");
-  const trxTypeDependency = await getData("trxType");
-  const marketDependency = await getData("market");
-
+  // 2. Dehydrate the cache immediately. The query is now 'pending'.
+  //    This promise is passed to the client.
   return (
-    <>
-      <Table
-        type={type}
-        labels={labels}
-        tableData={displayData}
-        rowActions={rowActions}
-        redirectTo="transactions">
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <ItemsTrxTableClient type={type} item_trx_id={item_trx_id}>
+        {/* Server component is passed as a child to the client component */}
         <ItemsTrxDetailsTable item_trx_id={item_trx_id} />
-      </Table>
-
-      <StoreHydrator
-        entities={{
-          itemTrx: data,
-          item: itemDependency,
-          bin: binDependency,
-          trxType: trxTypeDependency,
-          market: marketDependency,
-        }}
-      />
-    </>
+      </ItemsTrxTableClient>
+    </HydrationBoundary>
   );
 }
 

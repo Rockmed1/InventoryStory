@@ -87,12 +87,12 @@ export default function TableLoading({ config = {}, labels, children }) {
   }, [labels]);
 
   // Debug re-renders
-  const renderCount = useRef(0);
-  renderCount.current++;
+  // const renderCount = useRef(0);
+  // renderCount.current++;
 
-  console.log(`TableLoading render #${renderCount.current}`, {
-    displayDataLength: displayData.length,
-  });
+  // console.log(`TableLoading render #${renderCount.current}`, {
+  //   displayDataLength: displayData.length,
+  // });
 
   return (
     <div className="overflow-scroll rounded-lg border border-neutral-200">

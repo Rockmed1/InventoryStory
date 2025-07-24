@@ -15,6 +15,8 @@ import MarketTypesTable from "../_components/MarketTypesTable";
 import TrxTypesTable from "../_components/TrxTypesTable";
 import UseAuth from "../_hooks/useAuth";
 
+export const revalidate = 0; // this will make the page dynamic and revalidate cache every request
+
 export default function Page() {
   //1- authenticate the user
   const { _org_uuid, _usr_uuid } = UseAuth();
@@ -22,7 +24,7 @@ export default function Page() {
   const cards = [
     {
       cardName: "Locations",
-      cardTable: <LocationsTable org_uuid={_org_uuid} />,
+      cardTable: <LocationsTable />,
       cardFallback: <LocationsTable.Fallback />,
       CardAction: (
         <AddButtonModal
@@ -37,7 +39,7 @@ export default function Page() {
 
     {
       cardName: "Bins",
-      cardTable: <BinsTable org_uuid={_org_uuid} />,
+      cardTable: <BinsTable />,
       cardFallback: <BinsTable.Fallback />,
       CardAction: (
         <AddButtonModal
@@ -52,7 +54,7 @@ export default function Page() {
 
     {
       cardName: "Item Classes",
-      cardTable: <ItemClassesTable org_uuid={_org_uuid} />,
+      cardTable: <ItemClassesTable />,
       cardFallback: <ItemClassesTable.Fallback />,
       CardAction: (
         <AddButtonModal
@@ -78,7 +80,7 @@ export default function Page() {
 
     {
       cardName: "Market Types",
-      cardTable: <MarketTypesTable org_uuid={_org_uuid} />,
+      cardTable: <MarketTypesTable />,
       cardFallback: <MarketTypesTable.Fallback />,
       CardAction: (
         <AddButtonModal
@@ -91,7 +93,7 @@ export default function Page() {
 
     {
       cardName: "Markets",
-      cardTable: <MarketsTable org_uuid={_org_uuid} />,
+      cardTable: <MarketsTable />,
       cardFallback: <MarketsTable.Fallback />,
       CardAction: (
         <AddButtonModal opensWindowName="add-Markets" buttonLabel="Add Market">

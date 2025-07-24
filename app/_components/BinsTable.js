@@ -1,40 +1,28 @@
-import { PencilIcon } from "@heroicons/react/24/outline";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { getQueryClient } from "../_store/queryClient";
 import { getData } from "../_utils/helpers-server";
-import StoreHydrator from "../_store/StoreHydrator";
-import Table from "./_ui/client/Table";
-import EditBinForm from "./client/EditBinForm";
+import TableLoading from "./_ui/client/TableLoading";
+import BinsTableClient from "./client/BinsTableClient";
 
-const labels = ["Bin ID", "Bin Name", "Location Name", "Description"];
+const labels = ["Bin ID", "Name", "Location"];
 
-export default async function BinsTable({ org_uuid }) {
-  const rowActions = [
-    {
-      buttonLabel: "Edit",
-      windowName: "Edit Bin",
-      icon: <PencilIcon />,
-      action: <EditBinForm />,
-      /* here goes the form component or server action as needed. it will be passed from the Table to the MenuWithModal*/
-    },
-  ];
+export default async function BinsTable() {
+  const queryClient = getQueryClient();
 
-  //1- fetch only the data for this view
-  const data = await getData("bin");
-  const displayData = data.map(({ loc_id, ...displayFields }) => displayFields);
-  const dataDependency = await getData("location");
+  queryClient.prefetchQuery({
+    queryKey: ["bin"],
+    queryFn: () => getData("bin"),
+  });
 
   return (
-    <>
-      <Table tableData={displayData} labels={labels} rowActions={rowActions} />
-      <StoreHydrator entities={{
-        bin: data,
-        location: dataDependency
-      }} />
-    </>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <BinsTableClient />
+    </HydrationBoundary>
   );
 }
 
 function Fallback() {
-  return <Table labels={labels} />;
+  return <TableLoading labels={labels} />;
 }
 
 BinsTable.Fallback = Fallback;

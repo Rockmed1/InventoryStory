@@ -7,37 +7,56 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/_components/_ui/client/Select";
-import entityConfig from "@/app/_lib/appConfig";
-import { useAppStore } from "@/app/_store/AppProvider";
+import { getClientData } from "@/app/_utils/helpers-client";
+import { useQuery } from "@tanstack/react-query";
+import SpinnerMini from "../SpinnerMini";
 
-/**
- * A dropdown DropDown that is dynamically populated from a slice of the global app store.
- * It is designed to select a "entity" entity from a list.
- *
- * @param {string} entity - The key of the data slice in the global store (e.g., 'locations', 'itemClasses').
- * @param {string} name - The name attribute for the select input, corresponding to the database column name.
- * @param {string} label - A user-friendly label for the DropDown (e.g., 'location', 'item class').
- * @param {boolean} [required=true] - Whether the select input is required.
- */
 export function DropDown({
   entity,
   name,
   required = true,
   defaultValue = null,
+  label,
   onChange,
 }) {
-  //get the entity [entityList] and remove the description column
-  const entityList = useAppStore((state) => state[entity] || []).map((_) => ({
-    id: _.id,
-    name: _.name,
-  }));
+  const {
+    data: entityList,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: [entity],
+    queryFn: () => getClientData(entity),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    select: (data) => {
+      if (!Array.isArray(data)) return [];
+      return data.map((_) => ({
+        id: _.id,
+        name: _.name,
+      }));
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2">
+        <SpinnerMini />
+        <span>Loading {label}...</span>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return <div className="text-red-500">Error: {error.message}</div>;
+  }
 
   //Find the selected entity name for display
-  const selected = defaultValue
-    ? entityList.find(
-        (entity) => entity.id.toString() === defaultValue.toString(),
-      )
-    : null;
+  const selected =
+    defaultValue && entityList
+      ? entityList.find(
+          (entity) => entity.id.toString() === defaultValue.toString(),
+        )
+      : null;
 
   // console.log(defaultValue);
   // console.log(selected);
@@ -47,10 +66,10 @@ export function DropDown({
   //   "🏪 Full store state:",
   //   useAppStore((state) => state),
   // );
-  const { label } = entityConfig(entity);
+  // const { label } = entityConfig(entity);
 
   if (entityList.length === 0) {
-    console.log(`⚠️ ${entity} data array is empty in cache`);
+    console.log(`⚠️ ${entity} data array is empty`);
     return (
       <Select disabled>
         <SelectTrigger className="w-m">

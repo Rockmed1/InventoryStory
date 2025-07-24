@@ -8,7 +8,7 @@ export const metadata = {
   title: "items",
 };
 
-// export const revalidate = 0; // this will make the page dynamic and revalidate cache every request
+export const revalidate = 0; // this will make the page dynamic and revalidate cache every request
 
 export default async function Page({ searchParams }) {
   // cookies(); //headers() //
@@ -33,7 +33,10 @@ export default async function Page({ searchParams }) {
 
       {/* <Suspense fallback={<Loader2 />}> */}
       <Suspense fallback={<ItemsTrxTable.Fallback />}>
-        <ItemsTrxTable org_uuid={_org_uuid} item_trx_id={item_trx_id} />
+        <ItemsTrxTable
+          item_trx_id={item_trx_id}
+          // type={!item_trx_id ? "compound" : "simple"}
+        />
       </Suspense>
     </div>
   );

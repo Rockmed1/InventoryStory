@@ -1,37 +1,28 @@
-import { PencilIcon } from "@heroicons/react/24/outline";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { getQueryClient } from "../_store/queryClient";
 import { getData } from "../_utils/helpers-server";
-import StoreHydrator from "../_store/StoreHydrator";
-import Table from "./_ui/client/Table";
-import EditItemClassForm from "./client/EditItemClassForm";
+import TableLoading from "./_ui/client/TableLoading";
+import ItemClassesTableClient from "./client/ItemClassesTableClient";
 
-const labels = ["Item Class ID", "Item Class Name", "Description"];
+const labels = ["Class ID", "Name", "Description"];
 
-export default async function ItemClassesTable({ org_uuid }) {
-  const rowActions = [
-    {
-      buttonLabel: "Edit",
-      windowName: "Edit Item Class",
-      icon: <PencilIcon />,
-      action: <EditItemClassForm />,
-      /* here goes the form component or server action as needed. it will be passed from the Table to the MenuWithModal*/
-    },
-  ];
+export default async function ItemClassesTable() {
+  const queryClient = getQueryClient();
 
-  //1- fetch only the data for this view
-  const data = await getData("itemClass");
+  queryClient.prefetchQuery({
+    queryKey: ["itemClass"],
+    queryFn: () => getData("itemClass"),
+  });
 
   return (
-    <>
-      <Table tableData={data} labels={labels} rowActions={rowActions} />
-      <StoreHydrator entities={{
-        itemClass: data
-      }} />
-    </>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <ItemClassesTableClient />
+    </HydrationBoundary>
   );
 }
 
 function Fallback() {
-  return <Table labels={labels} />;
+  return <TableLoading labels={labels} />;
 }
 
 ItemClassesTable.Fallback = Fallback;

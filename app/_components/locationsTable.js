@@ -1,37 +1,28 @@
-import { PencilIcon } from "@heroicons/react/24/outline";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { getQueryClient } from "../_store/queryClient";
 import { getData } from "../_utils/helpers-server";
-import StoreHydrator from "../_store/StoreHydrator";
-import Table from "./_ui/client/Table";
-import EditLocationForm from "./client/EditLocationForm";
+import TableLoading from "./_ui/client/TableLoading";
+import LocationsTableClient from "./client/LocationsTableClient";
 
-const labels = ["Location ID", "Location Name", "Description"];
+const labels = ["Location ID", "Name", "Description"];
 
-export default async function LocationsTable({ org_uuid }) {
-  const rowActions = [
-    {
-      buttonLabel: "Edit",
-      windowName: "Edit Location",
-      icon: <PencilIcon />,
-      action: <EditLocationForm />,
-      /* here goes the form component or server action as needed. it will be passed from the Table to the MenuWithModal*/
-    },
-  ];
+export default async function LocationsTable() {
+  const queryClient = getQueryClient();
 
-  //1- fetch only the data for this view
-  const data = await getData("location");
+  queryClient.prefetchQuery({
+    queryKey: ["location"],
+    queryFn: () => getData("location"),
+  });
 
   return (
-    <>
-      <Table tableData={data} labels={labels} rowActions={rowActions} />
-      <StoreHydrator entities={{
-        location: data
-      }} />
-    </>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <LocationsTableClient />
+    </HydrationBoundary>
   );
 }
 
 function Fallback() {
-  return <Table labels={labels} />;
+  return <TableLoading labels={labels} />;
 }
 
 LocationsTable.Fallback = Fallback;
