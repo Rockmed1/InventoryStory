@@ -1,8 +1,8 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { getQueryClient } from "../_store/queryClient";
-import { getData } from "../_utils/helpers-server";
-import TableLoading from "./_ui/client/TableLoading";
-import ItemsTableClient from "./client/ItemsTableClient";
+import { getQueryClient } from "../../_store/queryClient";
+import { getData } from "../../_utils/helpers-server";
+import TableLoading from "../_ui/client/TableLoading";
+import ItemsTableClient from "../client/ItemsTableClient";
 
 const labels = ["Item ID", "Name", "Description", "Class"];
 

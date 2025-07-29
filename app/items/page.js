@@ -1,7 +1,7 @@
 import { Suspense } from "react";
-import ItemsTable from "../_components/ItemsTable";
 import AddButtonModal from "../_components/_ui/client/AddButtonModal";
 import AddItemForm from "../_components/client/AddItemForm";
+import ItemsTable from "../_components/server/ItemsTable";
 import UseAuth from "../_hooks/useAuth";
 
 export const metadata = {
@@ -29,6 +29,8 @@ export default async function Items() {
       <Suspense fallback={<ItemsTable.Fallback />}>
         <ItemsTable />
       </Suspense>
+      {/* 
+      <TestForm /> */}
     </div>
   );
 }

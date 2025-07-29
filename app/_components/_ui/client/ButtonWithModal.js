@@ -1,6 +1,6 @@
 "use client";
 
-import Button from "../Button";
+import Button from "../server/Button";
 import Modal from "./Modal";
 
 export default function ButtonWithModal({

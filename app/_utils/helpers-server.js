@@ -1,13 +1,22 @@
 "server-only";
 
-import entityConfig from "../_lib/appConfig.js";
-import { createDataService } from "../_lib/dataServices.js";
+import { createDataService } from "../_lib/server/dataServices.js";
+import entityServerOnlyConfig from "../_lib/server/entityServerOnlyConfig.js";
+
+// function getEntityServerConfig(entity) {
+//   const config = {
+//     ...entityClientConfig(entity),
+//     ...entityServerOnlyConfig(entity),
+//   };
+
+//   return config;
+// }
 
 // Helper function to fetch entity data using appConfig (SERVER-ONLY)
 export async function getData(entity, ...params) {
   // console.log(entity);
   const dataService = createDataService();
-  const { get } = entityConfig(entity);
+  const { get } = entityServerOnlyConfig(entity);
 
   if (!get) {
     throw new Error(
@@ -23,7 +32,7 @@ export async function getData(entity, ...params) {
 
 // Helper function to fetch only dependency data (no main entity) (SERVER-ONLY)
 export async function getDependenciesData(entity, entityParams = {}) {
-  const config = entityConfig(entity);
+  const config = getEntityServerConfig(entity);
   const dependencies = config?.dependencies || [];
 
   // console.log(config);
@@ -61,7 +70,7 @@ export async function getDependenciesData(entity, entityParams = {}) {
 
 // Helper function to fetch entity data with its dependencies (SERVER-ONLY)
 export async function getDataAndDependencies(entity, entityParams = {}) {
-  const config = entityConfig(entity);
+  const config = getEntityServerConfig(entity);
   const dependencies = config?.dependencies || [];
 
   // Create all fetch promises with entity names

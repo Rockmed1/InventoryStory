@@ -8,12 +8,12 @@ import { ChevronDownIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createContext, use, useCallback, useMemo } from "react";
+import MenuWithModal from "./MenuWithModal";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "./Collapsible";
-import MenuWithModal from "./MenuWithModal";
+} from "./shadcn-Collapsible";
 
 // import { createContext, use, useState } from "react";
 

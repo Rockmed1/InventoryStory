@@ -10,9 +10,15 @@ import {
 import { useClientData } from "@/app/_utils/helpers-client";
 import { useQuery } from "@tanstack/react-query";
 import SpinnerMini from "../server/SpinnerMini";
-import { FormControl } from "./shadcn-Form";
 
-export function DropDown({ field, entity, name, label }) {
+export function DropDown({
+  entity,
+  name,
+  required = true,
+  defaultValue = null,
+  label,
+  onChange,
+}) {
   const {
     data: entityList,
     isLoading,
@@ -45,12 +51,12 @@ export function DropDown({ field, entity, name, label }) {
   }
 
   //Find the selected entity name for display
-  // const selected =
-  //   defaultValue && entityList
-  //     ? entityList.find(
-  //         (entity) => entity.id.toString() === defaultValue.toString(),
-  //       )
-  //     : null;
+  const selected =
+    defaultValue && entityList
+      ? entityList.find(
+          (entity) => entity.id.toString() === defaultValue.toString(),
+        )
+      : null;
 
   // console.log(defaultValue);
   // console.log(selected);
@@ -75,17 +81,19 @@ export function DropDown({ field, entity, name, label }) {
 
   return (
     <Select
-      onValueChange={field.onChange}
-      // name={name}
-      defaultValue={field.value}>
-      <FormControl>
-        <SelectTrigger>
-          <SelectValue
-            placeholder={`Select ${label}`}
-            // defaultValue={selected?.name}
-          />
-        </SelectTrigger>
-      </FormControl>
+      onValueChange={(value) => {
+        // console.log("🎯 Selected value:", value);
+        onChange?.(value);
+      }}
+      name={name}
+      defaultValue={defaultValue?.toString()}
+      required={required}>
+      <SelectTrigger className="w-m">
+        <SelectValue
+          placeholder={`Select ${label}`}
+          defaultValue={selected?.name}
+        />
+      </SelectTrigger>
       <SelectContent className="z-[2000]">
         {entityList.map((_) => (
           <SelectItem key={_.id} value={_.id.toString()}>

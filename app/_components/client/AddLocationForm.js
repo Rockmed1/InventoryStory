@@ -3,11 +3,11 @@
 import Form from "@/app/_components/_ui/client/Form";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { createLocation } from "../../_lib/actions";
+import { createLocation } from "../../_lib/server/actions";
 import { getClientValidationSchema } from "../../_lib/ZodSchemas";
 import { useAppStore } from "../../_store/AppProvider";
-import Button from "../_ui/Button";
-import SpinnerMini from "../_ui/SpinnerMini";
+import Button from "../_ui/server/Button";
+import SpinnerMini from "../_ui/server/SpinnerMini";
 
 /**
  * A form for adding a new location, designed to be used within a modal.

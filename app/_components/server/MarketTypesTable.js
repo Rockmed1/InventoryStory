@@ -1,8 +1,8 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { getQueryClient } from "../_store/queryClient";
-import { getData } from "../_utils/helpers-server";
-import TableLoading from "./_ui/client/TableLoading";
-import MarketTypesTableClient from "./client/MarketTypesTableClient";
+import { getQueryClient } from "../../_store/queryClient";
+import { getData } from "../../_utils/helpers-server";
+import TableLoading from "../_ui/client/TableLoading";
+import MarketTypesTableClient from "../client/MarketTypesTableClient";
 
 const labels = ["Market Type ID", "Name", "Description"];
 

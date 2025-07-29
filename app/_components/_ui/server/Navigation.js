@@ -1,4 +1,4 @@
-import Logo from "@/app/_components/Logo";
+import Logo from "@/app/_components/server/Logo";
 import Link from "next/link";
 
 export default function Navigation() {

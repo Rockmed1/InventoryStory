@@ -7,13 +7,7 @@ import { useEffect, useState } from "react";
  * A styled input element. Part of the Form compound component.
  * @param {object} props - Any props to pass to the underlying input element.
  */
-export function Input({
-  inputValue,
-  placeholder,
-  className,
-  onChange,
-  ...props
-}) {
+function Input({ inputValue, placeholder, className, onChange, ...props }) {
   const [value, setValue] = useState(inputValue || "");
 
   useEffect(() => {

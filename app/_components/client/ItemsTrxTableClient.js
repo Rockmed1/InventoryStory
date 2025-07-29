@@ -2,7 +2,7 @@
 
 import { ArrowsRightLeftIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { getClientData } from "../../_utils/helpers-client";
+import { useClientData } from "../../_utils/helpers-client";
 import Table from "../_ui/client/Table";
 
 const labels = [
@@ -39,9 +39,9 @@ export default function ItemsTrxTableClient({
     queryKey: ["itemTrx", type === "simple" ? item_trx_id : "all"],
     queryFn: () => {
       if (type === "simple" && item_trx_id) {
-        return getClientData("itemTrx", item_trx_id);
+        return useClientData("itemTrx", item_trx_id);
       } else {
-        return getClientData("itemTrx");
+        return useClientData("itemTrx");
       }
     },
   });

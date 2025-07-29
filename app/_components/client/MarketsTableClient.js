@@ -3,7 +3,7 @@
 import { PencilIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import StoreHydrator from "../../_store/StoreHydrator";
-import { getClientData } from "../../_utils/helpers-client";
+import { useClientData } from "../../_utils/helpers-client";
 import Table from "../_ui/client/Table";
 import EditMarketForm from "./EditMarketForm";
 
@@ -21,7 +21,7 @@ const rowActions = [
 export default function MarketsTableClient() {
   const { data, isFetching } = useSuspenseQuery({
     queryKey: ["market"],
-    queryFn: () => getClientData("market"),
+    queryFn: () => useClientData("market"),
   });
 
   const displayData = data.map(

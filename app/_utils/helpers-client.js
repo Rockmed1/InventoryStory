@@ -1,4 +1,4 @@
-import entityConfig from "../_lib/appConfig.js";
+import entityClientConfig from "../_lib/client/entityClientConfig.js";
 
 /**
  * A generic, client-side data fetching function.
@@ -10,7 +10,7 @@ import entityConfig from "../_lib/appConfig.js";
  * @returns {Promise<any>} A promise that resolves to the fetched data.
  * @throws {Error} If the network response is not ok.
  */
-export async function getClientData(entity, id /* , options = {} */) {
+export async function useClientData(entity, id /* , options = {} */) {
   let url;
 
   if (id) {
@@ -56,27 +56,36 @@ export function destructuredFormData(state, formData) {
   return { ...state, ...formDataObject };
 }
 
+export function createFormData(data) {
+  //Convert RHF data to FormData for server action compatibility
+  const formData = new FormData();
+  Object.entries(data).forEach(([Key, value]) => {
+    formData.append(Key, value);
+  });
+  return formData;
+}
+
 /*  */
 export function parseIdAndName(data) {
   if (!Array.isArray(data)) {
     return [];
   }
-  return data.map((item) => `${item.id} - ${item.name}`);
+  return data.map((_) => `${_.id} - ${_.name}`);
 }
 
 export function removeLocDesc(data) {
   if (!Array.isArray(data)) {
     return [];
   }
-  return data.map((item) => ({
-    id: item.id,
-    name: item.name,
+  return data.map((_) => ({
+    id: _.id,
+    name: _.name,
   }));
 }
 
 // Helper function to get field mappings from appConfig (CLIENT-SAFE)
 export function getFieldMappings(entity) {
-  const config = entityConfig(entity);
+  const config = entityClientConfig(entity);
   if (!config || !config.fieldMappings) {
     throw new Error(`Field mappings for '${entity}' not found in appConfig.`);
   }

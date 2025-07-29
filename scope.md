@@ -148,3 +148,41 @@ commonly used
 ## Maintain and Update
 
 - indtall analytics software ( google analytics, fathom...etc.)
+
+## Form future flow
+
+│ User Submits Form │
+│ ↓ │
+│ JavaScript Available? │
+│ ↓ │
+│ ┌─── YES ────┐ │
+│ ↓ ↓ │
+│ Enhanced Mutation │
+│ Submission Available? │
+│ Works? ↓ │
+│ ↓ ┌─ YES ─┐ │
+│ YES ↓ ↓ │
+│ ↓ Use Fails? │
+│ Success Mutation ↓ │
+│ ↓ ↓ YES │
+│ END Success ↓ │
+│ ↓ Fall back to │
+│ END Native Form │
+│ ↓ │
+│ useEffect │
+│ Handles │
+│ Response │
+│ ↓ │
+│ END │
+│ │
+│ JavaScript Disabled? │
+│ ↓ │
+│ YES │
+│ ↓ │
+│ Native Form │
+│ Submission │
+│ ↓ │
+│ Page Refresh │
+│ (No useEffect) │
+│ ↓ │
+│ END

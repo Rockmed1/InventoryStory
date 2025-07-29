@@ -2,8 +2,8 @@
 
 import { revalidateTag } from "next/cache";
 import { connection } from "next/server";
-import UseAuth from "../_hooks/useAuth";
-import { destructuredFormData } from "../_utils/helpers";
+import UseAuth from "../../_hooks/useAuth";
+import { destructuredFormData } from "../../_utils/helpers";
 import { supabase } from "./supabase";
 
 export default async function dummyServerAction(param) {

@@ -1,5 +1,5 @@
-import ItemsTrxDetailsTable from "@/app/_components/ItemsTrxDetailsTable";
-import ItemsTrxTable from "@/app/_components/ItemsTrxTable";
+import ItemsTrxDetailsTable from "@/app/_components/server/ItemsTrxDetailsTable";
+import ItemsTrxTable from "@/app/_components/server/ItemsTrxTable";
 import Link from "next/link";
 import { Suspense } from "react";
 

@@ -5,7 +5,7 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "./Collapsible";
+} from "./shadcn-Collapsible";
 import {
   Table,
   TableBody,

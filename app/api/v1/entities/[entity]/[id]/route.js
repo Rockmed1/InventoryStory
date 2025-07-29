@@ -14,8 +14,8 @@ const ALLOWED_ENTITIES = [
 ];
 
 export async function GET(request, { params }) {
+  const { entity, id } = await params;
   try {
-    const { entity, id } = await params;
     const { searchParams } = new URL(request.url);
 
     // Validate entity

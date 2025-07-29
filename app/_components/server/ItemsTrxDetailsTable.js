@@ -1,5 +1,5 @@
-import Table from "./_ui/client/Table";
-import ItemsTrxDetailsTableClient from "./client/ItemsTrxDetailsTableClient";
+import Table from "../_ui/client/Table";
+import ItemsTrxDetailsTableClient from "../client/ItemsTrxDetailsTableClient";
 
 const labels = [
   "Line #",

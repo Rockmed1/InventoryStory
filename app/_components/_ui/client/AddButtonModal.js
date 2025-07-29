@@ -1,7 +1,7 @@
 "use client";
 
 import { BoltIcon } from "@heroicons/react/24/outline";
-import Button from "../Button";
+import Button from "../server/Button";
 import Modal from "./Modal";
 
 export default function AddButtonModal({

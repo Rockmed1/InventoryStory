@@ -3,12 +3,12 @@
 import Form from "@/app/_components/_ui/client/Form";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { updateItem } from "../../_lib/actions";
+import { updateItem } from "../../_lib/server/actions";
 import { getClientValidationSchema } from "../../_lib/ZodSchemas";
 import { useAppStore } from "../../_store/AppProvider";
-import Button from "../_ui/Button";
 import { DropDown } from "../_ui/client/DropDown";
-import SpinnerMini from "../_ui/SpinnerMini";
+import Button from "../_ui/server/Button";
+import SpinnerMini from "../_ui/server/SpinnerMini";
 
 /**
  * A form for editing an existing item, designed to be used within a modal.

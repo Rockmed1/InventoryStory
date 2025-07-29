@@ -1,4 +1,4 @@
-import SpinnerMini from "../_components/_ui/SpinnerMini";
+import SpinnerMini from "../_components/_ui/server/SpinnerMini";
 
 export default function loading() {
   return (

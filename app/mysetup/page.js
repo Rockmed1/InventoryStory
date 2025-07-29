@@ -1,18 +1,18 @@
 import { Suspense } from "react";
-import Card from "../_components/_ui/Card";
+import Card from "../_components/_ui/server/Card";
 import AddButtonModal from "../_components/_ui/client/AddButtonModal";
-import BinsTable from "../_components/BinsTable";
 import AddBinForm from "../_components/client/AddBinForm";
 import AddItemClassForm from "../_components/client/AddItemClassForm";
 import AddLocationForm from "../_components/client/AddLocationForm";
 import AddMarketForm from "../_components/client/AddMarketForm";
 import AddMarketTypeForm from "../_components/client/AddMarketTypeForm";
 import AddTrxTypeForm from "../_components/client/AddTrxTypeForm";
-import ItemClassesTable from "../_components/ItemClassesTable";
-import LocationsTable from "../_components/locationsTable";
-import MarketsTable from "../_components/MarketsTable";
-import MarketTypesTable from "../_components/MarketTypesTable";
-import TrxTypesTable from "../_components/TrxTypesTable";
+import BinsTable from "../_components/server/BinsTable";
+import ItemClassesTable from "../_components/server/ItemClassesTable";
+import LocationsTable from "../_components/server/locationsTable";
+import MarketsTable from "../_components/server/MarketsTable";
+import MarketTypesTable from "../_components/server/MarketTypesTable";
+import TrxTypesTable from "../_components/server/TrxTypesTable";
 import UseAuth from "../_hooks/useAuth";
 
 export const revalidate = 0; // this will make the page dynamic and revalidate cache every request

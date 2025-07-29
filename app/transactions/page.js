@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import AddButtonModal from "../_components/_ui/client/AddButtonModal";
 import AddItemTrxForm from "../_components/client/AddItemTrxForm";
-import ItemsTrxTable from "../_components/ItemsTrxTable";
+import ItemsTrxTable from "../_components/server/ItemsTrxTable";
 import UseAuth from "../_hooks/useAuth";
 
 export const metadata = {

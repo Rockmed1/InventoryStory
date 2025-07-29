@@ -1,6 +1,6 @@
-import Footer from "@/app/_components/_ui/Footer";
-import Loader from "@/app/_components/_ui/Loader";
-import Navigation from "@/app/_components/_ui/Navigation";
+import Footer from "@/app/_components/_ui/server/Footer";
+import Loader from "@/app/_components/_ui/server/Loader";
+import Navigation from "@/app/_components/_ui/server/Navigation";
 import "@/app/_styles/globals.css";
 //fonts using nextJs
 import { Geist } from "next/font/google";

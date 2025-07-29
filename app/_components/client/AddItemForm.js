@@ -1,33 +1,43 @@
 "use client";
 
-import Form from "@/app/_components/_ui/client/Form";
-import { useActionState, useEffect, useState } from "react";
+import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
+import { createFormData } from "@/app/_utils/helpers-client";
+import { DevTool } from "@hookform/devtools";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useActionState } from "react";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { createItem } from "../../_lib/actions";
-import { getClientValidationSchema } from "../../_lib/ZodSchemas";
-import { useAppStore } from "../../_store/AppProvider";
-import Button from "../_ui/Button";
+import { createItem } from "../../_lib/server/actions";
 import { DropDown } from "../_ui/client/DropDown";
-import SpinnerMini from "../_ui/SpinnerMini";
-
-/**
- * A form for adding a new item, designed to be used within a modal.
- * It handles form submission using a server action and displays success notifications.
- *
- * @param {Function} [onCloseModal] - An optional function to close the parent modal on successful submission.
- */
+import { Button } from "../_ui/client/shadcn-Button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../_ui/client/shadcn-Form";
+import { Input } from "../_ui/client/shadcn-Input";
+import Spinner from "../_ui/server/Spinner";
+import SpinnerMini from "../_ui/server/SpinnerMini";
 
 export default function AddItemForm({ onCloseModal }) {
-  // const ORG_UUID = "ceba721b-b8dc-487d-a80c-15ae9d947084";
-  // const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
+  const queryClient = useQueryClient();
 
-  // 1- Get existing items from the store for validation
-  const existingItems = useAppStore((state) => state.item || []);
+  // 2- get the validation schema with refreshed validation data
+  const { schema } = useValidationSchema("item", "create");
 
+  console.log("AddItemForm schema: ", schema);
+
+  //3- server action fallback for progressive enhancement (works withour JS)
   const initialState = {
     success: null,
     zodErrors: null,
     message: null,
+    // formData: null,
   };
 
   const [formState, formAction, pending] = useActionState(
@@ -35,92 +45,250 @@ export default function AddItemForm({ onCloseModal }) {
     initialState,
   );
 
-  const [clientFormState, setClientFormState] = useState(initialState);
+  //4- Enhanced form management (JS available)
+  const form = useForm({
+    resolver: schema ? zodResolver(schema) : null,
+    defaultValues: {
+      itemClassId: "",
+      nameField: "",
+      descField: "",
+    },
+    mode: "onBlur", //onTouched
+  });
 
-  const currentFormState = clientFormState?.message
-    ? clientFormState
-    : formState;
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { isSubmitting, isValid, errors },
+    setError,
+    clearErrors,
+    reset,
+  } = form;
 
-  useEffect(() => {
-    if (formState?.success) {
-      toast.success(`Item ${formState.formData?._item_name} has been created.`);
-      setClientFormState(initialState); //reset client form state
-      onCloseModal?.();
-    }
-  }, [formState, onCloseModal]);
+  //5- Enhanced Mutation  (JS available)
+  //! maybe extract into cusom hook
 
-  function handleSubmit(e) {
-    // CLIENT VALIDATE FORM DATA
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData);
-    // console.log(data);
+  const mutation = useMutation({
+    mutationFn: async (data) => {
+      //Convert RHF data to FormData for server action compatibility (incase js is unavailable the default data passed is formData. if only js then this conversion will not be needed )
+      const formData = createFormData(data);
 
-    // 2- get the validation schema with refreshed validation data
+      //Call server action directly
+      const result = await createItem(null, formData);
 
-    const schema = getClientValidationSchema("item", existingItems, "create");
+      //Transform server action response for mutation
+      if (!result.success) {
+        const error = new Error(result.message || "Server error occured");
+        error.zodErrors = result.zodErrors;
+        // error.formData = result.formData;
+        throw error;
+      }
 
-    // const itemSchemaWithValidation = schema.getClientValidationSchema(
-    //   "item",
-    //   existingItems,
-    //   "create",
-    // );
+      return result;
+    },
 
-    // 3- perform combined validation
-    const validationResults = schema.safeParse(data);
+    // Optimistic update:
+    onMutate: async (newItem) => {
+      //cancel ongoing refetches
+      await queryClient.cancelQueries({ queryKey: ["item"] });
 
-    // 4- if form data did not pass client validation
-    if (!validationResults.success) {
-      e.preventDefault();
-      setClientFormState({
-        success: false,
-        formData: data,
-        zodErrors: validationResults.error.flatten().fieldErrors,
-        message: "Fix these errors to proceed.",
+      //Snapshot previous values
+      const previousValues = queryClient.getQueryData(["item"]);
+
+      //optimistically update cache
+      queryClient.setQueryData(["item"], (old = []) => [
+        ...old,
+        { ...newItem, id: `temp-${Date.now()}`, optimistic: true },
+      ]);
+
+      return { previousValues };
+    },
+
+    //Success Handling
+    onSuccess: (result, variables) => {
+      //Replace optimistic update with real data
+      // queryClient.setQueryData(["item"], (old = []) =>
+      //   old.map((item) =>
+      //     item.optimistic && item.nameField === variables.item_name
+      //       ? { ...result.formData, id: result.id }
+      //       : item,
+      //   ),
+      // );
+
+      //! may be should refetch
+      queryClient.invalidateQueries({
+        queryKey: ["item"],
+        refetchType: "none", //don't show loading state
       });
-    } else {
-      // if passed client validation then reset form state
-      setClientFormState(initialState);
+      //UI feedback //! may be grab the newly created id here...
+      toast.success(`Item ${variables.nameField} was created successfully!`);
+      form.reset();
+      onCloseModal?.();
+    },
+
+    //Error Handling (JS Enhanced)
+    onError: (error, variables, context) => {
+      //Roll back optimistic update
+      if (context?.previousValues) {
+        queryClient.setQueryData(["item"], context.previousValues);
+      }
+
+      //! may be make a default to redirect the user to login page if the error is 401
+      //Handle Different error types
+      if (error.zodErrors) {
+        //Set field-specific validation errors in RHF
+        Object.entries(error.zodErrors).forEach(([field, errors]) =>
+          form.setError(field, {
+            type: "server",
+            message: Array.isArray(errors) ? errors[0] : errors,
+          }),
+        );
+        //! may be put this message on the top of the form
+        toast.error("Please fix the validation errors");
+      } else if (error.name === "NetworkError") {
+        //Network specific error handling
+        toast.error(
+          "Network error. Please check your connection and try again.",
+        );
+        form.setError("root", {
+          type: "network",
+          message: "Connection failed. Please try again.",
+        });
+      } else {
+        //Generic server errors
+        toast.error(error.message || "Failed to create item");
+        form.setError("root", {
+          type: "server",
+          message: error.message || "An unexpected error occured",
+        });
+      }
+    },
+
+    //retry logic
+    retry: (failureCount, error) => {
+      //Retry network errors but not validation errors
+      return error.name === "NetworkError" && failureCount < 3;
+    },
+  });
+
+  const { mutate, isPending, isSuccess, error } = mutation;
+  //6- Progressive enhancement submit handler
+
+  // const [clientFormState, setClientFormState] = useState(initialState);
+
+  // const currentFormState = clientFormState?.message
+  //   ? clientFormState
+  //   : formState;
+
+  function onSubmit(data, e) {
+    console.log("Form submitted: ", data);
+
+    // 🎯 BINARY DECISION: JavaScript Available & Mutation Ready?
+    const isJavaScriptReady =
+      mutation && !mutation.isPending && typeof mutation.mutate === "function";
+
+    if (isJavaScriptReady) {
+      // ✅ YES: Enhanced Submission
+      e.preventDefault();
+      mutation.mutate(data);
     }
+    // ❌ NO: Native Form Submission (let it proceed naturally)
   }
 
-  // console.log(currentFormState);
+  // Add loading check
+  if (!schema) {
+    return (
+      <div>
+        <Spinner />
+      </div>
+    );
+  }
+
   return (
-    <Form action={formAction} onSubmit={handleSubmit}>
-      <Form.ZodErrors
-        error={formState?.["message"] || clientFormState?.message}
-      />
-      <Form.InputSelect name={"_item_class_id"}>
-        <Form.Label>Select Item Class *</Form.Label>
-        <DropDown
-          parent="itemClass"
-          name="_item_class_id"
-          label="item class"
-          required={true}
-        />
-      </Form.InputSelect>
-      <Form.InputWithLabel
-        name={"_item_name"}
-        inputValue={currentFormState.formData?._item_name}
-        placeholder="Enter Item name"
-        error={currentFormState?.zodErrors?._item_name}>
-        Item Name *
-      </Form.InputWithLabel>
-      <Form.InputWithLabel
-        name={"_item_desc"}
-        inputValue={currentFormState.formData?._item_desc}
-        placeholder="Enter Item description"
-        error={currentFormState?.zodErrors?._item_desc}>
-        Item Description *
-      </Form.InputWithLabel>
-      <Form.Footer>
-        <Button disabled={pending} variant="secondary" onClick={onCloseModal}>
-          <span> Cancel</span>
-        </Button>
-        <Button disabled={pending} variant="secondary" type="submit">
-          {pending && <SpinnerMini />}
-          <span> Add Item</span>
-        </Button>
-      </Form.Footer>
-    </Form>
+    <>
+      {
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            action={formAction}
+            method="POST"
+            className="space-y-8">
+            {/* Global error display */}
+            {(form.formState.errors.root || formState.message) && (
+              <div className="error-banner rounded border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+                {form.formState.errors.root?.message || formState?.message}
+              </div>
+            )}
+
+            <FormField
+              control={form.control}
+              name="itemClassId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Item Class</FormLabel>
+                  <DropDown
+                    field={field}
+                    entity="itemClass"
+                    name="itemClassId"
+                    label="item class"
+                  />
+                  <FormDescription>Pick an item class.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="nameField"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Item name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="shadcn" {...field} />
+                  </FormControl>
+                  <FormDescription>Enter new item name</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="descField"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Item description</FormLabel>
+                  <FormControl>
+                    <Input placeholder="shadcn" {...field} />
+                  </FormControl>
+                  <FormDescription>Enter new item name</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex items-center justify-end gap-3">
+              <Button
+                disabled={mutation.isPending || !form.formState.isValid}
+                variant="outline"
+                type="submit">
+                {mutation.isPending && <SpinnerMini />}
+                <span> Add Item</span>
+              </Button>
+
+              <Button
+                type="button"
+                onClick={onCloseModal}
+                variant="destructive"
+                disabled={mutation.isPending}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </Form>
+      }
+      <DevTool control={form.control} />
+    </>
   );
 }

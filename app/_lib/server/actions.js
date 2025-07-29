@@ -2,9 +2,16 @@
 
 import { revalidateTag } from "next/cache";
 // import { auth } from "./auth"; // Placeholder for your actual auth function
+import { dbReadyData, formDataTransformer } from "../transformers";
+import { appContextSchema, getBaseSchema } from "../ZodSchemas";
 import { supabase } from "./supabase";
-import { formDataTransformer } from "./transformers";
-import { appContextSchema, getSchema } from "./ZodSchemas";
+
+/**
+ * Massages validated data to match database field mappings
+ * @param {object} validatedData - The data that passed Zod validation
+ * @param {string} entity - The entity type to get field mappings for
+ * @returns {object} - Data with field mapping keys replaced with actual database field names
+ */
 
 /**
  * A factory function to create standardized database server actions.
@@ -53,7 +60,7 @@ function dbAction(rpcName, entity, operation) {
       destructuredFormData = Object.fromEntries(formData);
     }
 
-    const schema = getSchema(entity, operation);
+    const schema = getBaseSchema(entity, operation);
 
     const validatedData = schema.safeParse({
       ...destructuredFormData,
@@ -68,7 +75,10 @@ function dbAction(rpcName, entity, operation) {
       };
     }
 
-    const _data = { _org_uuid, _usr_uuid, ...validatedData.data };
+    // Massage the validated data to match database field mappings
+    const readyData = dbReadyData(destructuredFormData, entity);
+
+    const _data = { _org_uuid, _usr_uuid, ...readyData };
 
     // console.log(_data);
     // await connection();

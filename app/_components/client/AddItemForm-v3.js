@@ -1,29 +1,28 @@
 "use client";
 
 import Form from "@/app/_components/_ui/client/Form";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { createItem } from "../../_lib/server/actions";
+import { getClientValidationSchema } from "../../_lib/ZodSchemas";
+import { useAppStore } from "../../_store/AppProvider";
 import { DropDown } from "../_ui/client/DropDown";
 import Button from "../_ui/server/Button";
 import SpinnerMini from "../_ui/server/SpinnerMini";
-import { ZodErrors } from "../_ui/server/ZodError";
 
 /**
  * A form for adding a new item, designed to be used within a modal.
  * It handles form submission using a server action and displays success notifications.
  *
- * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
+ * @param {Function} [onCloseModal] - An optional function to close the parent modal on successful submission.
  */
 
 export default function AddItemForm({ onCloseModal }) {
   // const ORG_UUID = "ceba721b-b8dc-487d-a80c-15ae9d947084";
   // const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
 
-  //const initialState = {
-  // _org_uuid: ORG_UUID,
-  // _usr_uuid: USR_UUID,
-  //};
+  // 1- Get existing items from the store for validation
+  const existingItems = useAppStore((state) => state.item || []);
 
   const initialState = {
     success: null,
@@ -36,36 +35,60 @@ export default function AddItemForm({ onCloseModal }) {
     initialState,
   );
 
-  console.log(formState);
+  const [clientFormState, setClientFormState] = useState(initialState);
+
+  const currentFormState = clientFormState?.message
+    ? clientFormState
+    : formState;
 
   useEffect(() => {
     if (formState?.success) {
       toast.success(`Item ${formState.formData?._item_name} has been created.`);
+      setClientFormState(initialState); //reset client form state
       onCloseModal?.();
     }
   }, [formState, onCloseModal]);
 
   function handleSubmit(e) {
+    // CLIENT VALIDATE FORM DATA
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData);
-    const validationResults = itemFormSchema.safeParse(data);
+    // console.log(data);
 
+    // 2- get the validation schema with refreshed validation data
+
+    const schema = getClientValidationSchema("item", existingItems, "create");
+
+    // const itemSchemaWithValidation = schema.getClientValidationSchema(
+    //   "item",
+    //   existingItems,
+    //   "create",
+    // );
+
+    // 3- perform combined validation
+    const validationResults = schema.safeParse(data);
+
+    // 4- if form data did not pass client validation
     if (!validationResults.success) {
       e.preventDefault();
-      return {
-        formState: {
-          success: false,
-          formData: destructuredFormData,
-          zodErrors: validationResults.error.flatten().fieldErrors,
-          message: "Fix these errors to proceed.",
-        },
-      };
+      setClientFormState({
+        success: false,
+        formData: data,
+        zodErrors: validationResults.error.flatten().fieldErrors,
+        message: "Fix these errors to proceed.",
+      });
+    } else {
+      // if passed client validation then reset form state
+      setClientFormState(initialState);
     }
   }
 
+  // console.log(currentFormState);
   return (
     <Form action={formAction} onSubmit={handleSubmit}>
-      <Form.ZodErrors error={formState?.["message"]} />
+      <Form.ZodErrors
+        error={formState?.["message"] || clientFormState?.message}
+      />
       <Form.InputSelect name={"_item_class_id"}>
         <Form.Label>Select Item Class *</Form.Label>
         <DropDown
@@ -77,21 +100,23 @@ export default function AddItemForm({ onCloseModal }) {
       </Form.InputSelect>
       <Form.InputWithLabel
         name={"_item_name"}
-        inputValue={formState.formData?._item_name}
-        description={<ZodErrors error={formState?.zodErrors?._item_name} />}>
-        Item Name
+        inputValue={currentFormState.formData?._item_name}
+        placeholder="Enter Item name"
+        error={currentFormState?.zodErrors?._item_name}>
+        Item Name *
       </Form.InputWithLabel>
       <Form.InputWithLabel
         name={"_item_desc"}
-        inputValue={formState.formData?._item_desc}
-        description={<ZodErrors error={formState?.zodErrors?._item_desc} />}>
-        Item Description
+        inputValue={currentFormState.formData?._item_desc}
+        placeholder="Enter Item description"
+        error={currentFormState?.zodErrors?._item_desc}>
+        Item Description *
       </Form.InputWithLabel>
       <Form.Footer>
         <Button disabled={pending} variant="secondary" onClick={onCloseModal}>
           <span> Cancel</span>
         </Button>
-        <Button disabled={pending} variant="secondary">
+        <Button disabled={pending} variant="secondary" type="submit">
           {pending && <SpinnerMini />}
           <span> Add Item</span>
         </Button>

@@ -1,14 +1,14 @@
 "use client";
 
 import Form from "@/app/_components/_ui/client/Form";
-import { createTrxType } from "@/app/_lib/actions";
+import { createTrxType } from "@/app/_lib/server/actions";
 import { getClientValidationSchema } from "@/app/_lib/ZodSchemas";
 import { useAppStore } from "@/app/_store/AppProvider";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import Button from "../_ui/Button";
 import { DropDown } from "../_ui/client/DropDown";
-import SpinnerMini from "../_ui/SpinnerMini";
+import Button from "../_ui/server/Button";
+import SpinnerMini from "../_ui/server/SpinnerMini";
 
 /**
  * A form for adding a new transaction type, designed to be used within a modal.
