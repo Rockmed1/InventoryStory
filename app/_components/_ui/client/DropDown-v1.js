@@ -7,7 +7,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/_components/_ui/client/shadcn-Select";
-import { useClientData } from "@/app/_utils/helpers-client";
 import { useQuery } from "@tanstack/react-query";
 import SpinnerMini from "../server/SpinnerMini";
 
@@ -25,7 +24,7 @@ export function DropDown({
     isError,
     error,
   } = useQuery({
-    queryKey: [entity],
+    queryKey: [entity, "all"],
     queryFn: () => useClientData(entity),
     staleTime: 1000 * 60 * 5, // 5 minutes
     select: (data) => {

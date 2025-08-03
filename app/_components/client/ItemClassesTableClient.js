@@ -2,7 +2,6 @@
 
 import { PencilIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useClientData } from "../../_utils/helpers-client";
 import Table from "../_ui/client/Table";
 import EditItemClassForm from "./EditItemClassForm";
 
@@ -19,8 +18,8 @@ const rowActions = [
 
 export default function ItemClassesTableClient() {
   const { data, isFetching } = useSuspenseQuery({
-    queryKey: ["itemClass"],
-    queryFn: () => useClientData("itemClass"),
+    queryKey: ["itemClass", "all"],
+    queryFn: () => useData("itemClass", "all"),
   });
 
   return (

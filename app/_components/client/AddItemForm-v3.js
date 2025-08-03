@@ -1,10 +1,10 @@
 "use client";
 
 import Form from "@/app/_components/_ui/client/Form";
+import { getValidationSchema } from "@/app/_lib/getValidationSchema";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { createItem } from "../../_lib/server/actions";
-import { getClientValidationSchema } from "../../_lib/ZodSchemas";
 import { useAppStore } from "../../_store/AppProvider";
 import { DropDown } from "../_ui/client/DropDown";
 import Button from "../_ui/server/Button";
@@ -57,9 +57,9 @@ export default function AddItemForm({ onCloseModal }) {
 
     // 2- get the validation schema with refreshed validation data
 
-    const schema = getClientValidationSchema("item", existingItems, "create");
+    const schema = getValidationSchema("item", existingItems, "create");
 
-    // const itemSchemaWithValidation = schema.getClientValidationSchema(
+    // const itemSchemaWithValidation = schema.getValidationSchema(
     //   "item",
     //   existingItems,
     //   "create",

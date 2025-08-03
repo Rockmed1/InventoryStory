@@ -1,6 +1,6 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { getQueryClient } from "../../_store/queryClient";
-import { getData } from "../../_utils/helpers-server";
+import { getServerData } from "../../_utils/helpers-server";
 import TableLoading from "../_ui/client/TableLoading";
 import ItemsTrxTableClient from "../client/ItemsTrxTableClient";
 import ItemsTrxDetailsTable from "./ItemsTrxDetailsTable";
@@ -26,9 +26,9 @@ export default async function ItemsTrxTable({
     queryKey: ["itemTrx", type === "simple" ? item_trx_id : "all"],
     queryFn: () => {
       if (type === "simple" && item_trx_id) {
-        return getData("itemTrx", item_trx_id);
+        return getServerData("itemTrx", item_trx_id);
       } else {
-        return getData("itemTrx");
+        return getServerData("itemTrx");
       }
     },
   });
@@ -37,7 +37,7 @@ export default async function ItemsTrxTable({
   if (item_trx_id) {
     queryClient.prefetchQuery({
       queryKey: ["itemTrxDetails", item_trx_id],
-      queryFn: () => getData("itemTrxDetails", item_trx_id),
+      queryFn: () => getServerData("itemTrxDetails", item_trx_id),
     });
   }
 

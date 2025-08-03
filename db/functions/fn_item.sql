@@ -963,7 +963,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_items(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid'];
+	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_item_id'];
 	_is_context_set BOOLEAN;
 	_result JSON;
 BEGIN
@@ -981,9 +981,11 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_agg(json_build_object('id' , i.item_id , 'name' , i.item_name , 'description' , i.item_desc , 'item_class_name' , i.item_class_name , 'item_class_id' , i.item_class_id , 'item_QOH' , COALESCE(i.qoh , 0)))
+		INTO _result json_agg(json_build_object('id' , i.item_id , 'name' , i.item_name , 'description' , i.item_desc , 'itemClassName' , i.item_class_name , 'itemClassId' , i.item_class_id , 'itemQOH' , COALESCE(i.qoh , 0)))
 	FROM
-		items.v_item i;
+		items.v_item i
+	WHERE (_data ->> '_item_id' IS NULL)
+		OR i.item_id =(_data ->> '_item_id')::INTEGER;
 
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'No records found in items.item.';
@@ -1019,7 +1021,9 @@ DECLARE
 	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_item_id' , '_item_name' , '_item_desc' , '_item_class_id'];
 	_is_context_set BOOLEAN;
 	_rows_affected INTEGER;
+	_updated_item_id INTEGER;
 	_success BOOLEAN := FALSE;
+	_result_data JSON;
 BEGIN
 	-- verify input parameters and set org context and get usr_id, org_id:
 	SELECT
@@ -1040,19 +1044,29 @@ BEGIN
 		, item_desc = _data ->> '_item_desc'
 		, item_class_id =(_data ->> '_item_class_id')::INTEGER
 	WHERE
-		i.item_id =(_data ->> '_item_id')::INTEGER;
+		i.item_id =(_data ->> '_item_id')::INTEGER
+	RETURNING
+		item_id INTO _updated_item_id;
 	GET DIAGNOSTICS _rows_affected = ROW_COUNT;
 
 	IF _rows_affected = 0 THEN
 		RAISE EXCEPTION 'Item with ID % not found or you do not have permission to update it.' ,(_data ->> '_item_id');
 	END IF;
 
+	SELECT
+		INTO _result_data json_build_object('id' , i.item_id , 'name' , i.item_name , 'description' , i.item_desc , 'itemClassName' , i.item_class_name , 'itemClassId' , i.item_class_id , 'itemQOH' , COALESCE(i.qoh , 0))
+	FROM
+		items.v_item i
+	WHERE
+		i.item_id = _updated_item_id;
+
 	_success := TRUE;
 
-	RETURN json_build_object('success' , _success);
+	RETURN json_build_object('success' , _success , 'data' , _result_data , 'message' , 'Item updated successfully');
+
 EXCEPTION
 	WHEN OTHERS THEN
-		RAISE;
+		RETURN json_build_object('success' , FALSE , 'error' , json_build_object('code' , SQLSTATE , 'message' , SQLERRM , 'function' , 'fn_update_item'));
 END;
 
 $$;

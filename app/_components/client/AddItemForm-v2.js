@@ -56,7 +56,7 @@ export default function AddItemForm({ onCloseModal }) {
     // CLIENT VALIDATE FORM DATA
 
     // 2- Refresh the data used in validation
-    const itemSchemaWithValidation = schema.getClientValidationSchema(
+    const itemSchemaWithValidation = schema.getValidationSchema(
       "items",
       existingItems,
     );

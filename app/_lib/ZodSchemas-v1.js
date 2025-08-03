@@ -240,7 +240,7 @@ export const getSchema = (entity, operation) => {
 };
 
 // 5. validation function
-export const getClientValidationSchema = (
+export const getValidationSchema = (
   entity,
   dataDependencies = {},
   operation = "create",

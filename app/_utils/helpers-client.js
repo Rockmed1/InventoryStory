@@ -1,5 +1,3 @@
-import entityClientConfig from "../_lib/client/entityClientConfig.js";
-
 /**
  * A generic, client-side data fetching function.
  * It constructs a URL to the optimized API routes and fetches data.
@@ -10,10 +8,10 @@ import entityClientConfig from "../_lib/client/entityClientConfig.js";
  * @returns {Promise<any>} A promise that resolves to the fetched data.
  * @throws {Error} If the network response is not ok.
  */
-export async function useClientData(entity, id /* , options = {} */) {
+export async function useData(entity, id = "all" /* , options = {} */) {
   let url;
 
-  if (id) {
+  if (id !== "all") {
     // Use path parameter style for specific IDs
     url = `/api/v1/entities/${entity}/${id}`;
 
@@ -63,35 +61,4 @@ export function createFormData(data) {
     formData.append(Key, value);
   });
   return formData;
-}
-
-/*  */
-export function parseIdAndName(data) {
-  if (!Array.isArray(data)) {
-    return [];
-  }
-  return data.map((_) => `${_.id} - ${_.name}`);
-}
-
-export function removeLocDesc(data) {
-  if (!Array.isArray(data)) {
-    return [];
-  }
-  return data.map((_) => ({
-    id: _.id,
-    name: _.name,
-  }));
-}
-
-// Helper function to get field mappings from appConfig (CLIENT-SAFE)
-export function getFieldMappings(entity) {
-  const config = entityClientConfig(entity);
-  if (!config || !config.fieldMappings) {
-    throw new Error(`Field mappings for '${entity}' not found in appConfig.`);
-  }
-  return {
-    idField: config.fieldMappings.idField,
-    nameField: config.fieldMappings.nameField,
-    displayName: config.displayName,
-  };
 }

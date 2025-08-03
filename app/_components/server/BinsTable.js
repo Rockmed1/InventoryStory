@@ -1,6 +1,6 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { getQueryClient } from "../../_store/queryClient";
-import { getData } from "../../_utils/helpers-server";
+import { getServerData } from "../../_utils/helpers-server";
 import TableLoading from "../_ui/client/TableLoading";
 import BinsTableClient from "../client/BinsTableClient";
 
@@ -11,7 +11,7 @@ export default async function BinsTable() {
 
   queryClient.prefetchQuery({
     queryKey: ["bin"],
-    queryFn: () => getData("bin"),
+    queryFn: () => getServerData("bin"),
   });
 
   return (

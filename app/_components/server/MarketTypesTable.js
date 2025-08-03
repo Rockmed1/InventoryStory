@@ -1,6 +1,6 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { getQueryClient } from "../../_store/queryClient";
-import { getData } from "../../_utils/helpers-server";
+import { getServerData } from "../../_utils/helpers-server";
 import TableLoading from "../_ui/client/TableLoading";
 import MarketTypesTableClient from "../client/MarketTypesTableClient";
 
@@ -11,7 +11,7 @@ export default async function MarketTypesTable() {
 
   queryClient.prefetchQuery({
     queryKey: ["marketType"],
-    queryFn: () => getData("marketType"),
+    queryFn: () => getServerData("marketType"),
   });
 
   return (

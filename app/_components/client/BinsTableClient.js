@@ -3,7 +3,6 @@
 import { PencilIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import StoreHydrator from "../../_store/StoreHydrator";
-import { useClientData } from "../../_utils/helpers-client";
 import Table from "../_ui/client/Table";
 import EditBinForm from "./EditBinForm";
 
@@ -21,7 +20,7 @@ const rowActions = [
 export default function BinsTableClient() {
   const { data, isFetching } = useSuspenseQuery({
     queryKey: ["bin"],
-    queryFn: () => useClientData("bin"),
+    queryFn: () => useData("bin"),
   });
 
   const displayData = data.map(

@@ -1,7 +1,7 @@
 "use client";
 
 import { useOutsideClick } from "@/app/_hooks/useOutsideClick";
-import React, { cloneElement, createContext, use, useState } from "react";
+import React, { createContext, use, useState } from "react";
 import { createPortal } from "react-dom";
 import CloseButton from "./CloseButton";
 
@@ -17,7 +17,8 @@ function StyledModal({ children, ref }) {
   return (
     <div
       ref={ref}
-      className="fixed top-1/2 left-1/2 w-full max-w-[calc(100%-2rem)] -translate-1/2 rounded-xl border border-neutral-300 bg-white p-6 shadow-lg transition-all duration-200 sm:w-md">
+      className="fixed top-1/2 left-1/2 w-full max-w-[calc(100%-2rem)] -translate-1/2 rounded-xl border border-neutral-300 bg-white p-6 shadow-lg transition-all duration-200 sm:w-md"
+    >
       <div>{children}</div>
     </div>
   );
@@ -47,7 +48,9 @@ function Modal({ children }) {
 
 function Open({ children, opensWindowName }) {
   const { open } = use(ModalContext);
-  return cloneElement(children, {
+  // Fix: Use React.createElement instead of cloneElement to preserve context
+  return React.createElement(children.type, {
+    ...children.props,
     onClick: (e) => {
       children.props.onClick?.(e);
       open(opensWindowName);
@@ -80,13 +83,17 @@ function Window({
             <Title>{title}</Title>
             <Description>{description}</Description>
           </div>
+          {/* Fix: Use render prop pattern instead of cloneElement to preserve context */}
           {React.Children.count(children) > 0 && React.isValidElement(children)
-            ? cloneElement(children, { onCloseModal: close })
+            ? React.createElement(children.type, {
+                ...children.props,
+                onCloseModal: close,
+              })
             : children}
         </div>
       </StyledModal>
     </Overlay>,
-    document.body,
+    document.body
   );
 }
 

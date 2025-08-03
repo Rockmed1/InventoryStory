@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 
 /**
  * Custom hook that detects clicks outside of a specified element.
- *
+
  * @param {Function} handler - The function to call when a click outside is detected.
  * @param {boolean} [listenCapturing=true] - Whether to listen for the event during the capturing phase.
  * @returns {React.RefObject} A ref object that should be attached to the element to monitor.
@@ -15,10 +15,13 @@ export function useOutsideClick(handler, listenCapturing = true) {
   //to implement the close modal window when there is a click outside:
   useEffect(() => {
     function handleClick(e) {
-      // console.log("ref.current: ", ref.current);
-      // console.log("e.target: ", e.target);
+      // If the click is on the root html element, it's likely a ghost click
+      // from an unmounted portal component. Ignore it.
+      if (e.target === document.documentElement) {
+        return;
+      }
+
       if (ref.current && !ref.current.contains(e.target)) {
-        // console.log("click outside modal window");
         handler();
       }
     }

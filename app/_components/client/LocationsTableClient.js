@@ -3,7 +3,6 @@
 import { PencilIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import StoreHydrator from "../../_store/StoreHydrator";
-import { useClientData } from "../../_utils/helpers-client";
 import Table from "../_ui/client/Table";
 import EditLocationForm from "./EditLocationForm";
 
@@ -21,7 +20,7 @@ const rowActions = [
 export default function LocationsTableClient() {
   const { data, isFetching } = useSuspenseQuery({
     queryKey: ["location"],
-    queryFn: () => useClientData("location"),
+    queryFn: () => useData("location"),
   });
 
   return (

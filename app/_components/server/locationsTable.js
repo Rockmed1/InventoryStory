@@ -1,6 +1,6 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { getQueryClient } from "../../_store/queryClient";
-import { getData } from "../../_utils/helpers-server";
+import { getServerData } from "../../_utils/helpers-server";
 import TableLoading from "../_ui/client/TableLoading";
 import LocationsTableClient from "../client/LocationsTableClient";
 
@@ -11,7 +11,7 @@ export default async function LocationsTable() {
 
   queryClient.prefetchQuery({
     queryKey: ["location"],
-    queryFn: () => getData("location"),
+    queryFn: () => getServerData("location"),
   });
 
   return (

@@ -1,20 +1,13 @@
-import { getData } from "@/app/_utils/helpers-server";
+import { allowedEntities } from "@/app/_lib/server/entityServerOnlyConfig";
+import { getServerData } from "@/app/_utils/helpers-server";
 import "server-only";
-
-const ALLOWED_ENTITIES = [
-  "item",
-  "bin",
-  "market",
-  "trxType",
-  "itemClass",
-  "location",
-  "marketType",
-  "itemTrx",
-  "itemTrxDetails",
-];
 
 export async function GET(request, { params }) {
   const { entity, id } = await params;
+  const ALLOWED_ENTITIES = allowedEntities();
+
+  console.log("api params: ", `entity: ${entity}`, `id: ${id}`);
+
   try {
     const { searchParams } = new URL(request.url);
 
@@ -31,11 +24,13 @@ export async function GET(request, { params }) {
     // Extract additional query parameters
     // const type = searchParams.get("type");
 
-    // Build parameters array for getData function
+    // Build parameters array for getServerData function
     const queryParams = [Number(id)];
     // if (type) queryParams.push(type === 'simple' ? true : type)
 
-    const data = await getData(entity, ...queryParams);
+    // console.log("queryParams: ", queryParams);
+
+    const data = await getServerData(entity, ...queryParams);
 
     return Response.json(data, {
       headers: {
@@ -43,7 +38,7 @@ export async function GET(request, { params }) {
       },
     });
   } catch (error) {
-    console.error(`API Error for entity ${params.entity}/${params.id}:`, error);
+    console.error(`API Error for entity ${entity}/${id}:`, error);
     return Response.json({ error: "Failed to fetch data" }, { status: 500 });
   }
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import Form from "@/app/_components/_ui/client/Form";
+import { getValidationSchema } from "@/app/_lib/getValidationSchema";
 import { createMarketType } from "@/app/_lib/server/actions";
-import { getClientValidationSchema } from "@/app/_lib/ZodSchemas";
 import { useAppStore } from "@/app/_store/AppProvider";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -48,7 +48,7 @@ export default function AddMarketTypeForm({ onCloseModal }) {
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData);
 
-    const validationSchema = getClientValidationSchema(
+    const validationSchema = getValidationSchema(
       "marketType",
       existingMarketTypes,
       "create",

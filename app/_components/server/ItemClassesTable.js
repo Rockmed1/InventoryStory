@@ -1,6 +1,6 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { getQueryClient } from "../../_store/queryClient";
-import { getData } from "../../_utils/helpers-server";
+import { getServerData } from "../../_utils/helpers-server";
 import TableLoading from "../_ui/client/TableLoading";
 import ItemClassesTableClient from "../client/ItemClassesTableClient";
 
@@ -10,8 +10,8 @@ export default async function ItemClassesTable() {
   const queryClient = getQueryClient();
 
   queryClient.prefetchQuery({
-    queryKey: ["itemClass"],
-    queryFn: () => getData("itemClass"),
+    queryKey: ["itemClass", "all"],
+    queryFn: () => getServerData("itemClass"),
   });
 
   return (

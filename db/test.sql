@@ -307,14 +307,20 @@ SELECT
 FROM
 	items.item;
 
+SELECT
+	*
+FROM
+	utils.fn_get_items(jsonb_build_object('_item_id' , '1000' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084' , '_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1'));
+
 DELETE FROM items.item
 WHERE item.item_id = 1037
-	WHERE item.item_name LIKE 'api%'
-		--* transaction types
-		SELECT
-			*
-		FROM
-			trans.trx_type;
+	WHERE item.item_name LIKE 'api%';
+
+--* transaction types
+SELECT
+	*
+FROM
+	trans.trx_type;
 
 SELECT
 	*

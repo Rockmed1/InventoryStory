@@ -3,7 +3,6 @@
 import { ArrowsRightLeftIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import StoreHydrator from "../../_store/StoreHydrator";
-import { useClientData } from "../../_utils/helpers-client";
 import Table from "../_ui/client/Table";
 import EditItemForm from "./EditItemForm";
 
@@ -26,14 +25,15 @@ const rowActions = [
 
 export default function ItemsTableClient() {
   const { data, isFetching } = useSuspenseQuery({
-    queryKey: ["item"],
-    queryFn: () => useClientData("item"),
+    queryKey: ["item", "all"],
+    queryFn: () => useData("item"),
   });
 
   const displayData = data.map(
-    ({ item_class_id, ...displayFields }) => displayFields,
+    ({ itemClassId, optimistic, ...displayFields }) => displayFields,
   );
 
+  // console.log(displayData);
   return (
     <>
       <Table

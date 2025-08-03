@@ -2,7 +2,8 @@
 
 import { revalidateTag, unstable_cache } from "next/cache";
 import { redirect } from "next/navigation";
-import { appContextSchema } from "../ZodSchemas";
+import { z } from "zod";
+import { appContextSchema } from "../getValidationSchema";
 import { supabase } from "./supabase";
 
 //!Factory pattern is used as it is better for multi-tennant applications caching to ensure org scoped operations
@@ -37,30 +38,39 @@ export function createDataService() {
   }
 
   return {
-    getItems: async (options = {}) => {
+    getItems: async (itemId = "all", options = {}) => {
       const { forceRefresh = false, cacheTTL = 300 } = options;
 
       if (forceRefresh) {
-        revalidateTag(`item-${_org_uuid}`);
+        revalidateTag(`item-${_org_uuid}-${itemId}`);
       }
 
       return unstable_cache(
         async () => {
+          const filteredData = {
+            _item_id: itemId === "all" ? null : itemId,
+            ..._data,
+          };
+          //TODO: confirm fetch from cache first before making db call
+
+          // console.log(filteredData);
           // For testing
           // await new Promise(res => setTimeout(res, 2000));
           const { data, error } = await supabase.rpc("fn_get_items", {
-            _data,
+            _data: filteredData,
           });
           // console.log(data, error);
           if (error) {
             console.error(error);
-            throw new Error("Items could not be loaded.");
+            throw new Error("Item(s) could not be loaded.");
           }
+          // console.log("itemServerData: ", data);
+
           return data || [];
         },
-        [`item-${_org_uuid}`],
+        [`${itemId ? "item-" + itemId : "item"}-${_org_uuid}`],
         {
-          tags: [`item-${_org_uuid}`],
+          tags: [`${itemId ? "item-" + itemId : "item"}-${_org_uuid}`],
           revalidate: cacheTTL,
         },
       )();
@@ -234,6 +244,7 @@ export function createDataService() {
           const { data, error } = await supabase.rpc("fn_get_item_trans", {
             _data: filteredData,
           });
+
           // console.log(data, error);
           if (error) {
             console.log(error);

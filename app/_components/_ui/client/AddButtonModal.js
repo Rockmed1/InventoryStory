@@ -27,7 +27,7 @@ export default function AddButtonModal({
           name={opensWindowName}
           title={buttonLabel}
           description={description}
-          isUseOutsideClick={false}>
+          isUseOutsideClick={true}>
           {children}
         </Modal.Window>
       </Modal>

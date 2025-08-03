@@ -1,10 +1,10 @@
 "use client";
 
 import Form from "@/app/_components/_ui/client/Form";
+import { getValidationSchema } from "@/app/_lib/getValidationSchema";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { createBin } from "../../_lib/server/actions";
-import { getClientValidationSchema } from "../../_lib/ZodSchemas";
 import { useAppStore } from "../../_store/AppProvider";
 import { DropDown } from "../_ui/client/DropDown";
 import Button from "../_ui/server/Button";
@@ -47,11 +47,7 @@ export default function AddBinForm({ onCloseModal }) {
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData);
 
-    const validationSchema = getClientValidationSchema(
-      "bin",
-      existingBins,
-      "create",
-    );
+    const validationSchema = getValidationSchema("bin", existingBins, "create");
     const validationResults = validationSchema.safeParse(data);
 
     if (!validationResults.success) {

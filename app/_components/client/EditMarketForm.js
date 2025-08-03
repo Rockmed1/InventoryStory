@@ -1,10 +1,10 @@
 "use client";
 
 import Form from "@/app/_components/_ui/client/Form";
+import { getValidationSchema } from "@/app/_lib/getValidationSchema";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { updateMarket } from "../../_lib/server/actions";
-import { getClientValidationSchema } from "../../_lib/ZodSchemas";
 import { useAppStore } from "../../_store/AppProvider";
 import { DropDown } from "../_ui/client/DropDown";
 import Button from "../_ui/server/Button";
@@ -81,7 +81,7 @@ export default function EditMarketForm({ id, onCloseModal }) {
     }
 
     // CLIENT VALIDATE FORM DATA for UPDATE operation
-    const validationSchema = getClientValidationSchema(
+    const validationSchema = getValidationSchema(
       "market",
       existingMarkets,
       "update",

@@ -1,5 +1,20 @@
 "server only";
 
+export function allowedEntities() {
+  const ALLOWED_ENTITIES = [
+    "item",
+    "bin",
+    "market",
+    "trxType",
+    "itemClass",
+    "location",
+    "marketType",
+    "itemTrx",
+    "itemTrxDetails",
+  ];
+
+  return ALLOWED_ENTITIES;
+}
 export default function entityServerOnlyConfig(entity) {
   const ENTITY_SERVER_ONLY_CONFIG = {
     item: {

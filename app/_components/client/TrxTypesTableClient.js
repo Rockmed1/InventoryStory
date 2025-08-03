@@ -3,7 +3,6 @@
 import { PencilIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import StoreHydrator from "../../_store/StoreHydrator";
-import { useClientData } from "../../_utils/helpers-client";
 import Table from "../_ui/client/Table";
 import EditTrxTypeForm from "./EditTrxTypeForm";
 
@@ -21,7 +20,7 @@ const rowActions = [
 export default function TrxTypesTableClient() {
   const { data, isFetching } = useSuspenseQuery({
     queryKey: ["trxType"],
-    queryFn: () => useClientData("trxType"),
+    queryFn: () => useData("trxType"),
   });
 
   return (

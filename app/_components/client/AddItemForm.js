@@ -21,23 +21,29 @@ import {
   FormMessage,
 } from "../_ui/client/shadcn-Form";
 import { Input } from "../_ui/client/shadcn-Input";
-import Spinner from "../_ui/server/Spinner";
 import SpinnerMini from "../_ui/server/SpinnerMini";
 
 export default function AddItemForm({ onCloseModal }) {
   const queryClient = useQueryClient();
 
   // 2- get the validation schema with refreshed validation data
-  const { schema } = useValidationSchema("item", "create");
+  const {
+    schema,
+    isLoading: loadingValidation,
+    isError,
+    debug,
+  } = useValidationSchema("item", "create");
 
-  console.log("AddItemForm schema: ", schema);
+  // console.log("AddItemForm schema: ", schema);
+  // console.log("AddItemForm schema loadingValidation?: ", loadingValidation);
+  // console.log("Validation hook isError:", isError);
+  // console.log("Validation hook debug info:", debug);
 
   //3- server action fallback for progressive enhancement (works withour JS)
   const initialState = {
     success: null,
     zodErrors: null,
     message: null,
-    // formData: null,
   };
 
   const [formState, formAction, pending] = useActionState(
@@ -47,7 +53,7 @@ export default function AddItemForm({ onCloseModal }) {
 
   //4- Enhanced form management (JS available)
   const form = useForm({
-    resolver: schema ? zodResolver(schema) : null,
+    resolver: schema ? zodResolver(schema) : undefined,
     defaultValues: {
       itemClassId: "",
       nameField: "",
@@ -55,16 +61,6 @@ export default function AddItemForm({ onCloseModal }) {
     },
     mode: "onBlur", //onTouched
   });
-
-  const {
-    register,
-    control,
-    handleSubmit,
-    formState: { isSubmitting, isValid, errors },
-    setError,
-    clearErrors,
-    reset,
-  } = form;
 
   //5- Enhanced Mutation  (JS available)
   //! maybe extract into cusom hook
@@ -81,6 +77,7 @@ export default function AddItemForm({ onCloseModal }) {
       if (!result.success) {
         const error = new Error(result.message || "Server error occured");
         error.zodErrors = result.zodErrors;
+        error.message = result.message;
         // error.formData = result.formData;
         throw error;
       }
@@ -90,14 +87,14 @@ export default function AddItemForm({ onCloseModal }) {
 
     // Optimistic update:
     onMutate: async (newItem) => {
-      //cancel ongoing refetches
+      //cancel ongoing refetches for all tags including "item"
       await queryClient.cancelQueries({ queryKey: ["item"] });
 
       //Snapshot previous values
-      const previousValues = queryClient.getQueryData(["item"]);
+      const previousValues = queryClient.getQueryData(["item", "all"]);
 
       //optimistically update cache
-      queryClient.setQueryData(["item"], (old = []) => [
+      queryClient.setQueryData(["item", "all"], (old = []) => [
         ...old,
         { ...newItem, id: `temp-${Date.now()}`, optimistic: true },
       ]);
@@ -131,7 +128,7 @@ export default function AddItemForm({ onCloseModal }) {
     onError: (error, variables, context) => {
       //Roll back optimistic update
       if (context?.previousValues) {
-        queryClient.setQueryData(["item"], context.previousValues);
+        queryClient.setQueryData(["item", "all"], context.previousValues);
       }
 
       //! may be make a default to redirect the user to login page if the error is 401
@@ -144,8 +141,8 @@ export default function AddItemForm({ onCloseModal }) {
             message: Array.isArray(errors) ? errors[0] : errors,
           }),
         );
-        //! may be put this message on the top of the form
-        toast.error("Please fix the validation errors");
+        // may be put this message on the top of the form
+        // toast.error("Please fix the validation errors");
       } else if (error.name === "NetworkError") {
         //Network specific error handling
         toast.error(
@@ -157,7 +154,7 @@ export default function AddItemForm({ onCloseModal }) {
         });
       } else {
         //Generic server errors
-        toast.error(error.message || "Failed to create item");
+        // toast.error(error.message || "Failed to create item");
         form.setError("root", {
           type: "server",
           message: error.message || "An unexpected error occured",
@@ -172,14 +169,9 @@ export default function AddItemForm({ onCloseModal }) {
     },
   });
 
-  const { mutate, isPending, isSuccess, error } = mutation;
+  const { mutate, isPending, isSuccess, error: mutationError } = mutation;
+
   //6- Progressive enhancement submit handler
-
-  // const [clientFormState, setClientFormState] = useState(initialState);
-
-  // const currentFormState = clientFormState?.message
-  //   ? clientFormState
-  //   : formState;
 
   function onSubmit(data, e) {
     console.log("Form submitted: ", data);
@@ -196,13 +188,9 @@ export default function AddItemForm({ onCloseModal }) {
     // ❌ NO: Native Form Submission (let it proceed naturally)
   }
 
-  // Add loading check
-  if (!schema) {
-    return (
-      <div>
-        <Spinner />
-      </div>
-    );
+  // Don't render form until schema is loaded and itemToEdit is available  │
+  if (loadingValidation || !schema) {
+    return <div>Loading form...</div>;
   }
 
   return (
@@ -212,10 +200,12 @@ export default function AddItemForm({ onCloseModal }) {
           <form
             onSubmit={form.handleSubmit(onSubmit)}
             action={formAction}
-            method="POST"
+            // method="POST"
             className="space-y-8">
             {/* Global error display */}
-            {(form.formState.errors.root || formState.message) && (
+            {(mutation.error?.message ||
+              form.formState.errors?.root ||
+              formState?.message) && (
               <div className="error-banner rounded border border-red-200 bg-red-50 px-4 py-3 text-red-700">
                 {form.formState.errors.root?.message || formState?.message}
               </div>
@@ -269,14 +259,15 @@ export default function AddItemForm({ onCloseModal }) {
               )}
             />
             <div className="flex items-center justify-end gap-3">
-              <Button
-                disabled={mutation.isPending || !form.formState.isValid}
-                variant="outline"
-                type="submit">
-                {mutation.isPending && <SpinnerMini />}
-                <span> Add Item</span>
-              </Button>
-
+              {loadingValidation || !schema ? null : (
+                <Button
+                  disabled={mutation.isPending || !form.formState.isValid}
+                  variant="outline"
+                  type="submit">
+                  {mutation.isPending && <SpinnerMini />}
+                  <span> Add Item</span>
+                </Button>
+              )}
               <Button
                 type="button"
                 onClick={onCloseModal}

@@ -1,4 +1,4 @@
-import entityServerOnlyConfig from "./server/entityServerOnlyConfig";
+import entityServerOnlyConfig from "./entityServerOnlyConfig";
 
 // Helper function to set nested values from dot notation or array notation
 function setNestedValue(obj, path, value) {
@@ -74,7 +74,6 @@ export const formDataTransformer = {
     };
   },
 
-  // Complete pipeline
   transform: (formData) => {
     const parsed = formDataTransformer.parse(formData);
     return formDataTransformer.toSchema(parsed);

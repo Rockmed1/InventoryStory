@@ -2,9 +2,10 @@
 
 import { revalidateTag } from "next/cache";
 // import { auth } from "./auth"; // Placeholder for your actual auth function
-import { dbReadyData, formDataTransformer } from "../transformers";
-import { appContextSchema, getBaseSchema } from "../ZodSchemas";
+import { appContextSchema } from "../getValidationSchema";
+import { getServerValidationSchema } from "./getServerValidationSchema";
 import { supabase } from "./supabase";
+import { dbReadyData, formDataTransformer } from "./transformers";
 
 /**
  * Massages validated data to match database field mappings
@@ -60,23 +61,34 @@ function dbAction(rpcName, entity, operation) {
       destructuredFormData = Object.fromEntries(formData);
     }
 
-    const schema = getBaseSchema(entity, operation);
+    const editedEntityId =
+      operation === "update" ? parseInt(destructuredFormData.idField) : null;
+
+    console.log("server editedEntityId: ", editedEntityId);
+
+    const schema = await getServerValidationSchema(
+      entity,
+      operation,
+      editedEntityId,
+    );
 
     const validatedData = schema.safeParse({
       ...destructuredFormData,
     });
+
+    console.log("server validatedData: ", validatedData);
 
     if (!validatedData.success) {
       return {
         success: false,
         formData: destructuredFormData,
         zodErrors: validatedData.error.flatten().fieldErrors,
-        message: "Missing Fields. Operation aborted.",
+        message: "Server validation Error. Operation aborted.",
       };
     }
 
     // Massage the validated data to match database field mappings
-    const readyData = dbReadyData(destructuredFormData, entity);
+    const readyData = dbReadyData(validatedData.data, entity);
 
     const _data = { _org_uuid, _usr_uuid, ...readyData };
 
@@ -110,12 +122,12 @@ function dbAction(rpcName, entity, operation) {
     // console.log(typeof payload);
 
     // 3. Call the specified Supabase RPC function.
-    const { data, error } = await supabase.rpc(rpcName, {
+    const { data: resultData, error } = await supabase.rpc(rpcName, {
       _data,
     });
 
     // 4. Handle errors.
-    if (error || !data?.success) {
+    if (error || !resultData?.success) {
       const errorMessage = error?.message || `Failed to execute ${rpcName}.`;
       console.error(`Error in ${rpcName}:`, errorMessage);
       return {
@@ -136,10 +148,10 @@ function dbAction(rpcName, entity, operation) {
     // return new form state
     return {
       // ...prevState,
-      success: data.success,
-      formData: destructuredFormData,
+      success: resultData.success,
+      data: resultData.data,
       zodErrors: null,
-      message: null,
+      message: resultData.message,
     };
   };
 }
@@ -183,6 +195,7 @@ export const updateItemClass = dbAction(
   "update",
 );
 export const updateItem = dbAction("fn_update_item", "item", "update");
+
 export const updateMarketType = dbAction(
   "fn_update_market_type",
   "marketType",

@@ -85,7 +85,7 @@ BEGIN
 		RAISE EXCEPTION '% _keys_param cannot be empty array or null in a record function.' , _fn_name;
 	END IF;
 	IF NOT(_data ?& _keys_param) THEN
-		RAISE EXCEPTION 'Invalid function parameters contained in the % _data JSONB. _keys_param: %' , _fn_name , _keys_param;
+		RAISE EXCEPTION 'Invalid function parameters contained in the % _data JSONB. _keys_param: % while expecting: %' , _fn_name , _keys_param , _data;
 	END IF;
 
 EXCEPTION

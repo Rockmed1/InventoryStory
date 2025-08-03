@@ -1,5 +1,5 @@
 {
-  "$schema": "https://cdn.statically.io/gh/nguyenngoclongdev/cdn/main/schema/v10/terminal-keeper.json",
+  "$schema": "https://cdn.statically.io/gh/nguyenngoclongdev/cdn/main/schema/v11/terminal-keeper.json",
   "theme": "chaos",
   "active": "default",
   "activateOnStartup": true,
@@ -51,6 +51,14 @@
         "color": "terminal.ansiBlue",
         "cwd": "/Users/themac/Dev/React/",
         "commands": ["acli rovodev run"]
+      },
+      {
+        "name": "Qwen",
+        "autoExecuteCommands": true,
+        "icon": "globe",
+        "color": "terminal.ansiBrightCyan",
+        "cwd": "/Users/themac/Dev/React/",
+        "commands": ["qwen"]
       }
     ]
   }

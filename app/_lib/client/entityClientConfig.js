@@ -1,70 +1,90 @@
-"use client";
-
 export default function entityClientConfig(entity) {
   const ENTITY_CLIENT_CONFIG = {
     item: {
       label: "Item",
       displayName: "Item",
-      dependencies: ["itemClass"],
+      foreignKeys: {
+        itemClassId: { itemClass: "id" },
+      },
+      changeDetectionFields: {
+        nameField: "name",
+        descField: "description",
+        itemClassId: "itemClassId",
+      },
       displayTableLabels: ["Item ID", "Name", "Description", "Class", "QOH"],
     },
 
     bin: {
       label: "Bin",
       displayName: "Bin",
-      dependencies: ["location"],
+      foreignKeys: {
+        locationId: { location: "id" },
+      },
     },
 
     trxType: {
       label: "Trx Type",
       displayName: "Transaction Type",
-      dependencies: [],
+      foreignKeys: {},
     },
 
     market: {
       label: "Market",
       displayName: "Market",
-      dependencies: ["marketType"],
+      foreignKeys: {
+        marketTypeId: { marketType: "id" },
+      },
     },
 
     location: {
       label: "Location",
       displayName: "Location",
-      dependencies: [],
+      foreignKeys: {},
     },
 
     itemClass: {
       label: "Item Class",
       displayName: "Item Class",
-      dependencies: [],
+      foreignKeys: {},
     },
 
     marketType: {
       label: "Market Type",
       displayName: "Market Type",
-      dependencies: [],
+      foreignKeys: {},
     },
 
     itemTrx: {
       label: "Item Trx",
       displayName: "Item Transaction",
-      dependencies: ["bin", "item", "market", "trxType"],
+      foreignKeys: {}, // This is a composite entity, validation is handled differently
     },
 
     itemTrxHeader: {
       label: "Trx Header",
       displayName: "Transaction Header",
-      dependencies: ["market", "trxType"],
+      foreignKeys: {
+        marketId: { market: "id" },
+        trxTypeId: { trxType: "id" },
+      },
     },
 
     itemTrxDetails: {
       label: "Trx Details",
       displayName: "Transaction Detail",
-      dependencies: ["item", "bin"],
+      foreignKeys: {
+        itemId: { item: "id" },
+        fromBinId: { bin: "id" },
+        toBinId: { bin: "id" },
+      },
     },
   };
 
   const config = ENTITY_CLIENT_CONFIG[entity];
+
+  if (!config) {
+    throw new Error(`Configuration for entity "${entity}" not found.`);
+  }
 
   return config;
 }

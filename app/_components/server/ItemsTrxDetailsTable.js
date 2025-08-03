@@ -22,7 +22,7 @@ export default async function ItemsTrxDetailsTable({ item_trx_id }) {
   // // DO NOT AWAIT. This starts the fetch and lets rendering continue.
   // queryClient.prefetchQuery({
   //   queryKey: ["itemTrxDetails", item_trx_id],
-  //   queryFn: () => getData("itemTrxDetails", item_trx_id),
+  //   queryFn: () => getServerData("itemTrxDetails", item_trx_id),
   // });
 
   // Just return the client component directly - no HydrationBoundary needed

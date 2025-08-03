@@ -1,10 +1,10 @@
 "use client";
 
 import Form from "@/app/_components/_ui/client/Form";
+import { getValidationSchema } from "@/app/_lib/getValidationSchema";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { createLocation } from "../../_lib/server/actions";
-import { getClientValidationSchema } from "../../_lib/ZodSchemas";
 import { useAppStore } from "../../_store/AppProvider";
 import Button from "../_ui/server/Button";
 import SpinnerMini from "../_ui/server/SpinnerMini";
@@ -48,7 +48,7 @@ export default function AddLocationForm({ onCloseModal }) {
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData);
 
-    const validationSchema = getClientValidationSchema(
+    const validationSchema = getValidationSchema(
       "location",
       existingLocations,
       "create",

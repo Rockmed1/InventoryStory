@@ -1,6 +1,6 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { getQueryClient } from "../../_store/queryClient";
-import { getData } from "../../_utils/helpers-server";
+import { getServerData } from "../../_utils/helpers-server";
 import TableLoading from "../_ui/client/TableLoading";
 import TrxTypesTableClient from "../client/TrxTypesTableClient";
 
@@ -11,7 +11,7 @@ export default async function TrxTypesTable() {
 
   queryClient.prefetchQuery({
     queryKey: ["trxType"],
-    queryFn: () => getData("trxType"),
+    queryFn: () => getServerData("trxType"),
   });
 
   return (

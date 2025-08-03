@@ -26,7 +26,7 @@ export default function ButtonWithModal({
           name={opensWindowName}
           title={title}
           description={description}
-          isUseOutsideClick={false}>
+          isUseOutsideClick={true}>
           {children}
         </Modal.Window>
       </Modal>

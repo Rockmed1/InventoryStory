@@ -10,7 +10,10 @@ function StyledToggle({ onClick, children, isActive }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center justify-center gap-2 rounded-lg bg-none p-0.5 text-neutral-700 transition-all duration-200 hover:bg-neutral-100 [&_svg]:h-6 [&_svg]:stroke-1 hover:[&_svg]:stroke-2 ${isActive ? "bg-neutral-100" : ""}`}>
+      className={`flex items-center justify-center gap-2 rounded-lg bg-none p-0.5 text-neutral-700 transition-all duration-200 hover:bg-neutral-100 [&_svg]:h-6 [&_svg]:stroke-1 hover:[&_svg]:stroke-2 ${
+        isActive ? "bg-neutral-100" : ""
+      }`}
+    >
       {children}
     </button>
   );
@@ -25,7 +28,8 @@ function StyledList({ position, children, ref }) {
         // using style because tailwind does not allow class names interpolation from props
         top: `${position?.y || 20}px`,
         right: `${position?.x || 20}px`,
-      }}>
+      }}
+    >
       {children}
     </ul>
   );
@@ -35,7 +39,8 @@ function StyledButton({ children, onClick }) {
   return (
     <button
       className="flex min-w-32 items-center gap-2.5 rounded-lg border-none bg-none px-2 py-1.5 text-left text-sm transition-all duration-200 hover:bg-neutral-100 active:bg-neutral-100 [&_svg]:size-3.5 [&_svg]:stroke-1 hover:[&_svg]:stroke-[1.6]"
-      onClick={onClick}>
+      onClick={onClick}
+    >
       {children}
     </button>
   );
@@ -69,7 +74,8 @@ function Menus({ children }) {
 
   return (
     <MenusContext.Provider
-      value={{ openId, close, open, position, setPosition }}>
+      value={{ openId, close, open, position, setPosition }}
+    >
       {children}
     </MenusContext.Provider>
   );
@@ -128,7 +134,7 @@ function MenuList({ id, children }) {
     <StyledList ref={ref} position={position}>
       {children}
     </StyledList>,
-    document.body,
+    document.body
   );
 }
 
