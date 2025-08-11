@@ -320,7 +320,35 @@ WHERE item.item_id = 1037
 SELECT
 	*
 FROM
-	trans.trx_type;
+-- trans.trx_type;
+trans.v_trx_type;
+
+SELECT
+	*
+FROM
+	utils.fn_update_trx_type(jsonb_build_object('_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084' , '_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_trx_type_id' , '1000' , '_trx_type_name' , 'trx_Type15' , '_trx_type_desc' , 'text1 text text text text' , '_trx_direction_id' , 1));
+
+SELECT
+	org_id
+	, org_name
+FROM
+	orgs.org
+WHERE
+	org_uuid = 'ceba721b-b8dc-487d-a80c-15ae9d947084';
+
+SELECT
+	trx_type_id
+	, trx_type_name
+	, org_id
+FROM
+	trans.trx_type
+WHERE
+	trx_type_id = 1000;
+
+SELECT
+	*
+FROM
+	trans.trx_direction;
 
 SELECT
 	*
@@ -328,19 +356,20 @@ FROM
 	utils.fn_get_trx_types(jsonb_build_object('_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084'));
 
 SELECT
-	*
-FROM
-	jsonb_pretty(utils.fn_get_trx_types(jsonb_build_object('_usr_uuid' ,(
-					SELECT
-						u.usr_uuid
-					FROM usrs.usr u
-					WHERE
-						u.usr_name = 'sa')::TEXT , '_org_uuid' ,(
-					SELECT
-						o.org_uuid
-					FROM orgs.org o
-					WHERE
-						o.org_name = 'test_org5')::TEXT))::JSONB);
+	SELECT
+		*
+	FROM
+		jsonb_pretty(utils.fn_get_trx_types(jsonb_build_object('_usr_uuid' ,(
+						SELECT
+							u.usr_uuid
+						FROM usrs.usr u
+						WHERE
+							u.usr_name = 'sa')::TEXT , '_org_uuid' ,(
+						SELECT
+							o.org_uuid
+						FROM orgs.org o
+						WHERE
+							o.org_name = 'test_org5')::TEXT))::JSONB);
 
 UPDATE
 	locations.location
@@ -373,7 +402,7 @@ DECLARE
 	, "_market_id" :"1000"
 	, "_trx_type_id" :"1000"
 	, "_num_of_lines" :"2" }
-	, "_trx_details" :[{ "_trx_line_num" :"1" , "_to_bin" :"1001" , "_item_id" :"1000" , "_from_bin" :null , "_qty_in" :8.0 , "_qty_out" :null , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" } , { "_trx_line_num" :"2" , "_to_bin" :"1001" , "_item_id" :"1001" , "_from_bin" :null , "_qty_in" :10.0 , "_qty_out" :null , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" }] }'::JSONB;
+	, "_trx_details" :[{ "_trx_line_num" :"1" , "_to_bin_id" :"1001" , "_item_id" :"1000" , "_from_bin_id" :null , "_qty_in" :8.0 , "_qty_out" :null , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" } , { "_trx_line_num" :"2" , "_to_bin_id" :"1001" , "_item_id" :"1001" , "_from_bin_id" :null , "_qty_in" :10.0 , "_qty_out" :null , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" }] }'::JSONB;
 	_results JSONB;
 	_type_id INTEGER;
 	_trx_direction_id INTEGER;
@@ -385,6 +414,8 @@ END;
 
 $$;
 
+-- ALTER TABLE trans.item_trx_detail RENAME COLUMN from_bin TO from_bin_id;
+-- ALTER TABLE trans.item_trx_detail RENAME COLUMN to_bin TO to_bin_id;
 ROLLBACK;
 
 SELECT
@@ -395,7 +426,7 @@ SELECT
 	, "_market_id" :"1000"
 	, "_trx_type_id" :"1000"
 	, "_num_of_lines" :"2" }
-	, "_trx_details" :[{ "_trx_line_num" :"1" , "_to_bin" :"1001" , "_item_id" :"1000" , "_from_bin" :null , "_qty_in" :8.0 , "_qty_out" :null , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" } , { "_trx_line_num" :"2" , "_to_bin" :"1001" , "_item_id" :"1001" , "_from_bin" :null , "_qty_in" :10.0 , "_qty_out" :null , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" }] }'::JSONB
+	, "_trx_details" :[{ "_trx_line_num" :"1" , "_to_bin_id" :"1001" , "_item_id" :"1000" , "_from_bin_id" :null , "_qty_in" :8.0 , "_qty_out" :null , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" } , { "_trx_line_num" :"2" , "_to_bin_id" :"1001" , "_item_id" :"1001" , "_from_bin_id" :null , "_qty_in" :10.0 , "_qty_out" :null , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" }] }'::JSONB
 	----------
 	--------
 	------

@@ -1,7 +1,7 @@
 "server-only";
 
+import entityServerOnlyConfig from "../_lib/config/server/entityServerOnlyConfig.js";
 import { createDataService } from "../_lib/server/dataServices.js";
-import entityServerOnlyConfig from "../_lib/server/entityServerOnlyConfig.js";
 
 // Helper function to fetch entity data using appConfig (SERVER-ONLY)
 export async function getServerData(entity, ...params) {
@@ -18,6 +18,6 @@ export async function getServerData(entity, ...params) {
   // Call the dataService method with optional parameters
   // console.log("dataService params: ", ...params);
   const entityData = await dataService[get](...params);
-  // console.log(entityData);
+  // console.log("Server entityData: ", entityData);
   return entityData;
 }

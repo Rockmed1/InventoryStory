@@ -1,7 +1,7 @@
 "use client";
 
 import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
-import { createFormData } from "@/app/_utils/helpers-client";
+import { createFormData } from "@/app/_utils/helpers";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -32,7 +32,9 @@ export default function AddItemForm({ onCloseModal }) {
     isLoading: loadingValidation,
     isError,
     debug,
-  } = useValidationSchema("item", "create");
+  } = useValidationSchema({ entity: "item", operation: "create" });
+
+  // console.log("AddItemForm debug useValidationSchema: ", debug);
 
   // console.log("AddItemForm schema: ", schema);
   // console.log("AddItemForm schema loadingValidation?: ", loadingValidation);
@@ -96,7 +98,7 @@ export default function AddItemForm({ onCloseModal }) {
       //optimistically update cache
       queryClient.setQueryData(["item", "all"], (old = []) => [
         ...old,
-        { ...newItem, id: `temp-${Date.now()}`, optimistic: true },
+        { ...newItem, idField: `temp-${Date.now()}`, optimistic: true },
       ]);
 
       return { previousValues };
@@ -108,7 +110,7 @@ export default function AddItemForm({ onCloseModal }) {
       // queryClient.setQueryData(["item"], (old = []) =>
       //   old.map((item) =>
       //     item.optimistic && item.nameField === variables.item_name
-      //       ? { ...result.formData, id: result.id }
+      //       ? { ...result.formData,idField: result.idField }
       //       : item,
       //   ),
       // );
@@ -169,12 +171,10 @@ export default function AddItemForm({ onCloseModal }) {
     },
   });
 
-  const { mutate, isPending, isSuccess, error: mutationError } = mutation;
-
   //6- Progressive enhancement submit handler
 
   function onSubmit(data, e) {
-    console.log("Form submitted: ", data);
+    // console.log("Form submitted: ", data);
 
     // 🎯 BINARY DECISION: JavaScript Available & Mutation Ready?
     const isJavaScriptReady =
@@ -217,12 +217,14 @@ export default function AddItemForm({ onCloseModal }) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Item Class</FormLabel>
-                  <DropDown
-                    field={field}
-                    entity="itemClass"
-                    name="itemClassId"
-                    label="item class"
-                  />
+                  <FormControl>
+                    <DropDown
+                      field={field}
+                      entity="itemClass"
+                      name="itemClassId"
+                      label="item class"
+                    />
+                  </FormControl>
                   <FormDescription>Pick an item class.</FormDescription>
                   <FormMessage />
                 </FormItem>

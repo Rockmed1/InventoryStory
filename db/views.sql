@@ -145,6 +145,7 @@ CREATE OR REPLACE VIEW trans.v_trx_type AS
 SELECT
 	t.trx_type_id
 	, t.trx_type_name
+	, t.trx_direction_id
 	, d.trx_direction
 	, t.trx_type_desc
 FROM
@@ -192,14 +193,16 @@ SELECT
 	, d.item_trx_desc
 	, d.item_id
 	, i.item_name
-	, d.from_bin
+	, d.from_bin_id
+	, b.bin_name AS from_bin_name
 	, b.bin_desc AS from_bin_desc
-	, d.to_bin
+	, d.to_bin_id
+	, n.bin_name AS to_bin_name
 	, n.bin_desc AS to_bin_desc
 	, d.qty_in
 	, d.qty_out
 FROM
 	trans.item_trx_detail d
 	JOIN items.item i ON i.item_id = d.item_id
-	LEFT JOIN locations.bin b ON b.bin_id = d.from_bin
-	LEFT JOIN locations.bin n ON n.bin_id = d.to_bin;
+	LEFT JOIN locations.bin b ON b.bin_id = d.from_bin_id
+	LEFT JOIN locations.bin n ON n.bin_id = d.to_bin_id;

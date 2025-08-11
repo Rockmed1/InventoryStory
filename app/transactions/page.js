@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import AddButtonModal from "../_components/_ui/client/AddButtonModal";
 import AddItemTrxForm from "../_components/client/AddItemTrxForm";
+import TestForm from "../_components/client/TestForm";
 import ItemsTrxTable from "../_components/server/ItemsTrxTable";
 import UseAuth from "../_hooks/useAuth";
 
@@ -19,14 +20,14 @@ export default async function Page({ searchParams }) {
 
   const param = await searchParams;
   // console.log("param: ", param);
-  const item_trx_id = Number(param.item_trx_id);
-  // console.log("item_trx_id: ", item_trx_id);
+  const itemTrxId = Number(param.itemTrxId);
+  // console.log("itemTrxId: ", itemTrxId);
 
   return (
     <div className="container m-auto grid w-full items-center gap-6 p-2">
       <div className="flex flex-row-reverse gap-2">
         {/* <AddItem /> */}
-        <AddButtonModal opensWindowName="item-form" buttonLabel="Add item">
+        <AddButtonModal buttonLabel="Create item transaction">
           <AddItemTrxForm />
         </AddButtonModal>
       </div>
@@ -34,10 +35,11 @@ export default async function Page({ searchParams }) {
       {/* <Suspense fallback={<Loader2 />}> */}
       <Suspense fallback={<ItemsTrxTable.Fallback />}>
         <ItemsTrxTable
-          item_trx_id={item_trx_id}
-          // type={!item_trx_id ? "compound" : "simple"}
+          itemTrxId={itemTrxId}
+          // type={!itemTrxId ? "compound" : "simple"}
         />
       </Suspense>
+      <TestForm />
     </div>
   );
 }

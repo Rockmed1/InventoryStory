@@ -1,12 +1,12 @@
 "use client";
 
+import { useApiData } from "@/app/_hooks/useClientData";
+import { getEntityTableLabels } from "@/app/_utils/helpers";
 import { PencilIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import StoreHydrator from "../../_store/StoreHydrator";
 import Table from "../_ui/client/Table";
 import EditTrxTypeForm from "./EditTrxTypeForm";
-
-const labels = ["Trx Type ID", "Name", "Description", "Direction"];
 
 const rowActions = [
   {
@@ -19,15 +19,21 @@ const rowActions = [
 
 export default function TrxTypesTableClient() {
   const { data, isFetching } = useSuspenseQuery({
-    queryKey: ["trxType"],
-    queryFn: () => useData("trxType"),
+    queryKey: ["trxType", "all"],
+    queryFn: () => useApiData("trxType", "all"),
   });
+  const displayTableLabels = getEntityTableLabels("trxType");
+
+  const displayData = data.map(
+    ({ trxDirectionId, ...displayFields }) => displayFields,
+  );
 
   return (
     <>
       <Table
-        labels={labels}
-        tableData={data}
+        entity="trxType"
+        // labels={displayTableLabels}
+        tableData={displayData}
         rowActions={rowActions}
         isLoading={isFetching}
       />

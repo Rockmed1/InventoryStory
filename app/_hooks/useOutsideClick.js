@@ -15,9 +15,18 @@ export function useOutsideClick(handler, listenCapturing = true) {
   //to implement the close modal window when there is a click outside:
   useEffect(() => {
     function handleClick(e) {
-      // If the click is on the root html element, it's likely a ghost click
+      // If the click is on the root html element or body, it's likely a ghost click
       // from an unmounted portal component. Ignore it.
-      if (e.target === document.documentElement) {
+      if (e.target === document.documentElement || e.target === document.body) {
+        return;
+      }
+
+      // Check if click is inside a popover/portal content
+      const isInsidePopover =
+        e.target.closest("[data-radix-popover-content]") ||
+        e.target.closest('[data-slot="popover-content"]');
+
+      if (isInsidePopover) {
         return;
       }
 

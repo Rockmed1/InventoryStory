@@ -363,8 +363,8 @@ CREATE TABLE IF NOT EXISTS trans.item_trx_detail(
 	, item_trx_id BIGINT NOT NULL
 	, trx_line_num INTEGER NOT NULL
 	, item_id BIGINT NOT NULL
-	, from_bin INTEGER NULL
-	, to_bin INTEGER NULL
+	, from_bin_id INTEGER NULL
+	, to_bin_id INTEGER NULL
 	, qty_in DECIMAL(8 , 2) NULL
 	, qty_out DECIMAL(8 , 2) NULL
 	, item_trx_desc TEXT
@@ -376,13 +376,13 @@ CREATE TABLE IF NOT EXISTS trans.item_trx_detail(
 	, exec_by VARCHAR(50) NOT NULL DEFAULT CURRENT_USER
 	, FOREIGN KEY (item_trx_id , org_id) REFERENCES trans.item_trx(item_trx_id , org_id)
 	, FOREIGN KEY (item_id , org_id) REFERENCES items.item(item_id , org_id)
-	, FOREIGN KEY (from_bin , org_id) REFERENCES locations.bin(bin_id , org_id)
-	, FOREIGN KEY (to_bin , org_id) REFERENCES locations.bin(bin_id , org_id)
+	, FOREIGN KEY (from_bin_id , org_id) REFERENCES locations.bin(bin_id , org_id)
+	, FOREIGN KEY (to_bin_id , org_id) REFERENCES locations.bin(bin_id , org_id)
 	, FOREIGN KEY (org_id) REFERENCES orgs.org(org_id)
 	, FOREIGN KEY (created_by) REFERENCES usrs.usr(usr_id)
 	, FOREIGN KEY (modified_by) REFERENCES usrs.usr(usr_id)
 	, PRIMARY KEY (item_trx_detail_id , org_id)
-	, CHECK (NOT (from_bin IS NULL AND to_bin IS NULL))
+	, CHECK (NOT (from_bin_id IS NULL AND to_bin_id IS NULL))
 	, CHECK (NOT (qty_in IS NULL AND qty_out IS NULL))
 );
 

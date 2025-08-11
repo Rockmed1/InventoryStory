@@ -10,7 +10,7 @@ export default async function MarketsTable() {
   const queryClient = getQueryClient();
 
   queryClient.prefetchQuery({
-    queryKey: ["market"],
+    queryKey: ["market", "all"],
     queryFn: () => getServerData("market"),
   });
 
@@ -22,7 +22,7 @@ export default async function MarketsTable() {
 }
 
 function Fallback() {
-  return <TableLoading labels={labels} />;
+  return <TableLoading entity="market" />;
 }
 
 MarketsTable.Fallback = Fallback;

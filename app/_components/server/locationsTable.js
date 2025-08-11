@@ -10,7 +10,7 @@ export default async function LocationsTable() {
   const queryClient = getQueryClient();
 
   queryClient.prefetchQuery({
-    queryKey: ["location"],
+    queryKey: ["location", "all "],
     queryFn: () => getServerData("location"),
   });
 
@@ -22,7 +22,7 @@ export default async function LocationsTable() {
 }
 
 function Fallback() {
-  return <TableLoading labels={labels} />;
+  return <TableLoading entity="location" />;
 }
 
 LocationsTable.Fallback = Fallback;

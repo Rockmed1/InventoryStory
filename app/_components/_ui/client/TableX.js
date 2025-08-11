@@ -38,7 +38,7 @@ export default function TableX({ type = "simple", labels, data, rowActions }) {
     data ||
     //default place holder for when data is not passed
     Array.from({ length: 3 }, (_, i) => ({
-      id: "loading" + i,
+    idField: "loading" + i,
       ...Object.fromEntries(
         labels.filter((_, i) => i > 0).map((label) => [label, "loading"]),
       ),
@@ -62,9 +62,9 @@ export default function TableX({ type = "simple", labels, data, rowActions }) {
           </TableHeader>
           <TableBody>
             {tableData.map((row) => (
-              <Collapsible key={row.id} asChild>
+              <Collapsible key={row.idField} asChild>
                 <>
-                  <TableRow key={row.id} rowId={row.id}>
+                  <TableRow key={row.idField} rowId={row.idField}>
                     {Object.keys(row).map((fieldKey) => (
                       <TableCell>{row[fieldKey]}</TableCell>
                     ))}
@@ -260,7 +260,7 @@ export default function Table({ type = "simple", labels, data, rowActions }) {
     data ||
     //default place holder for when data is not passed
     Array.from({ length: 3 }, (_, i) => ({
-      id: "loading" + i,
+    idField: "loading" + i,
       ...Object.fromEntries(
         labels.filter((_, i) => i > 0).map((label) => [label, "loading"]),
       ),
@@ -277,10 +277,10 @@ export default function Table({ type = "simple", labels, data, rowActions }) {
           <tbody>
             {/* loop through the data rows (list of objects) */}
             {tableData.map((row) => (
-              <Collapsible key={row.id} asChild>
+              <Collapsible key={row.idField} asChild>
                 <>
-                  <TableRow key={row.id} rowId={row.id}>
-                    <CheckboxCell rowId={row.id} />
+                  <TableRow key={row.idField} rowId={row.idField}>
+                    <CheckboxCell rowId={row.idField} />
 
                     {Object.keys(row).map((fieldKey) => (
                       <TableCell

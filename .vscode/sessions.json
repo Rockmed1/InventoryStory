@@ -53,12 +53,12 @@
         "commands": ["acli rovodev run"]
       },
       {
-        "name": "Qwen",
+        "name": "Cursor Agent",
         "autoExecuteCommands": true,
         "icon": "globe",
         "color": "terminal.ansiBrightCyan",
         "cwd": "/Users/themac/Dev/React/",
-        "commands": ["qwen"]
+        "commands": ["cursor-agent"]
       }
     ]
   }

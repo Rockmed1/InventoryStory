@@ -1,12 +1,12 @@
 "use client";
 
+import { useApiData } from "@/app/_hooks/useClientData";
+import { getEntityTableLabels } from "@/app/_utils/helpers";
 import { PencilIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import StoreHydrator from "../../_store/StoreHydrator";
 import Table from "../_ui/client/Table";
 import EditMarketForm from "./EditMarketForm";
-
-const labels = ["Market ID", "Name", "Description", "Market Type"];
 
 const rowActions = [
   {
@@ -19,18 +19,21 @@ const rowActions = [
 
 export default function MarketsTableClient() {
   const { data, isFetching } = useSuspenseQuery({
-    queryKey: ["market"],
-    queryFn: () => useData("market"),
+    queryKey: ["market", "all"],
+    queryFn: () => useApiData("market", "all"),
   });
 
+  const displayTableLabels = getEntityTableLabels("market");
+
   const displayData = data.map(
-    ({ market_type_id, ...displayFields }) => displayFields,
+    ({ marketTypeId, ...displayFields }) => displayFields,
   );
 
   return (
     <>
       <Table
-        labels={labels}
+        entity="market"
+        // labels={displayTableLabels}
         tableData={displayData}
         rowActions={rowActions}
         isLoading={isFetching}

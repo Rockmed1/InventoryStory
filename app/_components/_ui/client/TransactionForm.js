@@ -106,10 +106,10 @@ export default function TransactionForm() {
   const addDetailLine = (e) => {
     const newLine = {
       _qty_in: null,
-      _to_bin: "",
+      _to_bin_id: "",
       _item_id: "",
       _qty_out: null,
-      _from_bin: null,
+      _from_bin_id: null,
       _trx_line_num: (formData._trx_details.length + 1).toString(),
       _item_trx_desc: "",
     };
@@ -146,8 +146,8 @@ export default function TransactionForm() {
       ...detail,
       _qty_in: detail._qty_in ? parseInt(detail._qty_in) : null,
       _qty_out: detail._qty_out ? parseInt(detail._qty_out) : null,
-      _from_bin: detail._from_bin || null,
-      _to_bin: detail._to_bin || null,
+      _from_bin_id: detail._from_bin_id || null,
+      _to_bin_id: detail._to_bin_id || null,
     }));
 
     // console.log(formData);
@@ -315,11 +315,11 @@ export default function TransactionForm() {
                     <Form.Label>From Bin</Form.Label>
                     <DropDown
                       parent="bin"
-                      name="_from_bin"
+                      name="_from_bin_id"
                       label="bin"
-                      value={row._from_bin || ""}
+                      value={row._from_bin_id || ""}
                       onChange={(value) =>
-                        handleDetailChange(index, "_from_bin", value)
+                        handleDetailChange(index, "_from_bin_id", value)
                       }
                     />
                   </Form.InputSelect>
@@ -327,11 +327,11 @@ export default function TransactionForm() {
                     <Form.Label>To Bin</Form.Label>
                     <DropDown
                       parent="bin"
-                      name="_to_bin"
+                      name="_to_bin_id"
                       label="bin"
-                      value={row._to_bin || ""}
+                      value={row._to_bin_id || ""}
                       onChange={(value) =>
-                        handleDetailChange(index, "_to_bin", value)
+                        handleDetailChange(index, "_to_bin_id", value)
                       }
                     />
                   </Form.InputSelect>
@@ -400,8 +400,8 @@ const dummyformData = {
   _item_id: "1001",
   _qty_in_0: "9",
   _qty_out_0: "5",
-  _from_bin: "1001",
-  _to_bin: "1005",
+  _from_bin_id: "1001",
+  _to_bin_id: "1005",
   _item_trx_desc_0: "dfsdfas",
   _qty_in_1: "1",
   _qty_out_1: "6",
@@ -410,19 +410,19 @@ const dummyformData = {
   _trx_details: [
     {
       _qty_in: 6,
-      _to_bin: "1002",
+      _to_bin_id: "1002",
       _item_id: "1001",
       _qty_out: 5,
-      _from_bin: "1001",
+      _from_bin_id: "1001",
       _trx_line_num: "1",
       _item_trx_desc: "ytery",
     },
     {
       _qty_in: 4,
-      _to_bin: "1002",
+      _to_bin_id: "1002",
       _item_id: "1038",
       _qty_out: 3,
-      _from_bin: "1002",
+      _from_bin_id: "1002",
       _trx_line_num: "2",
       _item_trx_desc: "asdf",
     },
@@ -440,19 +440,19 @@ const dummyformDataObj = {
   _trx_details: [
     {
       _qty_in: "9",
-      _to_bin: "",
+      _to_bin_id: "",
       _item_id: "",
       _qty_out: "5",
-      _from_bin: null,
+      _from_bin_id: null,
       _trx_line_num: "1",
       _item_trx_desc: "dfsdfas",
     },
     {
       _qty_in: "1",
-      _to_bin: "",
+      _to_bin_id: "",
       _item_id: "",
       _qty_out: "6",
-      _from_bin: null,
+      _from_bin_id: null,
       _trx_line_num: "2",
       _item_trx_desc: "rtsdfgsdf",
     },

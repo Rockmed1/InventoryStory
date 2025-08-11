@@ -1,27 +1,48 @@
 "use client";
 
-import Form from "@/app/_components/_ui/client/Form";
-import { getValidationSchema } from "@/app/_lib/getValidationSchema";
-import { useActionState, useEffect, useState } from "react";
+import useClientData from "@/app/_hooks/useClientData";
+import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
+import { createFormData } from "@/app/_utils/helpers";
+import { DevTool } from "@hookform/devtools";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useActionState } from "react";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { updateMarket } from "../../_lib/server/actions";
-import { useAppStore } from "../../_store/AppProvider";
 import { DropDown } from "../_ui/client/DropDown";
-import Button from "../_ui/server/Button";
+import { Button } from "../_ui/client/shadcn-Button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../_ui/client/shadcn-Form";
+import { Input } from "../_ui/client/shadcn-Input";
 import SpinnerMini from "../_ui/server/SpinnerMini";
 
-/**
- * A form for editing an existing market, designed to be used within a modal.
- * It handles form submission using a server action and displays success notifications.
- *
- * @param {number} id - The market ID to edit
- * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
- */
-
 export default function EditMarketForm({ id, onCloseModal }) {
-  // Get existing markets from the store for validation
-  const existingMarkets = useAppStore((state) => state.market || []);
-  const [marketToEdit] = existingMarkets.filter((market) => market.id === id);
+  const queryClient = useQueryClient();
+
+  const {
+    data: [marketToEdit],
+    isLoading: marketLoading,
+    isError: marketDataError,
+  } = useClientData({ entity: "market", id });
+
+  const {
+    schema,
+    isLoading: loadingValidation,
+    isError,
+    debug,
+  } = useValidationSchema({
+    entity: "market",
+    operation: "update",
+    editedEntityId: id,
+  });
 
   const initialState = {
     success: null,
@@ -33,133 +54,233 @@ export default function EditMarketForm({ id, onCloseModal }) {
     updateMarket,
     initialState,
   );
-  const [clientFormState, setClientFormState] = useState(initialState);
 
-  const currentFormState = clientFormState?.message
-    ? clientFormState
-    : formState;
+  const form = useForm({
+    resolver: schema ? zodResolver(schema) : undefined,
+    mode: "onBlur",
+    defaultValues: {
+      idField: marketToEdit?.idField || "",
+      nameField: marketToEdit?.nameField || "",
+      descField: marketToEdit?.descField || "",
+      urlField: marketToEdit?.urlField || "",
+      marketTypeId: marketToEdit?.marketTypeId || "",
+    },
+    shouldUnregister: true,
+  });
 
-  useEffect(() => {
-    if (formState?.success) {
-      toast.success(
-        `Market ${formState.formData?._market_name} has been updated.`,
+  const mutation = useMutation({
+    onMutate: async (values) => {
+      const marketTypeName = queryClient
+        .getQueryData(["marketType", "all"])
+        .find((_) => _.idField.toString() == values.marketTypeId)?.nameField;
+
+      await queryClient.cancelQueries({ queryKey: ["market"] });
+
+      const previousValues = queryClient.getQueryData(["market", "all"]);
+
+      queryClient.setQueryData(["market", "all"], (old = []) =>
+        old.map((market) => {
+          if (market.idField === values.idField) {
+            return {
+              ...market,
+              nameField: values.nameField,
+              descField: values.descField,
+              urlField: values.urlField,
+              marketTypeId: values.marketTypeId,
+              marketTypeName: marketTypeName ?? "Fetching...",
+            };
+          }
+          return market;
+        }),
       );
-      setClientFormState(initialState);
-      onCloseModal?.();
-    }
-  }, [formState, onCloseModal]);
 
-  function isChanged(marketToEdit, data) {
-    const { name, description, url, market_type_id } = marketToEdit;
-    const { _market_name, _market_desc, _market_url, _market_type_id } = data;
+      return { previousValues };
+    },
 
-    // console.log("Name changed:", name.toString() !== _market_name.toString());
-    // console.log("Description changed:", description.toString() !== _market_desc.toString());
-    // console.log("URL changed:", url.toString() !== _market_url.toString());
-    // console.log("Market Type changed:", market_type_id.toString() !== _market_type_id.toString());
+    mutationFn: async (values) => {
+      const formData = createFormData(values);
+      const result = await updateMarket(null, formData);
 
-    if (
-      name.toString() !== _market_name.toString() ||
-      description.toString() !== _market_desc.toString() ||
-      url.toString() !== _market_url.toString() ||
-      market_type_id.toString() !== _market_type_id.toString()
-    ) {
-      return true;
-    } else {
-      return false;
-    }
-  }
+      if (!result.success) {
+        const error = new Error(result.message || "Server error occured");
+        error.zodErrors = result.zodErrors;
+        error.message = result.message;
+        throw error;
+      }
 
-  function handleSubmit(e) {
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData);
+      return result;
+    },
 
-    // Don't do anything if no change
-    if (!isChanged(marketToEdit, data)) {
-      e.preventDefault();
-      return;
-    }
-
-    // CLIENT VALIDATE FORM DATA for UPDATE operation
-    const validationSchema = getValidationSchema(
-      "market",
-      existingMarkets,
-      "update",
-      data._market_id,
-    );
-
-    const validationResults = validationSchema.safeParse(data);
-
-    if (!validationResults.success) {
-      e.preventDefault();
-      setClientFormState({
-        success: false,
-        formData: data,
-        zodErrors: validationResults.error.flatten().fieldErrors,
-        message: "Please fix the errors below.",
+    onSuccess: (result, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["market"],
+        refetchType: "active",
       });
-    }
-    // If pass validation
-    else {
-      setClientFormState(initialState);
+      toast.success(`Market ${variables.nameField} was updated successfully!`);
+      form.reset();
+      onCloseModal?.();
+    },
+
+    onError: (error, variables, context) => {
+      if (context?.previousValues) {
+        queryClient.setQueryData(["market", "all"], context.previousValues);
+      }
+
+      if (error.zodErrors) {
+        Object.entries(error.zodErrors).forEach(([field, errors]) =>
+          form.setError(field, {
+            type: "server",
+            message: Array.isArray(errors) ? errors[0] : errors,
+          }),
+        );
+      } else if (error.name === "NetworkError") {
+        toast.error(
+          "Network error. Please check your connection and try again.",
+        );
+        form.setError("root", {
+          type: "network",
+          message: "Connection failed. Please try again.",
+        });
+      } else {
+        form.setError("root", {
+          type: "server",
+          message: error.message || "An unexpected error occured",
+        });
+      }
+    },
+
+    retry: (failureCount, error) => {
+      return error.name === "NetworkError" && failureCount < 3;
+    },
+  });
+
+  function onSubmit(values, e) {
+    const isJavaScriptReady =
+      mutation && !mutation.isPending && typeof mutation.mutate === "function";
+
+    if (isJavaScriptReady) {
+      e.preventDefault();
+      mutation.mutate(values);
     }
   }
 
   return (
-    <Form action={formAction} onSubmit={handleSubmit}>
-      <Form.ZodErrors error={currentFormState?.message} />
+    <>
+      {
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            action={formAction}
+            className="space-y-8">
+            {(mutation.error?.message ||
+              form.formState.errors?.root ||
+              form.formState?.message) && (
+              <div className="error-banner rounded border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+                {form.formState.errors.root?.message ||
+                  formState?.message ||
+                  mutation.error?.message}
+              </div>
+            )}
 
-      {/* Hidden ID field */}
-      <input type="hidden" name="_market_id" value={marketToEdit.id} />
+            <input type="hidden" {...form.register("idField")} />
 
-      <Form.InputSelect name={"_market_type_id"}>
-        <Form.Label>Select Market Type *</Form.Label>
-        <DropDown
-          parent="marketType"
-          name="_market_type_id"
-          label="market type"
-          required={true}
-          defaultValue={marketToEdit.market_type_id}
-        />
-      </Form.InputSelect>
+            <FormField
+              control={form.control}
+              name="marketTypeId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Market Type</FormLabel>
+                  <FormControl>
+                    <DropDown
+                      field={field}
+                      entity="marketType"
+                      name="marketTypeId"
+                      label="market type"
+                    />
+                  </FormControl>
+                  <FormDescription>Select a market type.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-      <Form.InputWithLabel
-        name={"_market_name"}
-        inputValue={
-          currentFormState.formData?._market_name || marketToEdit.name
-        }
-        placeholder="Enter Market name"
-        error={currentFormState?.zodErrors?._market_name}>
-        Market Name *
-      </Form.InputWithLabel>
+            <FormField
+              control={form.control}
+              name="nameField"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Market Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter Market name" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Enter a unique name for the market
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-      <Form.InputWithLabel
-        name={"_market_desc"}
-        inputValue={
-          currentFormState.formData?._market_desc || marketToEdit.description
-        }
-        placeholder="Enter Market description"
-        error={currentFormState?.zodErrors?._market_desc}>
-        Market Description *
-      </Form.InputWithLabel>
+            <FormField
+              control={form.control}
+              name="descField"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Market Description</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter Market description" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Provide a description for the market
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-      <Form.InputWithLabel
-        name={"_market_url"}
-        inputValue={currentFormState.formData?._market_url || marketToEdit.url}
-        placeholder="Enter Market URL"
-        error={currentFormState?.zodErrors?._market_url}>
-        Market URL *
-      </Form.InputWithLabel>
+            <FormField
+              control={form.control}
+              name="urlField"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Market URL</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter Market URL" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Enter the website URL for the market
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-      <Form.Footer>
-        <Button disabled={pending} variant="secondary" onClick={onCloseModal}>
-          Cancel
-        </Button>
-        <Button disabled={pending} variant="primary">
-          {pending && <SpinnerMini />}
-          Update Market
-        </Button>
-      </Form.Footer>
-    </Form>
+            <div className="flex items-center justify-end gap-3">
+              {loadingValidation || !schema ? null : (
+                <Button
+                  disabled={
+                    marketLoading ||
+                    mutation.isPending ||
+                    !form.formState.isValid
+                  }
+                  variant="outline"
+                  type="submit">
+                  {mutation.isPending && <SpinnerMini />}
+                  <span> Update Market</span>
+                </Button>
+              )}
+              <Button
+                type="button"
+                onClick={onCloseModal}
+                variant="destructive"
+                disabled={mutation.isPending}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </Form>
+      }
+      <DevTool control={form.control} />
+    </>
   );
 }

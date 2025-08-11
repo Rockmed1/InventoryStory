@@ -1,4 +1,4 @@
-import entityServerOnlyConfig from "./entityServerOnlyConfig";
+import entityServerOnlyConfig from "../config/server/entityServerOnlyConfig";
 
 // Helper function to set nested values from dot notation or array notation
 function setNestedValue(obj, path, value) {
@@ -35,7 +35,7 @@ export const formDataTransformer = {
       // Skip empty values for optional fields and convert to null
       if (
         value === "" &&
-        (key.includes("_from_bin") || key.includes("_qty_out"))
+        (key.includes("_from_bin_id") || key.includes("_qty_out"))
       ) {
         setNestedValue(result, key, null);
       } else {
@@ -67,8 +67,10 @@ export const formDataTransformer = {
         _item_id: detail._item_id ? parseInt(detail._item_id) : null,
         _qty_in: detail._qty_in ? parseInt(detail._qty_in) : null,
         _qty_out: detail._qty_out ? parseInt(detail._qty_out) : null,
-        _from_bin: detail._from_bin ? parseInt(detail._from_bin) : null,
-        _to_bin: detail._to_bin ? parseInt(detail._to_bin) : null,
+        _from_bin_id: detail._from_bin_id
+          ? parseInt(detail._from_bin_id)
+          : null,
+        _to_bin_id: detail._to_bin_id ? parseInt(detail._to_bin_id) : null,
         _item_trx_desc: detail._item_trx_desc,
       })),
     };

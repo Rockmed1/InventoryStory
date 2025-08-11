@@ -5,7 +5,7 @@ export default function entityTransformers(entity) {
         apiOnlyData: (defaultValues) => {
           const {
             idField,
-            itemClass: { id: itemClassId },
+            itemClass: { idField: itemClassId },
             nameField,
             descField,
           } = defaultValues;
@@ -25,8 +25,8 @@ export default function entityTransformers(entity) {
             values: {
               idField,
               itemClass: {
-                id: itemClassId,
-                name: itemClassName,
+                idField: itemClassId,
+                nameField: itemClassName,
               },
               nameField,
               descField,

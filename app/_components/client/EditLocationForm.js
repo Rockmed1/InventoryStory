@@ -1,28 +1,47 @@
 "use client";
 
-import Form from "@/app/_components/_ui/client/Form";
-import { getValidationSchema } from "@/app/_lib/getValidationSchema";
-import { useActionState, useEffect, useState } from "react";
+import useClientData from "@/app/_hooks/useClientData";
+import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
+import { createFormData } from "@/app/_utils/helpers";
+import { DevTool } from "@hookform/devtools";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useActionState } from "react";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { updateLocation } from "../../_lib/server/actions";
-import { useAppStore } from "../../_store/AppProvider";
-import Button from "../_ui/server/Button";
+import { Button } from "../_ui/client/shadcn-Button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../_ui/client/shadcn-Form";
+import { Input } from "../_ui/client/shadcn-Input";
 import SpinnerMini from "../_ui/server/SpinnerMini";
 
-/**
- * A form for editing an existing location, designed to be used within a modal.
- * It handles form submission using a server action and displays success notifications.
- *
- * @param {number} id - The location ID to edit
- * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
- */
-
 export default function EditLocationForm({ id, onCloseModal }) {
-  // Get existing locations from the store for validation
-  const existingLocations = useAppStore((state) => state.location || []);
-  const [locationToEdit] = existingLocations.filter(
-    (location) => location.id === id,
-  );
+  const queryClient = useQueryClient();
+
+  const {
+    data: [locationToEdit],
+    isLoading: locationLoading,
+    isError: locationDataError,
+  } = useClientData({ entity: "location", id });
+
+  const {
+    schema,
+    isLoading: loadingValidation,
+    isError,
+    debug,
+  } = useValidationSchema({
+    entity: "location",
+    operation: "update",
+    editedEntityId: id,
+  });
 
   const initialState = {
     success: null,
@@ -34,108 +53,196 @@ export default function EditLocationForm({ id, onCloseModal }) {
     updateLocation,
     initialState,
   );
-  const [clientFormState, setClientFormState] = useState(initialState);
 
-  const currentFormState = clientFormState?.message
-    ? clientFormState
-    : formState;
+  // const { apiOnlyData, restoreDefaultFormat, isChanged } =
+  //   entityTransformers("location").editForm;
 
-  useEffect(() => {
-    if (formState?.success) {
-      toast.success(
-        `Location ${formState.formData?._loc_name} has been updated.`,
+  const form = useForm({
+    resolver: schema ? zodResolver(schema) : undefined,
+    mode: "onBlur",
+    defaultValues: {
+      idField: locationToEdit?.idField || "",
+      nameField: locationToEdit?.nameField || "",
+      descField: locationToEdit?.descField || "",
+    },
+    shouldUnregister: true,
+  });
+
+  const mutation = useMutation({
+    onMutate: async (values) => {
+      await queryClient.cancelQueries({ queryKey: ["location"] });
+
+      const previousValues = queryClient.getQueryData(["location", "all"]);
+
+      queryClient.setQueryData(["location", "all"], (old = []) =>
+        old.map((location) => {
+          if (location.idField === values.idField) {
+            return {
+              ...location,
+              nameField: values.nameField,
+              descField: values.descField,
+            };
+          }
+          return location;
+        }),
       );
-      setClientFormState(initialState);
-      onCloseModal?.();
-    }
-  }, [formState, onCloseModal]);
 
-  function isChanged(locationToEdit, data) {
-    const { name, description } = locationToEdit;
-    const { _loc_name, _loc_desc } = data;
+      return { previousValues };
+    },
 
-    // console.log("Name changed:", name.toString() !== _loc_name.toString());
-    // console.log("Description changed:", description.toString() !== _loc_desc.toString());
+    mutationFn: async (values) => {
+      const formData = createFormData(values);
+      const result = await updateLocation(null, formData);
 
-    if (
-      name.toString() !== _loc_name.toString() ||
-      description.toString() !== _loc_desc.toString()
-    ) {
-      return true;
-    } else {
-      return false;
-    }
-  }
+      if (!result.success) {
+        const error = new Error(result.message || "Server error occured");
+        error.zodErrors = result.zodErrors;
+        error.message = result.message;
+        throw error;
+      }
 
-  function handleSubmit(e) {
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData);
+      return result;
+    },
 
-    // Don't do anything if no change
-    if (!isChanged(locationToEdit, data)) {
-      e.preventDefault();
-      return;
-    }
-
-    // CLIENT VALIDATE FORM DATA for UPDATE operation
-    const validationSchema = getValidationSchema(
-      "location",
-      existingLocations,
-      "update",
-      data._loc_id,
-    );
-
-    const validationResults = validationSchema.safeParse(data);
-
-    if (!validationResults.success) {
-      e.preventDefault();
-      setClientFormState({
-        success: false,
-        formData: data,
-        zodErrors: validationResults.error.flatten().fieldErrors,
-        message: "Please fix the errors below.",
+    onSuccess: (result, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["location"],
+        refetchType: "active",
       });
-    }
-    // If pass validation
-    else {
-      setClientFormState(initialState);
+      toast.success(
+        `Location ${variables.nameField} was updated successfully!`,
+      );
+      form.reset();
+      onCloseModal?.();
+    },
+
+    onError: (error, variables, context) => {
+      if (context?.previousValues) {
+        queryClient.setQueryData(["location", "all"], context.previousValues);
+      }
+
+      if (error.zodErrors) {
+        Object.entries(error.zodErrors).forEach(([field, errors]) =>
+          form.setError(field, {
+            type: "server",
+            message: Array.isArray(errors) ? errors[0] : errors,
+          }),
+        );
+      } else if (error.name === "NetworkError") {
+        toast.error(
+          "Network error. Please check your connection and try again.",
+        );
+        form.setError("root", {
+          type: "network",
+          message: "Connection failed. Please try again.",
+        });
+      } else {
+        form.setError("root", {
+          type: "server",
+          message: error.message || "An unexpected error occured",
+        });
+      }
+    },
+
+    retry: (failureCount, error) => {
+      return error.name === "NetworkError" && failureCount < 3;
+    },
+  });
+
+  function onSubmit(values, e) {
+    const isJavaScriptReady =
+      mutation && !mutation.isPending && typeof mutation.mutate === "function";
+
+    if (isJavaScriptReady) {
+      e.preventDefault();
+
+      // if (!isChanged(locationToEdit, values)) {
+      //   toast.error("No changes detected");
+      //   return;
+      // }
+
+      mutation.mutate(values);
     }
   }
 
   return (
-    <Form action={formAction} onSubmit={handleSubmit}>
-      <Form.ZodErrors error={currentFormState?.message} />
+    <>
+      {
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            action={formAction}
+            className="space-y-8">
+            {(mutation.error?.message ||
+              form.formState.errors?.root ||
+              form.formState?.message) && (
+              <div className="error-banner rounded border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+                {form.formState.errors.root?.message ||
+                  formState?.message ||
+                  mutation.error?.message}
+              </div>
+            )}
 
-      {/* Hidden ID field */}
-      <input type="hidden" name="_loc_id" value={locationToEdit.id} />
+            <input type="hidden" {...form.register("idField")} />
 
-      <Form.InputWithLabel
-        name={"_loc_name"}
-        inputValue={currentFormState.formData?._loc_name || locationToEdit.name}
-        placeholder="Enter Location name"
-        error={currentFormState?.zodErrors?._loc_name}>
-        Location Name *
-      </Form.InputWithLabel>
+            <FormField
+              control={form.control}
+              name="nameField"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter Location name" {...field} />
+                  </FormControl>
+                  <FormDescription>Enter new location name</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-      <Form.InputWithLabel
-        name={"_loc_desc"}
-        inputValue={
-          currentFormState.formData?._loc_desc || locationToEdit.description
-        }
-        placeholder="Enter Location description"
-        error={currentFormState?.zodErrors?._loc_desc}>
-        Location Description *
-      </Form.InputWithLabel>
-
-      <Form.Footer>
-        <Button disabled={pending} variant="secondary" onClick={onCloseModal}>
-          Cancel
-        </Button>
-        <Button disabled={pending} variant="primary">
-          {pending && <SpinnerMini />}
-          Update Location
-        </Button>
-      </Form.Footer>
-    </Form>
+            <FormField
+              control={form.control}
+              name="descField"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location description</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter Location description"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>Enter new location name</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex items-center justify-end gap-3">
+              {loadingValidation || !schema ? null : (
+                <Button
+                  disabled={
+                    locationLoading ||
+                    mutation.isPending ||
+                    !form.formState.isValid
+                  }
+                  variant="outline"
+                  type="submit">
+                  {mutation.isPending && <SpinnerMini />}
+                  <span> Update Location</span>
+                </Button>
+              )}
+              <Button
+                type="button"
+                onClick={onCloseModal}
+                variant="destructive"
+                disabled={mutation.isPending}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </Form>
+      }
+      <DevTool control={form.control} />
+    </>
   );
 }

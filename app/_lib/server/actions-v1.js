@@ -22,8 +22,8 @@ export default async function dummyServerAction(param) {
 //   _trx_date: "3/2/2024",
 //   _item_trx_id: 3,
 //   _item_id: "2",
-//   // _from_bin: 9,
-//   _to_bin: 3,
+//   // _from_bin_id: 9,
+//   _to_bin_id: 3,
 //   _qty_in: 3,
 //   _qty_out: 2,
 // };

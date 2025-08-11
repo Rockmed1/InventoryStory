@@ -1,4 +1,4 @@
-import Table from "../_ui/client/Table";
+import TableLoading from "../_ui/client/TableLoading";
 import ItemsTrxDetailsTableClient from "../client/ItemsTrxDetailsTableClient";
 
 const labels = [
@@ -14,23 +14,23 @@ const labels = [
   "Qty out",
 ];
 
-export default async function ItemsTrxDetailsTable({ item_trx_id }) {
-  if (!item_trx_id) return null;
+export default async function ItemsTrxDetailsTable({ itemTrxId }) {
+  if (!itemTrxId) return null;
 
   // const queryClient = getQueryClient();
 
   // // DO NOT AWAIT. This starts the fetch and lets rendering continue.
   // queryClient.prefetchQuery({
-  //   queryKey: ["itemTrxDetails", item_trx_id],
-  //   queryFn: () => getServerData("itemTrxDetails", item_trx_id),
+  //   queryKey: ["itemTrxDetails", itemTrxId],
+  //   queryFn: () => getServerData("itemTrxDetails", itemTrxId),
   // });
 
   // Just return the client component directly - no HydrationBoundary needed
-  return <ItemsTrxDetailsTableClient item_trx_id={item_trx_id} />;
+  return <ItemsTrxDetailsTableClient itemTrxId={itemTrxId} />;
 }
 
 function Fallback() {
-  return <Table labels={labels} />;
+  return <TableLoading entity="itemTrxDetails" />;
 }
 
 ItemsTrxDetailsTable.Fallback = Fallback;

@@ -15,29 +15,26 @@ const labels = [
   "URL",
 ];
 
-export default async function ItemsTrxTable({
-  type = "compound",
-  item_trx_id,
-}) {
+export default async function ItemsTrxTable({ type = "compound", itemTrxId }) {
   const queryClient = getQueryClient();
 
   // DO NOT AWAIT. This starts the fetch and lets rendering continue.
   queryClient.prefetchQuery({
-    queryKey: ["itemTrx", type === "simple" ? item_trx_id : "all"],
+    queryKey: ["itemTrx", type === "simple" ? itemTrxId : "all"],
     queryFn: () => {
-      if (type === "simple" && item_trx_id) {
-        return getServerData("itemTrx", item_trx_id);
+      if (type === "simple" && itemTrxId) {
+        return getServerData("itemTrx", itemTrxId);
       } else {
         return getServerData("itemTrx");
       }
     },
   });
 
-  // Also prefetch itemTrxDetails if we have an item_trx_id
-  if (item_trx_id) {
+  // Also prefetch itemTrxDetails if we have an itemTrxId
+  if (itemTrxId) {
     queryClient.prefetchQuery({
-      queryKey: ["itemTrxDetails", item_trx_id],
-      queryFn: () => getServerData("itemTrxDetails", item_trx_id),
+      queryKey: ["itemTrxDetails", itemTrxId],
+      queryFn: () => getServerData("itemTrxDetails", itemTrxId),
     });
   }
 
@@ -45,16 +42,16 @@ export default async function ItemsTrxTable({
   //    This promise is passed to the client.
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <ItemsTrxTableClient type={type} item_trx_id={item_trx_id}>
+      <ItemsTrxTableClient type={type} itemTrxId={itemTrxId}>
         {/* Server component is passed as a child to the client component */}
-        <ItemsTrxDetailsTable item_trx_id={item_trx_id} />
+        <ItemsTrxDetailsTable itemTrxId={itemTrxId} />
       </ItemsTrxTableClient>
     </HydrationBoundary>
   );
 }
 
 function Fallback() {
-  return <TableLoading labels={labels} />;
+  return <TableLoading entity="itemTrx" />;
 }
 
 ItemsTrxTable.Fallback = Fallback;

@@ -47,7 +47,7 @@ export const createAppStore = (initState = initStore()) => {
     // This can be used for a snappier UI experience
     addItemOptimistic: (newItem) =>
       set((state) => ({
-        item: [...state.item, { ...newItem, id: `temp-${Date.now()}` }], // Add with a temporary ID
+        item: [...state.item, { ...newItem, idField: `temp-${Date.now()}` }], // Add with a temporary ID
       })),
   }));
 };

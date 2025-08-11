@@ -10,7 +10,7 @@ import {
   PopoverTrigger,
 } from "@/app/_components/_ui/client/shadcn-Popover";
 import { cn } from "@/app/_utils/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "./shadcn-Input";
 
 function formatDate(date) {
@@ -38,20 +38,21 @@ export default function DatePicker({ field }) {
   const [inputValue, setInputValue] = useState(
     field.value ? formatDate(field.value) : "",
   );
+  const isUpdatingInternally = useRef(false);
 
-  // const [date, setDate] = useState(new Date());
-  // const [value, setValue] = useState(formatDate(date));
-
-  //Sync input value when field value changes
   useEffect(() => {
+    if (isUpdatingInternally.current) {
+      isUpdatingInternally.current = false;
+      return;
+    }
     setInputValue(formatDate(field.value));
   }, [field.value]);
 
   return (
     <div className="relative flex items-center">
       <Input
-        {...field} // Pass field props to bind to react-hook-form
         id="date"
+        name={field.name}
         value={inputValue}
         placeholder={new Date().toLocaleDateString("en-US", {
           year: "numeric",
@@ -60,17 +61,25 @@ export default function DatePicker({ field }) {
         })}
         className="bg-background pr-10"
         onChange={(e) => {
-          const date = new Date(e.target.value);
-          console.log(date);
-
-          const newInputValue = e.target.value;
-          setInputValue(newInputValue);
-
+          setInputValue(e.target.value);
+        }}
+        onBlur={() => {
+          if (!inputValue) {
+            isUpdatingInternally.current = true;
+            field.onChange(null);
+            field.onBlur();
+            return;
+          }
+          const date = new Date(inputValue);
           if (isValidDate(date)) {
+            isUpdatingInternally.current = true;
             field.onChange(date); // Update form state
+            setInputValue(formatDate(date));
+            field.onBlur();
             setMonth(date);
           } else {
-            field.onChange(undefined); // Clear form state if date is invalid
+            // if the user entered an invalid date, revert to the last valid one
+            setInputValue(formatDate(field.value));
           }
         }}
         onKeyDown={(e) => {
@@ -81,7 +90,7 @@ export default function DatePicker({ field }) {
         }}
       />
 
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={setOpen} modal={true}>
         <PopoverTrigger asChild>
           <Button
             variant="ghost"
@@ -89,16 +98,18 @@ export default function DatePicker({ field }) {
             className={cn(
               "absolute top-1/2 right-2 h-6 w-6 -translate-y-1/2 p-0",
               !field.value && "text-muted-foreground",
-            )}>
+            )}
+          >
             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent
           // className="w-auto overflow-hidden p-0"
-          className="w-auto p-0"
+          className="z-[2000] w-auto p-0"
           /* align="end" */ align="end"
           alignOffset={-8}
-          sideOffset={10}>
+          sideOffset={10}
+        >
           <Calendar
             mode="single"
             captionLayout="dropdown"
@@ -108,6 +119,7 @@ export default function DatePicker({ field }) {
             fromYear={1979}
             toYear={new Date().getFullYear()}
             onSelect={(date) => {
+              isUpdatingInternally.current = true;
               field.onChange(date);
               setInputValue(formatDate(date));
               setOpen(false);
@@ -118,99 +130,6 @@ export default function DatePicker({ field }) {
           />
         </PopoverContent>
       </Popover>
-
-      {/* <Form.InputWithLabel
-          name={name}
-          inputValue={value}
-          placeholder={new Date().toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
-          className="bg-background pr-10"
-          onChange={(e) => {
-            const date = new Date(e.target.value);
-
-            setValue(e.target.value);
-            onChange?.(formatDate(date));
-
-            if (isValidDate(date)) {
-              setDate(date);
-              setMonth(date);
-            }
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "ArrowDown") {
-              e.preventDefault();
-              setOpen(true);
-            }
-          }}
-          error={error}>
-          Select Date *
-        </Form.InputWithLabel> */}
-      {/* 
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              id="date-picker"
-              variant="ghost"
-              className="absolute top-8/12 right-2 size-6 -translate-y-1/2">
-              <CalendarIcon className="size-3.5" />
-              <span className="sr-only">Select date</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent
-            className="w-auto overflow-hidden p-0"
-            align="end"
-            alignOffset={-8}
-            sideOffset={10}>
-            <Calendar
-              mode="single"
-              selected={date}
-              captionLayout="dropdown"
-              month={month}
-              onMonthChange={setMonth}
-              onSelect={(date) => {
-                setDate(date);
-                setValue(formatDate(date));
-                setOpen(false);
-                // onChange?.(formatDate(date));
-              }}
-            />
-          </PopoverContent>
-        </Popover> */}
     </div>
   );
 }
-
-// <FormItem className="flex flex-col">
-//   <FormLabel>Date of birth</FormLabel>
-//   <Popover>
-//     <PopoverTrigger asChild>
-//       <FormControl>
-//         <Button
-//           variant={"outline"}
-//           className={cn(
-//             "w-[240px] pl-3 text-left font-normal",
-//             !field.value && "text-muted-foreground",
-//           )}>
-//           {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-//           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-//         </Button>
-//       </FormControl>
-//     </PopoverTrigger>
-//     <PopoverContent className="w-auto p-0" align="start">
-//       <Calendar
-//         mode="single"
-//         selected={field.value}
-//         onSelect={field.onChange}
-//         disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-//         captionLayout="dropdown"
-//       />
-//     </PopoverContent>
-//   </Popover>
-//   <FormDescription>
-//     Your date of birth is used to calculate your age.
-//   </FormDescription>
-//   <FormMessage />
-// </FormItem>;

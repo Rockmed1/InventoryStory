@@ -5,6 +5,7 @@ import { useActionState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { createItem } from "../../_lib/server/actions";
 import { DropDown } from "../_ui/client/DropDown";
+import { FormControl } from "../_ui/client/shadcn-Form";
 import Button from "../_ui/server/Button";
 import SpinnerMini from "../_ui/server/SpinnerMini";
 import { ZodErrors } from "../_ui/server/ZodError";
@@ -68,12 +69,14 @@ export default function AddItemForm({ onCloseModal }) {
       <Form.ZodErrors error={formState?.["message"]} />
       <Form.InputSelect name={"_item_class_id"}>
         <Form.Label>Select Item Class *</Form.Label>
-        <DropDown
-          parent="itemClass"
-          name="_item_class_id"
-          label="item class"
-          required={true}
-        />
+        <FormControl>
+          <DropDown
+            parent="itemClass"
+            name="_item_class_id"
+            label="item class"
+            required={true}
+          />
+        </FormControl>
       </Form.InputSelect>
       <Form.InputWithLabel
         name={"_item_name"}

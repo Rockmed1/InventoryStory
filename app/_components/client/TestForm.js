@@ -1,105 +1,43 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import z from "zod";
-import { DropDown } from "../_ui/client/DropDown";
-import { Button } from "../_ui/client/shadcn-Button";
-import DatePicker from "../_ui/client/shadcn-DatePicker";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "../_ui/client/shadcn-Form";
-import { Input } from "../_ui/client/shadcn-Input";
+// import { useFieldArray, useForm } from "react-hook-form";
 
-const formSchema = z.object({
-  username: z.string().min(2, {
-    message: "Username must be at least 2 characters.",
-  }),
-  dob: z.date({
-    required_error: "A date of birth is required.",
-  }),
-  itemClass: z.string().min(2, {
-    message: "Item class must be selected",
-  }),
-});
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 
-function onSubmit(values) {
-  console.log(values);
-}
-
-export function TestForm() {
-  //1-Define the form
-  const form = useForm({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      username: "",
-      dob: undefined,
-      itemClass: "",
+export default function TestForm() {
+  const { register, control, handleSubmit, reset, trigger, setError } = useForm(
+    {
+      // defaultValues: {}; you can populate the fields by this attribute
     },
+  );
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "test",
   });
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="username"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Username</FormLabel>
-              <FormControl>
-                <Input placeholder="shadcn" {...field} />
-              </FormControl>
-              <FormDescription>
-                This is your public display name
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="dob"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Date of birth</FormLabel>
-              <DatePicker field={field} />
-              <FormDescription>
-                Your Date of birth is used to calculate your age.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="itemClass"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Item Class</FormLabel>
-
-              <DropDown
-                field={field}
-                entity="itemClass"
-                name="_item_class_id"
-                label="item class"
-              />
-              <FormDescription>Pick an item class.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <Button type="submit">Submit</Button>
-      </form>
-    </Form>
+    <form onSubmit={handleSubmit((data) => console.log(data))}>
+      <ul>
+        {fields.map((item, index) => (
+          <li key={item.id}>
+            <input {...register(`test.${index}.firstName`)} />
+            <Controller
+              name={`test.${index}.lastName`}
+              control={control}
+              render={({ field }) => <input {...field} />}
+            />
+            <button type="button" onClick={() => remove(index)}>
+              Delete
+            </button>
+          </li>
+        ))}
+      </ul>
+      <button
+        type="button"
+        onClick={() => append({ firstName: "bill", lastName: "luo" })}>
+        append
+      </button>
+      <input type="submit" />
+    </form>
   );
 }

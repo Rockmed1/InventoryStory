@@ -1,12 +1,16 @@
 "use client";
 
 import Menus from "@/app/_components/_ui/client/Menus";
-import useTableState, { TableProvider } from "@/app/_store/TableProvider";
+
+import {
+  getEntityTableLabels,
+  getEntityUrlIdentifier,
+} from "@/app/_utils/helpers";
+import { useUrlParam } from "@/app/_utils/helpers-client";
 import { cn } from "@/app/_utils/utils";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createContext, use, useCallback, useMemo } from "react";
 import MenuWithModal from "./MenuWithModal";
 import {
@@ -17,7 +21,7 @@ import {
 
 // import { createContext, use, useState } from "react";
 
-// const initialState = {
+// const tableState = {
 //   type: "simple",
 //   labels: [],
 //   tableData: [],
@@ -27,51 +31,21 @@ import {
 //   openRow: undefined,
 // };
 
-const UrlStateContext = createContext();
+//Table context to make the components more readable
+const TableContext = createContext();
 
-export function useUrlState() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathName = usePathname();
-
-  const openRowId = useMemo(() => {
-    return searchParams.get("item_trx_id");
-  }, [searchParams]);
-
-  const toggleRow = useCallback(
-    (rowId) => {
-      const params = new URLSearchParams(searchParams);
-
-      if (openRowId === rowId.toString()) {
-        params.delete("item_trx_id");
-      } else {
-        params.set("item_trx_id", rowId.toString());
-      }
-
-      router.replace(`${pathName}?${params.toString()}`, { scroll: false });
-    },
-    [openRowId, router, pathName],
-  );
-
-  return { openRowId, toggleRow };
-  // return useMemo(() => ({ openRowId, toggleRow }), [openRowId, toggleRow]);
-}
-
-export function UrlStateProvider({ children }) {
-  const urlState = useUrlState();
-
+function TableProvider({ tableState, children }) {
   return (
-    <UrlStateContext.Provider value={urlState}>
-      {children}
-    </UrlStateContext.Provider>
+    <TableContext.Provider value={tableState}>{children}</TableContext.Provider>
   );
 }
 
-export function useUrlStateContext() {
-  const context = use(UrlStateContext);
-  if (context === undefined) {
-    throw new Error("useUrlStateContext must be used within UrlStateProvider");
-  }
+function useTableState() {
+  const context = use(TableContext);
+
+  if (context === undefined)
+    throw new Error("Table context was used outside provider");
+
   return context;
 }
 
@@ -135,9 +109,9 @@ function TableCell({ row, fieldKey }) {
       <td key={fieldKey} className="p-2">
         {
           /* then create links for the id and name cells only if the real data  TODO: make this part modular */
-          (fieldKey === "id" || fieldKey === "name") && redirectTo ? (
+          (fieldKey === "idField" || fieldKey === "nameField") && redirectTo ? (
             <Link
-              href={`/${redirectTo}/${row["id"]}`}
+              href={`/${redirectTo}/${row["idField"]}`}
               className="transition-all duration-200 hover:underline">
               {row[fieldKey]}
             </Link>
@@ -154,9 +128,9 @@ function TableCell({ row, fieldKey }) {
       <td key={fieldKey} className="p-2">
         {
           /* then create links for the id and name cells only if the real data  TODO: make this part modular */
-          fieldKey === "id" || fieldKey === "date" ? (
+          fieldKey === "idField" || fieldKey === "dateField" ? (
             <Link
-              href={`/${redirectTo}/${row["id"]}`}
+              href={`/${redirectTo}/${row["idField"]}`}
               className="transition-all duration-200 hover:underline">
               {row[fieldKey]}
             </Link>
@@ -170,7 +144,7 @@ function TableCell({ row, fieldKey }) {
 }
 
 function ActionCell({ row }) {
-  const { type, rowActions, isLoading } = useTableState();
+  const { entity, type, rowActions, isLoading } = useTableState();
 
   if (isLoading) {
     return (
@@ -192,10 +166,12 @@ function ActionCell({ row }) {
     );
 
   if (type === "compound") {
-    const { openRowId, toggleRow } = useUrlStateContext();
+    const param = getEntityUrlIdentifier(entity);
+    const { toggle: toggleRow } = useUrlParam(param);
+
     const handleClick = useCallback(() => {
-      toggleRow(row.id);
-    }, [toggleRow, row.id]);
+      toggleRow(row.idField);
+    }, [toggleRow, row.idField]);
 
     return (
       <td className="w-2 p-2 align-middle">
@@ -219,7 +195,8 @@ function ActionCell({ row }) {
 
 function TableRowDetail({ children }) {
   const { labels } = useTableState();
-
+  // console.log("table details labels: ", labels);
+  // console.log(children);
   return (
     <CollapsibleContent asChild forceMount>
       <tr>
@@ -237,8 +214,8 @@ function TableRowDetail({ children }) {
   );
 }
 
-function TableBodyLoading({ children }) {
-  const { tableData, type } = useTableState();
+function TableBodyLoading() {
+  // const { tableData, type } = useTableState();
   // Debug re-renders
   // const renderCount = useRef(0);
   // renderCount.current++;
@@ -248,12 +225,25 @@ function TableBodyLoading({ children }) {
   //   type,
   // });
 
+  // default place holder for when data is not passed
+  // LATER: get the number of placeholder rows
+  const placeHolderData = useMemo(
+    () =>
+      Array.from({ length: 3 }, (_, i) => ({
+        idField: "loading" + i,
+        ...Object.fromEntries(
+          labels.filter((_, i) => i > 0).map((label) => [label, "loading"]),
+        ),
+      })),
+    [labels],
+  );
+
   return (
     <>
-      {tableData.map((row) => (
-        <tbody className="group" key={row.id}>
-          <TableRow rowId={row.id}>
-            <CheckboxCell rowId={row.id} />
+      {placeHolderData.map((row) => (
+        <tbody className="group" key={row.idField}>
+          <TableRow rowId={row.idField}>
+            <CheckboxCell rowId={row.idField} />
             {Object.keys(row).map((fieldKey) => (
               <TableCell row={row} key={fieldKey} fieldKey={fieldKey} />
             ))}
@@ -266,9 +256,14 @@ function TableBodyLoading({ children }) {
 }
 
 function TableBody({ children }) {
-  const { tableData, type } = useTableState();
-  const { openRowId } = useUrlStateContext();
+  const { entity, tableData, type } = useTableState();
+  const param = getEntityUrlIdentifier(entity);
+  const { paramValue: openRowId } = useUrlParam(param);
+
+  // console.log("openRowId: ", openRowId);
+
   // // Debug re-renders
+
   // const renderCount = useRef(0);
   // renderCount.current++;
 
@@ -282,13 +277,13 @@ function TableBody({ children }) {
   return (
     <>
       {tableData.map((row) => {
-        const isOpen = row.id.toString() === openRowId;
+        const isOpen = row.idField.toString() === openRowId;
 
         return (
-          <Collapsible key={row.id} asChild open={isOpen}>
+          <Collapsible key={row.idField} asChild open={isOpen}>
             <tbody className="group">
-              <TableRow rowId={row.id}>
-                <CheckboxCell rowId={row.id} />
+              <TableRow rowId={row.idField}>
+                <CheckboxCell rowId={row.idField} />
                 {Object.keys(row).map((fieldKey) => (
                   <TableCell row={row} key={fieldKey} fieldKey={fieldKey} />
                 ))}
@@ -317,10 +312,10 @@ function TableBody({ children }) {
 export default function Table({
   config = {},
   type = "simple",
-  labels,
   tableData,
   rowActions,
   redirectTo,
+  entity,
   children,
 }) {
   // const {
@@ -331,26 +326,32 @@ export default function Table({
   //   redirectTo = "", //default
   // } = config;
 
+  if (!entity) {
+    throw new Error(
+      "Table component requires 'entity' prop, but none was passed.",
+    );
+  }
+
+  const labels = getEntityTableLabels(entity);
+
   // console.log(labels);
   if (!labels) {
-    throw new Error(
-      "Table component requires 'labels' prop, but none was passed.",
-    );
+    throw new Error(`No labels were found for entity ${entity}`);
   }
   //default place holder for when data is not passed
   //LATER: get the number of placeholder rows
-  const placeHolderData = useMemo(
-    () =>
-      Array.from({ length: 3 }, (_, i) => ({
-        id: "loading" + i,
-        ...Object.fromEntries(
-          labels.filter((_, i) => i > 0).map((label) => [label, "loading"]),
-        ),
-      })),
-    [labels],
-  );
+  // const placeHolderData = useMemo(
+  //   () =>
+  //     Array.from({ length: 3 }, (_, i) => ({
+  //       idField: "loading" + i,
+  //       ...Object.fromEntries(
+  //         labels.filter((_, i) => i > 0).map((label) => [label, "loading"]),
+  //       ),
+  //     })),
+  //   [labels],
+  // );
 
-  const displayData = tableData || placeHolderData;
+  // const displayData = tableData || placeHolderData;
 
   // // Debug re-renders
   // const renderCount = useRef(0);
@@ -365,13 +366,14 @@ export default function Table({
   // console.log(displayData);
 
   // const searchParams = useSearchParams();
-  // const openRowId = searchParams.get("item_trx_id");
+  // const openRowId = searchParams.get("itemTrxId");
 
   const tableState = useMemo(
     () => ({
+      entity,
       type,
       labels,
-      tableData: displayData,
+      tableData,
       rowActions,
       redirectTo,
       isLoading: !tableData,
@@ -380,29 +382,28 @@ export default function Table({
     [
       type,
       labels,
+      tableData,
       rowActions,
       redirectTo,
-      displayData,
+
       // openRowId,
     ],
   );
 
   return (
-    <UrlStateProvider>
-      <TableProvider initialState={tableState}>
-        <div className="overflow-scroll rounded-lg border border-neutral-200">
-          <Menus>
-            <table className="w-full table-auto text-left text-sm">
-              <TableHeader labels={labels} />
-              {tableState.isLoading ? (
-                <TableBodyLoading />
-              ) : (
-                <TableBody>{children}</TableBody>
-              )}
-            </table>
-          </Menus>
-        </div>
-      </TableProvider>
-    </UrlStateProvider>
+    <TableProvider tableState={tableState}>
+      <div className="overflow-scroll rounded-lg border border-neutral-200">
+        <Menus>
+          <table className="w-full table-auto text-left text-sm">
+            <TableHeader labels={labels} />
+            {!tableData ? (
+              <TableBodyLoading />
+            ) : (
+              <TableBody>{children}</TableBody>
+            )}
+          </table>
+        </Menus>
+      </div>
+    </TableProvider>
   );
 }

@@ -6,6 +6,7 @@ export function allowedEntities() {
     "bin",
     "market",
     "trxType",
+    "trxDirection",
     "itemClass",
     "location",
     "marketType",
@@ -43,7 +44,16 @@ export default function entityServerOnlyConfig(entity) {
         idField: "_trx_type_id",
         nameField: "_trx_type_name",
         descField: "_trx_type_desc",
-        directionId: "_trx_direction_id",
+        trxDirectionId: "_trx_direction_id",
+      },
+    },
+
+    trxDirection: {
+      get: "getTrxDirections",
+      fieldMappings: {
+        idField: "_trx_direction_id",
+        nameField: "_trx_direction_name",
+        descField: "_trx_direction_desc",
       },
     },
 
@@ -101,6 +111,7 @@ export default function entityServerOnlyConfig(entity) {
         dateField: "_trx_date",
         trxTypeId: "_trx_type_id",
         marketId: "_market_id",
+        numOfLines: "_num_of_lines",
       },
     },
 
@@ -108,7 +119,7 @@ export default function entityServerOnlyConfig(entity) {
       get: "getItemTrxDetails",
       fieldMappings: {
         itemTrxId: "_item_trx_id",
-        lineNum: "_trx_line_num",
+        trxLineNum: "_trx_line_num",
         itemId: "_item_id",
         fromBinId: "_from_bin_id",
         toBinId: "_to_bin_id",

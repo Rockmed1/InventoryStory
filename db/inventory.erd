@@ -4418,7 +4418,7 @@
     "memoEntities": {
       "UfD2lTgQoJiBOJhQw1POC": {
         "id": "UfD2lTgQoJiBOJhQw1POC",
-        "value": "Relationships:\n1- Organization could  have many or no usrs and usrs should have at least one organization and could have many organizations\n\n\n*** Everything else should have at least one organization and exactly one created_by_usr_id\n\n2- items should have exactly one class id\n3-  items transactions should have exactly one transaction type and should have one or more item_id\n4- item_trxs_details should have :\n- one transaction id (many to one) \n- many to one item_id \n- many to one item_market_id \n- many to one bin_id\n5- item_qty should have composite foreign key item number + bin_id one to one\n\n",
+        "value": "Relationships:\n1- Organization could  have many or no usrs and usrs should have at least one organization and could have many organizations\n\n\n*** Everything else should have at least one organization and exactly one created_by_usr_id\n\n2- items should have exactly one class id\n3-  items transactions should have exactly one transaction type and should have one or more item_id\n4- item_trxs_details should have :\n- one transaction id (many to one) \n- many to one item_id \n- many to one item_market_id \n- many to one bin_id\n5- item_qty should have compositee foreign key item number + bin_id one to one\n\n",
         "ui": {
           "x": 12.1676,
           "y": -23.4374,

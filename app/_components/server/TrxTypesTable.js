@@ -10,7 +10,7 @@ export default async function TrxTypesTable() {
   const queryClient = getQueryClient();
 
   queryClient.prefetchQuery({
-    queryKey: ["trxType"],
+    queryKey: ["trxType", "all"],
     queryFn: () => getServerData("trxType"),
   });
 
@@ -22,7 +22,7 @@ export default async function TrxTypesTable() {
 }
 
 function Fallback() {
-  return <TableLoading labels={labels} />;
+  return <TableLoading entity="trxType" />;
 }
 
 TrxTypesTable.Fallback = Fallback;

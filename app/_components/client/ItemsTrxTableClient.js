@@ -1,18 +1,9 @@
 "use client";
 
+import { useApiData } from "@/app/_hooks/useClientData";
 import { ArrowsRightLeftIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import Table from "../_ui/client/Table";
-
-const labels = [
-  "Trx ID",
-  "Date",
-  "Description",
-  "Trx Type",
-  "Direction",
-  "Market",
-  "URL",
-];
 
 const rowActions = [
   {
@@ -31,31 +22,33 @@ const rowActions = [
 
 export default function ItemsTrxTableClient({
   type = "compound",
-  item_trx_id,
+  itemTrxId,
   children,
 }) {
   const { data, isFetching } = useSuspenseQuery({
-    queryKey: ["itemTrx", type === "simple" ? item_trx_id : "all"],
+    queryKey: ["itemTrx", type === "simple" ? itemTrxId : "all"],
     queryFn: () => {
-      if (type === "simple" && item_trx_id) {
-        return useData("itemTrx", item_trx_id);
+      if (type === "simple" && itemTrxId) {
+        return useApiData("itemTrx", itemTrxId);
       } else {
-        return useData("itemTrx");
+        return useApiData("itemTrx", "all");
       }
     },
   });
+  // const displayTableLabels = getEntityTableLabels("itemTrx");
   // No isLoading check is needed. The <Suspense> boundary handles it.
   // `isFetching` can be used to show a subtle loading indicator during background refetches.
 
   const displayData = data.map(
-    ({ trx_type_id, market_id, ...displayFields }) => displayFields,
+    ({ trxTypeId, marketId, ...displayFields }) => displayFields,
   );
 
   return (
     <>
       <Table
         type={type}
-        labels={labels}
+        // labels={displayTableLabels}
+        entity="itemTrx"
         tableData={displayData}
         rowActions={rowActions}
         redirectTo="transactions"

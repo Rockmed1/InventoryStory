@@ -1,7 +1,8 @@
 "use client";
 
+import { getEntityTableLabels } from "@/app/_utils/helpers";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 
 // function TableHeader({ labels }) {
 //   return (
@@ -67,19 +68,25 @@ function ActionCell() {
  * @param {object[]} [rowActions] - An array of action objects for the menu in each row. Each object should have `id`, `label`, `icon`, and `action` properties.
  */
 
-export default function TableLoading({ config = {}, labels, children }) {
+export default function TableLoading({ config = {}, entity, children }) {
+  if (!entity) {
+    throw new Error(
+      "Table component requires 'entity' prop, but none was passed.",
+    );
+  }
+
+  const labels = getEntityTableLabels(entity);
+
   // console.log(labels);
   if (!labels) {
-    throw new Error(
-      "Table component requires 'labels' prop, but none was passed.",
-    );
+    throw new Error(`No labels were found for entity ${entity}`);
   }
 
   const displayData = useMemo(() => {
     //default place holder for when data is not passed
     //LATER: get the number of placeholder rows
     return Array.from({ length: 3 }, (_, i) => ({
-      id: "loading" + i,
+      idField: "loading" + i,
       ...Object.fromEntries(
         labels.filter((_, i) => i > 0).map((label) => [label, "loading"]),
       ),
@@ -110,9 +117,9 @@ export default function TableLoading({ config = {}, labels, children }) {
         </thead>
 
         {displayData.map((row) => (
-          <tbody className="group" key={row.id}>
-            <TableRow rowId={row.id}>
-              <CheckboxCell rowId={row.id} />
+          <tbody className="group" key={row.idField}>
+            <TableRow rowId={row.idField}>
+              <CheckboxCell rowId={row.idField} />
               {Object.keys(row).map((fieldKey) => (
                 <TableCell row={row} key={fieldKey} fieldKey={fieldKey} />
               ))}

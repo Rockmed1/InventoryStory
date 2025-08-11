@@ -359,3 +359,47 @@ $$;
 --------
 ------
 ---
+--* Transactions
+DO $$
+DECLARE
+	-- _data JSONB;
+	_data JSONB := ' {"_org_uuid" :"ceba721b-b8dc-487d-a80c-15ae9d947084"
+	, "_usr_uuid" :"2bfdec48-d917-41ee-99ff-123757d59df1"
+	, "_trx_header" : { "_trx_date" :"7/1/2025"
+	, "_trx_desc" :"kjhskjdhfsdkh"
+	, "_market_id" :"1000"
+	, "_trx_type_id" :"1000"
+	, "_num_of_lines" :"2" }
+	, "_trx_details" :[{ "_trx_line_num" :"1" , "_to_bin_id" :"1001" , "_item_id" :"1000" , "_from_bin_id" :null , "_qty_in" :6.0 , "_qty_out" :null , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" } , { "_trx_line_num" :"2" , "_to_bin_id" :"1001" , "_item_id" :"1001" , "_from_bin_id" :null , "_qty_in" :35.0 , "_qty_out" :null , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" }] }'::JSONB;
+	_results JSONB;
+	_type_id INTEGER;
+	_trx_direction_id INTEGER;
+BEGIN
+	PERFORM
+		utils.fn_create_item_trx(_data);
+
+END;
+
+$$;
+
+DO $$
+DECLARE
+	-- _data JSONB;
+	_data JSONB := ' {"_org_uuid" :"ceba721b-b8dc-487d-a80c-15ae9d947084"
+	, "_usr_uuid" :"2bfdec48-d917-41ee-99ff-123757d59df1"
+	, "_trx_header" : { "_trx_date" :"7/1/2025"
+	, "_trx_desc" :"kjhskjdhfsdkh"
+	, "_market_id" :"1000"
+	, "_trx_type_id" :"1000"
+	, "_num_of_lines" :"2" }
+	, "_trx_details" :[{ "_trx_line_num" :"1" , "_to_bin_id" :"1001" , "_item_id" :"1000" , "_from_bin_id" :null , "_qty_in" :8.0 , "_qty_out" :null , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" } , { "_trx_line_num" :"2" , "_to_bin_id" :"1001" , "_item_id" :"1001" , "_from_bin_id" :null , "_qty_in" :10.0 , "_qty_out" :null , "_item_trx_desc" :"sdkkfjhkajsdfadsfad" }] }'::JSONB;
+	_results JSONB;
+	_type_id INTEGER;
+	_trx_direction_id INTEGER;
+BEGIN
+	PERFORM
+		utils.fn_create_item_trx(_data);
+
+END;
+
+$$;

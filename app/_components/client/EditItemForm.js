@@ -1,17 +1,16 @@
 "use client";
 
 import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
-import { createFormData } from "@/app/_utils/helpers-client";
+import { createFormData } from "@/app/_utils/helpers";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useActionState, useEffect } from "react";
+import { useActionState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { updateItem } from "../../_lib/server/actions";
 import { DropDown } from "../_ui/client/DropDown";
 // import Button from "../_ui/server/Button";
 import useClientData from "@/app/_hooks/useClientData";
-import entityTransformers from "@/app/_lib/client/entityTransformers";
 import { DevTool } from "@hookform/devtools";
 import { Button } from "../_ui/client/shadcn-Button";
 import {
@@ -38,7 +37,7 @@ export default function EditItemForm({ id, onCloseModal }) {
   const queryClient = useQueryClient();
   // the id will be passed from the cloneElement in the Modal
 
-  // console.log("EditItemForm id: ", id);
+  // console.log("EditItemFormidField: ", id);
   // Get existing items from the store for validation
   const {
     data: [itemToEdit],
@@ -46,12 +45,13 @@ export default function EditItemForm({ id, onCloseModal }) {
     isError: itemDataError,
   } = useClientData({ entity: "item", id });
 
-  // console.log("EditItemForm received itemToEdit:", {
-  //   itemToEdit,
-  //   isArray: Array.isArray(itemToEdit),
-  //   type: typeof itemToEdit,
-  //   id,
-  // });
+  console.log("EditItemForm received itemToEdit:", {
+    id,
+    itemToEdit,
+    isArray: Array.isArray(itemToEdit),
+    type: typeof itemToEdit,
+    itemDataError,
+  });
 
   // 2- get the validation schema with refreshed validation data
   const {
@@ -59,7 +59,11 @@ export default function EditItemForm({ id, onCloseModal }) {
     isLoading: loadingValidation,
     isError,
     debug,
-  } = useValidationSchema("item", "update", id);
+  } = useValidationSchema({
+    entity: "item",
+    operation: "update",
+    editedEntityId: id,
+  });
 
   // console.log("EditItemForm schema: ", schema);
   // console.log("EditItemForm schema loadingValidation?: ", loadingValidation);
@@ -79,8 +83,8 @@ export default function EditItemForm({ id, onCloseModal }) {
   );
 
   //4- Enhanced form management (JS available)
-  const { apiOnlyData, restoreDefaultFormat, isChanged } =
-    entityTransformers("item").editForm;
+  // const { apiOnlyData, restoreDefaultFormat, isChanged } =
+  //   entityTransformers("item").editForm;
 
   // //4-a customize the resolver to handle the custom form data:
   // const customZodResolver = (schema) => {
@@ -115,10 +119,10 @@ export default function EditItemForm({ id, onCloseModal }) {
     resolver: schema ? zodResolver(schema) : undefined,
     mode: "onBlur", //onTouched
     defaultValues: {
-      idField: itemToEdit?.id || "",
+      idField: itemToEdit?.idField || "",
       itemClassId: itemToEdit?.itemClassId || "",
-      nameField: itemToEdit?.name || "",
-      descField: itemToEdit?.description || "",
+      nameField: itemToEdit?.nameField || "",
+      descField: itemToEdit?.descField || "",
     },
     shouldUnregister: true,
   });
@@ -135,7 +139,7 @@ export default function EditItemForm({ id, onCloseModal }) {
 
       const itemClassName = queryClient
         .getQueryData(["itemClass", "all"])
-        .find((_) => _.id.toString() == values.itemClassId)?.name;
+        .find((_) => _.idField.toString() == values.itemClassId)?.nameField;
 
       await queryClient.cancelQueries({ queryKey: ["item"] });
 
@@ -145,11 +149,11 @@ export default function EditItemForm({ id, onCloseModal }) {
       //optimistically update cache
       queryClient.setQueryData(["item", "all"], (old = []) =>
         old.map((item) => {
-          if (item.id === values.idField) {
+          if (item.idField === values.idField) {
             return {
               ...item,
-              name: values.nameField,
-              description: values.descField,
+              nameField: values.nameField,
+              descField: values.descField,
               itemClassId: values.itemClassId,
               itemClassName: itemClassName ?? "Fetching...",
             };
@@ -253,6 +257,8 @@ export default function EditItemForm({ id, onCloseModal }) {
       } else {
         //Generic server errors
         // toast.error(error.message || "Failed to create item");
+
+        console.log("🚨 error: ", error);
         form.setError("root", {
           type: "server",
           message: error.message || "An unexpected error occured",
@@ -279,10 +285,10 @@ export default function EditItemForm({ id, onCloseModal }) {
       // ✅ YES: Enhanced Submission
       e.preventDefault();
 
-      if (!isChanged(itemToEdit, values)) {
-        toast.error("No changes detected");
-        return;
-      }
+      // if (!isChanged(itemToEdit, values)) {
+      //   toast.error("No changes detected");
+      //   return;
+      // }
 
       mutation.mutate(values);
     }
@@ -301,20 +307,24 @@ export default function EditItemForm({ id, onCloseModal }) {
   //   // },
   // });
 
-  useEffect(() => {
-    console.log("📊 editForm state changed:", {
-      isValid: form.formState.isValid,
-      statuses: {
-        itemLoading: itemLoading,
-        "mutation.isPending": mutation.isPending,
-        "!form.formState.isValid": !form.formState.isValid,
-      },
+  // useEffect(() => {
+  //   console.log("📊 editForm state changed:", {
+  //     isValid: form.formState.isValid,
+  //     statuses: {
+  //       itemLoading: itemLoading,
+  //       "mutation.isPending": mutation.isPending,
+  //       "!form.formState.isValid": !form.formState.isValid,
+  //     },
 
-      errors: form.formState.errors,
-      isDirty: form.formState.isDirty,
-      values: form.getValues(),
-    });
-  }, [form.formState.isValid, form.formState.errors]);
+  //     errors: {
+  //       "mutation.error": mutation.error,
+  //       "form.formState?.message": form.formState?.message,
+  //       "form.formState.errors": form.formState.errors,
+  //     },
+  //     isDirty: form.formState.isDirty,
+  //     values: form.getValues(),
+  //   });
+  // }, [form.formState.isValid, form.formState.errors]);
 
   return (
     <>
@@ -345,13 +355,15 @@ export default function EditItemForm({ id, onCloseModal }) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Item Class</FormLabel>
-                  <DropDown
-                    field={field}
-                    entity="itemClass"
-                    name="itemClassId"
-                    label="item class"
-                    // form={form}
-                  />
+                  <FormControl>
+                    <DropDown
+                      field={field}
+                      entity="itemClass"
+                      name="itemClassId"
+                      label="item class"
+                      // form={form}
+                    />
+                  </FormControl>
                   <FormDescription>Pick an item class.</FormDescription>
                   <FormMessage />
                 </FormItem>

@@ -2,8 +2,9 @@
 
 import { revalidateTag } from "next/cache";
 // import { auth } from "./auth"; // Placeholder for your actual auth function
-import { appContextSchema } from "../getValidationSchema";
-import { getServerValidationSchema } from "./getServerValidationSchema";
+import z from "zod";
+import { appContextSchema } from "../validation/getValidationSchema";
+import { getServerValidationSchema } from "../validation/server/getServerValidationSchema";
 import { supabase } from "./supabase";
 import { dbReadyData, formDataTransformer } from "./transformers";
 
@@ -42,6 +43,8 @@ function dbAction(rpcName, entity, operation) {
       _usr_uuid,
     });
 
+    // console.log("validatedAppContext: ", validatedAppContext);
+
     if (!validatedAppContext.success) {
       return {
         error: z.prettifyError(validatedAppContext.error),
@@ -55,22 +58,24 @@ function dbAction(rpcName, entity, operation) {
     if (entity === "ItemTrx") {
       // Transform FormData using unified pipeline for complex transactions
       destructuredFormData = formDataTransformer.transform(formData);
-      console.log("Transformed ItemTrx data:", destructuredFormData);
+      // console.log("Transformed ItemTrx data:", destructuredFormData);
     } else {
       // Standard FormData handling for other entities
       destructuredFormData = Object.fromEntries(formData);
     }
 
+    // console.log("server destructuredFormData: ", destructuredFormData);
+
     const editedEntityId =
       operation === "update" ? parseInt(destructuredFormData.idField) : null;
 
-    console.log("server editedEntityId: ", editedEntityId);
+    // console.log("server editedEntityId: ", editedEntityId);
 
-    const schema = await getServerValidationSchema(
+    const schema = await getServerValidationSchema({
       entity,
       operation,
       editedEntityId,
-    );
+    });
 
     const validatedData = schema.safeParse({
       ...destructuredFormData,
@@ -82,7 +87,7 @@ function dbAction(rpcName, entity, operation) {
       return {
         success: false,
         formData: destructuredFormData,
-        zodErrors: validatedData.error.flatten().fieldErrors,
+        zodErrors: z.flattenError(validatedData.error).fieldErrors,
         message: "Server validation Error. Operation aborted.",
       };
     }
@@ -92,7 +97,7 @@ function dbAction(rpcName, entity, operation) {
 
     const _data = { _org_uuid, _usr_uuid, ...readyData };
 
-    // console.log(_data);
+    console.log(_data);
     // await connection();
 
     // For testing
@@ -128,7 +133,8 @@ function dbAction(rpcName, entity, operation) {
 
     // 4. Handle errors.
     if (error || !resultData?.success) {
-      const errorMessage = error?.message || `Failed to execute ${rpcName}.`;
+      const errorMessage = error.message || `Failed to execute ${rpcName}.`;
+
       console.error(`Error in ${rpcName}:`, errorMessage);
       return {
         success: false,
@@ -202,6 +208,7 @@ export const updateMarketType = dbAction(
   "update",
 );
 export const updateMarket = dbAction("fn_update_market", "market", "update");
+
 export const updateTrxType = dbAction(
   "fn_update_trx_type",
   "trxType",

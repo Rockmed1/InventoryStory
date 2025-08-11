@@ -1,11 +1,11 @@
 "use client";
 
+import { useApiData } from "@/app/_hooks/useClientData";
+import { getEntityTableLabels } from "@/app/_utils/helpers";
 import { PencilIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import Table from "../_ui/client/Table";
 import EditItemClassForm from "./EditItemClassForm";
-
-const labels = ["Class ID", "Name", "Description"];
 
 const rowActions = [
   {
@@ -19,13 +19,16 @@ const rowActions = [
 export default function ItemClassesTableClient() {
   const { data, isFetching } = useSuspenseQuery({
     queryKey: ["itemClass", "all"],
-    queryFn: () => useData("itemClass", "all"),
+    queryFn: () => useApiData("itemClass", "all"),
   });
+
+  const displayTableLabels = getEntityTableLabels("itemClass");
 
   return (
     <>
       <Table
-        labels={labels}
+        entity="itemClass"
+        // labels={displayTableLabels}
         tableData={data}
         rowActions={rowActions}
         isLoading={isFetching}

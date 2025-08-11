@@ -1,7 +1,7 @@
 "use client";
 
 import Form from "@/app/_components/_ui/client/Form";
-import { getValidationSchema } from "@/app/_lib/getValidationSchema";
+import { getValidationSchema } from "@/app/_lib/validation/getValidationSchema";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { createItem } from "../../_lib/server/actions";

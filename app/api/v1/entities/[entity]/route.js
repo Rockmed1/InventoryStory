@@ -1,21 +1,25 @@
 "server-only";
 
+import { allowedEntities } from "@/app/_lib/config/server/entityServerOnlyConfig";
 import { getServerData } from "@/app/_utils/helpers-server";
 
-const ALLOWED_ENTITIES = [
-  "item",
-  "bin",
-  "market",
-  "trxType",
-  "itemClass",
-  "location",
-  "marketType",
-  "itemTrx",
-  "itemTrxDetails",
-];
+// const ALLOWED_ENTITIES = [
+//   "item",
+//   "bin",
+//   "market",
+//   "trxType",
+//   "itemClass",
+//   "location",
+//   "marketType",
+//   "itemTrx",
+//   "itemTrxDetails",
+// ];
 
 export async function GET(request, { params }) {
   const { entity } = await params;
+  const ALLOWED_ENTITIES = allowedEntities();
+
+  // console.log("api entity: ", entity);
 
   try {
     const { searchParams } = new URL(request.url);

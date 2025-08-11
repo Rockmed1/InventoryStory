@@ -1,26 +1,48 @@
 "use client";
 
-import Form from "@/app/_components/_ui/client/Form";
-import { getValidationSchema } from "@/app/_lib/getValidationSchema";
-import { useActionState, useEffect, useState } from "react";
+import useClientData from "@/app/_hooks/useClientData";
+import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
+import { createFormData } from "@/app/_utils/helpers";
+import { DevTool } from "@hookform/devtools";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useActionState } from "react";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { updateBin } from "../../_lib/server/actions";
-import { useAppStore } from "../../_store/AppProvider";
 import { DropDown } from "../_ui/client/DropDown";
-import Button from "../_ui/server/Button";
+import { Button } from "../_ui/client/shadcn-Button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../_ui/client/shadcn-Form";
+import { Input } from "../_ui/client/shadcn-Input";
 import SpinnerMini from "../_ui/server/SpinnerMini";
 
-/**
- * A form for editing an existing bin, designed to be used within a modal.
- * It handles form submission using a server action and displays success notifications.
- *
- * @param {number} id - The bin ID to edit
- * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
- */
-
 export default function EditBinForm({ id, onCloseModal }) {
-  const existingBins = useAppStore((state) => state.bin || []);
-  const [binToEdit] = existingBins.filter((bin) => bin.id === id);
+  const queryClient = useQueryClient();
+
+  const {
+    data: [binToEdit],
+    isLoading: binLoading,
+    isError: binDataError,
+  } = useClientData({ entity: "bin", id });
+
+  const {
+    schema,
+    isLoading: loadingValidation,
+    isError,
+    debug,
+  } = useValidationSchema({
+    entity: "bin",
+    operation: "update",
+    editedEntityId: id,
+  });
 
   const initialState = {
     success: null,
@@ -32,118 +54,212 @@ export default function EditBinForm({ id, onCloseModal }) {
     updateBin,
     initialState,
   );
-  const [clientFormState, setClientFormState] = useState(initialState);
 
-  const currentFormState = clientFormState?.message
-    ? clientFormState
-    : formState;
+  const form = useForm({
+    resolver: schema ? zodResolver(schema) : undefined,
+    mode: "onBlur",
+    defaultValues: {
+      idField: binToEdit?.idField || "",
+      nameField: binToEdit?.nameField || "",
+      descField: binToEdit?.descField || "",
+      locationId: binToEdit?.locationId || "",
+    },
+    shouldUnregister: true,
+  });
 
-  useEffect(() => {
-    if (formState?.success) {
-      toast.success(`Bin ${formState.formData?._bin_name} has been updated.`);
-      setClientFormState(initialState);
-      onCloseModal?.();
-    }
-  }, [formState, onCloseModal]);
+  const mutation = useMutation({
+    onMutate: async (values) => {
+      const locationName = queryClient
+        .getQueryData(["location", "all"])
+        .find((_) => _.idField.toString() == values.locationId)?.nameField;
 
-  function isChanged(binToEdit, data) {
-    const { name, description, loc_id } = binToEdit;
-    const { _bin_name, _bin_desc, _loc_id } = data;
+      await queryClient.cancelQueries({ queryKey: ["bin"] });
 
-    // console.log("Name changed:", name.toString() !== _bin_name.toString());
-    // console.log("Description changed:", description.toString() !== _bin_desc.toString());
-    // console.log("Location changed:", loc_id.toString() !== _loc_id.toString());
+      const previousValues = queryClient.getQueryData(["bin", "all"]);
 
-    if (
-      name.toString() !== _bin_name.toString() ||
-      description.toString() !== _bin_desc.toString() ||
-      loc_id.toString() !== _loc_id.toString()
-    ) {
-      return true;
-    } else {
-      return false;
-    }
-  }
+      queryClient.setQueryData(["bin", "all"], (old = []) =>
+        old.map((bin) => {
+          if (bin.idField === values.idField) {
+            return {
+              ...bin,
+              nameField: values.nameField,
+              descField: values.descField,
+              locationId: values.locationId,
+              locationName: locationName ?? "Fetching...",
+            };
+          }
+          return bin;
+        }),
+      );
 
-  function handleSubmit(e) {
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData);
+      return { previousValues };
+    },
 
-    // Don't do anything if no change
-    if (!isChanged(binToEdit, data)) {
-      e.preventDefault();
-      return;
-    }
+    mutationFn: async (values) => {
+      const formData = createFormData(values);
+      const result = await updateBin(null, formData);
 
-    // CLIENT VALIDATE FORM DATA for UPDATE operation
-    const validationSchema = getValidationSchema(
-      "bin",
-      existingBins,
-      "update",
-      data._bin_id,
-    );
-    const validationResults = validationSchema.safeParse(data);
+      if (!result.success) {
+        const error = new Error(result.message || "Server error occured");
+        error.zodErrors = result.zodErrors;
+        error.message = result.message;
+        throw error;
+      }
 
-    if (!validationResults.success) {
-      e.preventDefault();
-      setClientFormState({
-        success: false,
-        formData: data,
-        zodErrors: validationResults.error.flatten().fieldErrors,
-        message: "Please fix the errors below.",
+      return result;
+    },
+
+    onSuccess: (result, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["bin"],
+        refetchType: "active",
       });
-    }
-    // If pass validation
-    else {
-      setClientFormState(initialState);
+      toast.success(`Bin ${variables.nameField} was updated successfully!`);
+      form.reset();
+      onCloseModal?.();
+    },
+
+    onError: (error, variables, context) => {
+      if (context?.previousValues) {
+        queryClient.setQueryData(["bin", "all"], context.previousValues);
+      }
+
+      if (error.zodErrors) {
+        Object.entries(error.zodErrors).forEach(([field, errors]) =>
+          form.setError(field, {
+            type: "server",
+            message: Array.isArray(errors) ? errors[0] : errors,
+          }),
+        );
+      } else if (error.name === "NetworkError") {
+        toast.error(
+          "Network error. Please check your connection and try again.",
+        );
+        form.setError("root", {
+          type: "network",
+          message: "Connection failed. Please try again.",
+        });
+      } else {
+        form.setError("root", {
+          type: "server",
+          message: error.message || "An unexpected error occured",
+        });
+      }
+    },
+
+    retry: (failureCount, error) => {
+      return error.name === "NetworkError" && failureCount < 3;
+    },
+  });
+
+  function onSubmit(values, e) {
+    const isJavaScriptReady =
+      mutation && !mutation.isPending && typeof mutation.mutate === "function";
+
+    if (isJavaScriptReady) {
+      e.preventDefault();
+      mutation.mutate(values);
     }
   }
 
   return (
-    <Form action={formAction} onSubmit={handleSubmit}>
-      <Form.ZodErrors error={currentFormState?.message} />
+    <>
+      {
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            action={formAction}
+            className="space-y-8">
+            {(mutation.error?.message ||
+              form.formState.errors?.root ||
+              form.formState?.message) && (
+              <div className="error-banner rounded border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+                {form.formState.errors.root?.message ||
+                  formState?.message ||
+                  mutation.error?.message}
+              </div>
+            )}
 
-      {/* Hidden ID field */}
-      <input type="hidden" name="_bin_id" value={binToEdit.id} />
+            <input type="hidden" {...form.register("idField")} />
 
-      <Form.InputSelect name={"_loc_id"}>
-        <Form.Label>Select Location *</Form.Label>
-        <DropDown
-          parent="location"
-          name="_loc_id"
-          label="location"
-          required={true}
-          defaultValue={binToEdit.loc_id}
-        />
-      </Form.InputSelect>
+            <FormField
+              control={form.control}
+              name="locationId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location</FormLabel>
+                  <FormControl>
+                    <DropDown
+                      field={field}
+                      entity="location"
+                      name="locationId"
+                      label="location"
+                    />
+                  </FormControl>
+                  <FormDescription>Select a location.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-      <Form.InputWithLabel
-        name={"_bin_name"}
-        inputValue={currentFormState.formData?._bin_name || binToEdit.name}
-        placeholder="Enter Bin name"
-        error={currentFormState?.zodErrors?._bin_name}>
-        Bin Name *
-      </Form.InputWithLabel>
+            <FormField
+              control={form.control}
+              name="nameField"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bin Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter Bin name" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Enter a unique name for the bin
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-      <Form.InputWithLabel
-        name={"_bin_desc"}
-        inputValue={
-          currentFormState.formData?._bin_desc || binToEdit.description
-        }
-        placeholder="Enter Bin description"
-        error={currentFormState?.zodErrors?._bin_desc}>
-        Bin Description *
-      </Form.InputWithLabel>
+            <FormField
+              control={form.control}
+              name="descField"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bin Description</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter Bin description" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Provide a description for the bin
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-      <Form.Footer>
-        <Button disabled={pending} variant="secondary" onClick={onCloseModal}>
-          Cancel
-        </Button>
-        <Button disabled={pending} variant="primary">
-          {pending && <SpinnerMini />}
-          Update Bin
-        </Button>
-      </Form.Footer>
-    </Form>
+            <div className="flex items-center justify-end gap-3">
+              {loadingValidation || !schema ? null : (
+                <Button
+                  disabled={
+                    binLoading || mutation.isPending || !form.formState.isValid
+                  }
+                  variant="outline"
+                  type="submit">
+                  {mutation.isPending && <SpinnerMini />}
+                  <span> Update Bin</span>
+                </Button>
+              )}
+              <Button
+                type="button"
+                onClick={onCloseModal}
+                variant="destructive"
+                disabled={mutation.isPending}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </Form>
+      }
+      <DevTool control={form.control} />
+    </>
   );
 }

@@ -1,73 +1,95 @@
 import { useQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
-import entityClientConfig from "../_lib/client/entityClientConfig";
-import { getValidationSchema } from "../_lib/getValidationSchema";
-import { useData } from "../_utils/helpers-client";
+import { getValidationSchema } from "../_lib/validation/getValidationSchema";
+import { getEntityDependencies } from "../_utils/helpers";
+import { useApiData } from "./useClientData";
 
-export function useValidationSchema(
+//Data preparation wrapper for getValidationScheme
+export function useValidationSchema({
   entity,
   operation = "create",
   editedEntityId = null,
-) {
+}) {
+  // console.log(`📝 useValidation was called with: `, {
+  //   entity,
+  //   operation,
+  //   editedEntityId,
+  // });
+
   // 1. Get the config for the primary entity.
-  const entityConfig = useMemo(() => entityClientConfig(entity), [entity]);
+  // const entityConfig = useMemo(() => entityClientConfig(entity), [entity]);
 
   // 2. Determine the unique set of entities to fetch.
   const entitiesToFetch = useMemo(() => {
-    const dependencies = new Set([entity]); // Always include the primary entity
-    if (entityConfig.foreignKeys) {
-      for (const remoteConfig of Object.values(entityConfig.foreignKeys)) {
-        const remoteEntity = Object.keys(remoteConfig)[0];
-        dependencies.add(remoteEntity);
-      }
-    }
-    return Array.from(dependencies);
-  }, [entity, entityConfig]);
+    // const dependencies = new Set([entity]); // Always include the primary entity
+    // if (entityConfig.foreignKeys) {
+    //   for (const remoteConfig of Object.values(entityConfig.foreignKeys)) {
+    //     const remoteEntity = Object.keys(remoteConfig)[0];
+    //     dependencies.add(remoteEntity);
+    //   }
+    // }
+    // return Array.from(dependencies);
+    return getEntityDependencies(entity);
+  }, [entity]);
 
+  // console.log("useValidationSchema entities to fetch: ", entitiesToFetch);
   // 3. Fetch data for all entities, selecting only the required fields.
   const results = useQueries({
-    queries: entitiesToFetch.map((entityName) => {
+    queries: entitiesToFetch.map((entitytoFetch) => {
       const fieldsToSelect =
-        entityName !== entity ? new Set(["id", "name"]) : null;
-      // Find which field this dependency is referenced by. add the remote primary key field to the
-      for (const remoteConfig of Object.values(entityConfig.foreignKeys)) {
-        const [remoteEntity, remotePkField] = Object.entries(remoteConfig)[0];
-        if (remoteEntity === entityName) {
-          fieldsToSelect.add(remotePkField);
-        }
-      }
+        entitytoFetch !== entity ? new Set(["idField", "nameField"]) : null;
+      // Find which field this dependency is referenced by. add the remote primary key field to the entity
+      // for (const remoteConfig of Object.values(entityConfig.foreignKeys)) {
+      //   const [remoteEntity, remotePkField] = Object.entries(remoteConfig)[0];
+      //   if (remoteEntity === entitytoFetch) {
+      //     fieldsToSelect.add(remotePkField);
+      //   }
+      // }
 
       // console.log("useValidationSchema entity: ", entity);
-      // console.log("useValidationSchema entityName: ", entityName);
+      // console.log("useValidationSchema entitytoFetch: ", entitytoFetch);
       // console.log(
-      //   "useValidationSchema entity === entityName :",
-      //   entity === entityName,
+      //   "useValidationSchema entity === entitytoFetch :",
+      //   entity === entitytoFetch,
       // );
+      // console.log("useValidationSchema fields to select: ", fieldsToSelect);
 
       // for update grab one record only for the main Entity . this is not needed if we are grabbing the whole set for name unique check
-      // const isWithId = entity === entityName ? id : "all";
+      // const isWithId = entity === entitytoFetch ? id : "all";
 
       const select = fieldsToSelect
         ? (data) => {
+            // console.log("select fieldsToSelect data: ", data);
+
             if (!Array.isArray(data)) return [];
+
             //Select the required fields only
             const selectFields = Array.from(fieldsToSelect);
+
+            // console.log("select selectFields data: ", selectFields);
+
             return data.map((row) => {
               const rows = {};
               for (const field of selectFields) {
+                // console.log("field: ", field);
+                // console.log(
+                // "row.hasOwnProperty(field):",
+                // row.hasOwnProperty(field),
+                // );
                 if (row.hasOwnProperty(field)) {
                   //only add the fields that are needed
                   rows[field] = row[field];
                 }
               }
+              // console.log("rows: ", rows);
               return rows;
             });
           }
-        : undefined;
+        : undefined; //this will select all fields
 
       return {
-        queryKey: [entityName, "all"],
-        queryFn: async () => await useData(entityName), //useData directly not useClientData
+        queryKey: [entitytoFetch, "all"],
+        queryFn: () => useApiData(entitytoFetch, "all"), //useApiData directly not useClientData
         staleTime: 1000 * 60 * 5, // 5 minutes
         gcTime: 1000 * 60 * 10, // 10 minutes garbage collection
         select,
@@ -81,34 +103,54 @@ export function useValidationSchema(
       const errors = results.map((r) => r.error).filter(Boolean);
       const isSuccess = results.every((r) => r.isSuccess);
 
-      // Don't wait for ALL queries to succeed, use available data
+      // console.log("useValidation combine entitiesTofetch: ", entitiesToFetch);
+
+      // console.log("useValidation combine results: ", results);
       const availableData = {};
-      entitiesToFetch.forEach((entityName, index) => {
+      entitiesToFetch.forEach((entitytoFetch, index) => {
+        // console.log(
+        //   `useValidation combine for ${entitytoFetch} - results[index=${index}]: `,
+        //   results[index],
+        // );
+        // if (results[index].isError) {
+        //   console.error(
+        //     `Error loading ${entitytoFetch}:`,
+        //     results[index].error,
+        //   );
+        // }
+
+        // if (isSuccess)
+        // Don't wait for ALL queries to succeed, use available data
         if (results[index].isSuccess && results[index].data) {
-          availableData[entityName] = results[index].data;
+          availableData[entitytoFetch] = results[index].data;
         }
       });
 
+      // console.log("useValidation availableData: ", availableData);
       // Only return null if NO data is available
       const dataDependencies =
         Object.keys(availableData).length > 0 ? availableData : null;
 
-      const schema = dataDependencies
-        ? (() => {
-            // console.log("Generating schema with available data:", {
-            //   entity,
-            //   availableEntities: Object.keys(dataDependencies),
-            //   operation,
-            //   // id: id,
-            // });
-            return getValidationSchema(
-              entity,
-              dataDependencies,
-              operation,
-              editedEntityId,
-            );
-          })()
-        : null;
+      // console.log("useValidation dataDependencies: ", dataDependencies);
+
+      const schema =
+        dataDependencies &&
+        Object.keys(dataDependencies).length === entitiesToFetch.length
+          ? (() => {
+              // console.log("Generating schema with available data:", {
+              //   entity,
+              //   availableEntities: Object.keys(dataDependencies),
+              //   operation,
+              //   //idField: id,
+              // });
+              return getValidationSchema({
+                entity,
+                dataDependencies,
+                operation,
+                editedEntityId,
+              });
+            })()
+          : null;
 
       // console.log("Query debug:", {
       //   entitiesToFetch,

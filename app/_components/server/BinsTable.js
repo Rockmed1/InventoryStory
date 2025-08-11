@@ -10,7 +10,7 @@ export default async function BinsTable() {
   const queryClient = getQueryClient();
 
   queryClient.prefetchQuery({
-    queryKey: ["bin"],
+    queryKey: ["bin", "all"],
     queryFn: () => getServerData("bin"),
   });
 
@@ -22,7 +22,7 @@ export default async function BinsTable() {
 }
 
 function Fallback() {
-  return <TableLoading labels={labels} />;
+  return <TableLoading entity="bin" />;
 }
 
 BinsTable.Fallback = Fallback;

@@ -1,6 +1,5 @@
 import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { useData } from "../_utils/helpers-client";
 
 export function clientEntityConfig(entity, id = "all") {
   const ENTITY_CONFIG = {
@@ -12,7 +11,7 @@ export function clientEntityConfig(entity, id = "all") {
       clientQueryOptions: () =>
         queryOptions({
           queryKey: [entity, id ?? "all"],
-          queryFn: () => useData(entity, id),
+          queryFn: () => useApiData(entity, id),
           staleTime: staleTime,
         }),
     },
@@ -35,7 +34,7 @@ export default function useClientData({
   select = null,
 }) {
   // console.log("useClientData entity: ", entity);
-  // console.log("useClientData id: ", id);
+  // console.log("useClientDataidField: ", id);
 
   const queryClient = useQueryClient();
 
@@ -48,7 +47,7 @@ export default function useClientData({
     // console.log(`${entity}-allData: `, allData);
 
     if (allData && Array.isArray(allData)) {
-      const record = allData.find((_) => _.id === id);
+      const record = allData.find((_) => _.idField === id);
       // console.log(`${entity}-record: `, record);
       // const results = {
       //   data: [record],
@@ -63,7 +62,7 @@ export default function useClientData({
 
   const results = useQuery({
     queryKey: [entity, id],
-    queryFn: () => useData(entity, id),
+    queryFn: () => useApiData(entity, id),
     staleTime: staleTime,
     gcTime,
     select,
@@ -85,6 +84,55 @@ export default function useClientData({
   return results;
 }
 
+/**
+ * A generic, client-side data fetching function.
+ * It constructs a URL to the optimized API routes and fetches data.
+ *
+ * @param {string} entity - The name of the entity to fetch (e.g., "itemTrx", "item").
+ * @param {string | number} [id] - An optional ID to fetch a specific record.
+ * @param {object} [options] - Additional options like type, limit, etc.
+ * @returns {Promise<any>} A promise that resolves to the fetched data.
+ * @throws {Error} If the network response is not ok.
+ */
+export async function useApiData(entity, id = "all" /* , options = {} */) {
+  let url;
+
+  if (id === "all" || id === undefined) {
+    // Use query parameter style for collections
+    // const params = new URLSearchParams()
+    // if (options.limit) params.set('limit', options.limit)
+    // if (options.type) params.set('type', options.type)
+    url = `/api/v1/entities/${entity}`;
+    // if (params.toString()) {
+    //   url += `?${params}`
+    // }
+  } else {
+    // Use path parameter style for specific IDs
+    url = `/api/v1/entities/${entity}/${id}`;
+
+    // Add query parameters if needed
+    // const params = new URLSearchParams()
+    // if (options.type) params.set('type', options.type)
+    // if (params.toString()) {
+    //   url += `?${params}`
+    // }
+  }
+
+  // console.log("url: ", url);
+
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    // This will activate the closest `error.js` Error Boundary
+    const errorPayload = await res.json();
+    const errorMessage =
+      errorPayload.error || errorPayload.message || "Failed to fetch data";
+    throw new Error(errorMessage);
+  }
+
+  return res.json();
+}
+
 // const {
 //   data: entityList,
 //   isLoading,
@@ -92,13 +140,13 @@ export default function useClientData({
 //   error,
 // } = useQuery({
 //   queryKey: [entity, "all"],
-//   queryFn: () => useDatay, "all"),
+//   queryFn: () => useApiDatay, "all"),
 //   staleTime: 1000 * 60 * 5, // 5 minutes
 //   select: (data) => {
 //     if (!Array.isArray(data)) return [];
 //     return data.map((_) => ({
-//       id: _.id,
-//       name: _.name,
+//      idField: _.idField,
+//       nameField: _.name,
 //     }));
 //   },
 // });

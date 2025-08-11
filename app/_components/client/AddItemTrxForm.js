@@ -1,25 +1,42 @@
 "use client";
 
-import Form from "@/app/_components/_ui/client/Form";
-import { getValidationSchema } from "@/app/_lib/getValidationSchema";
-import { useAppStore } from "@/app/_store/AppProvider";
-import { useActionState, useEffect, useState } from "react";
+import { createFormData } from "@/app/_utils/helpers";
+import { DevTool } from "@hookform/devtools";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useActionState, useEffect } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { createItemTrx } from "../../_lib/server/actions";
-import { formDataTransformer } from "../../_lib/server/transformers";
 import { DropDown } from "../_ui/client/DropDown";
+import { Button } from "../_ui/client/shadcn-Button";
 import DatePicker from "../_ui/client/shadcn-DatePicker";
-import Button from "../_ui/server/Button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../_ui/client/shadcn-Form";
+import { Input } from "../_ui/client/shadcn-Input";
 import SpinnerMini from "../_ui/server/SpinnerMini";
 
-/**
- * A form for adding a new item transaction, designed to be used within a modal.
- * It handles form submission using a server action and displays success notifications.
- *
- * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
- */
-
 export default function AddItemTrxForm({ onCloseModal }) {
+  //
+  //! making this function JS only without fallback for now !//
+
+  const queryClient = useQueryClient();
+
+  // Get validation schema with refreshed validation data
+  // const {
+  //   schema,
+  //   isLoading: loadingValidation,
+  //   isError,
+  //   debug,
+  // } = useValidationSchema({ entity: "itemTrx", operation: "create" });
+
+  //3- server action fallback for progressive enhancement (works withour JS)
   const initialState = {
     success: null,
     zodErrors: null,
@@ -31,271 +48,475 @@ export default function AddItemTrxForm({ onCloseModal }) {
     initialState,
   );
 
-  const [clientFormState, setClientFormState] = useState(initialState);
-  const [detailLines, setDetailLines] = useState([{}]);
+  //4- Enhanced form management (JS available)
+  const form = useForm({
+    // resolver: schema ? zodResolver(schema) : undefined,
+    defaultValues: {
+      itemTrxHeader: {
+        trxTypeId: null,
+        dateField: new Date(),
+        marketId: null,
+        descField: null,
+        numOfLines: "1",
+      },
+      itemTrxDetails: [
+        {
+          trxLineNum: "1",
+          descField: "",
+          itemId: null,
+          fromBin: null,
+          toBin: null,
+          qtyIn: 0,
+          qtyOut: 0,
+        },
+      ],
+    },
+    mode: "onBlur", //onTouched
+  });
 
-  const currentFormState = clientFormState?.message
-    ? clientFormState
-    : formState;
+  //for dynamic details lines
+  const fieldArray = useFieldArray({
+    control: form.control,
+    name: "itemTrxDetails",
+  });
 
-  useEffect(() => {
-    if (formState?.success) {
-      toast.success(`Item transaction has been created successfully.`);
-      setClientFormState(initialState); // reset client form state
-      setDetailLines([{}]); // reset detail lines
-      onCloseModal?.();
-    }
-  }, [formState, onCloseModal]);
-
-  const addDetailLine = () => {
-    setDetailLines((prev) => [...prev, {}]);
-  };
-
-  const removeDetailLine = (index) => {
-    if (detailLines.length > 1) {
-      setDetailLines((prev) => prev.filter((_, i) => i !== index));
-    }
-  };
-
-  function handleSubmit(e) {
-    e.preventDefault();
-
-    // CLIENT VALIDATE FORM DATA
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData);
-    console.log(data);
-
-    // Transform FormData using unified pipeline
-    const transformedData = formDataTransformer.transform(formData);
-    console.log("Client transformed data:", transformedData);
-
-    // Get the validation schema with data dependencies (following current pattern)
-    // Get only required existing data from the store for validation upfront
-    const existingItems = useAppStore((state) => state.item || []);
-    const existingBins = useAppStore((state) => state.bin || []);
-    const existingMarkets = useAppStore((state) => state.market || []);
-    const existingTrxTypes = useAppStore((state) => state.trxType || []);
-
-    const dataDependencies = {
-      item: existingItems,
-      bin: existingBins,
-      market: existingMarkets,
-      trxType: existingTrxTypes,
-    };
-
-    const schema = getValidationSchema("itemTrx", dataDependencies, "create");
-
-    // Perform combined validation
-    const validationResults = schema.safeParse(transformedData);
-
-    // If form data did not pass client validation
-    if (!validationResults.success) {
-      e.preventDefault();
-      setClientFormState({
-        success: false,
-        formData: transformedData,
-        zodErrors: validationResults.error.flatten().fieldErrors,
-        message: "Fix these errors to proceed.",
-      });
-    } else {
-      // If passed client validation then reset form state
-      setClientFormState(initialState);
-    }
+  function addDetailLine() {
+    fieldArray.append({
+      trxLineNum: (fieldArray.fields.length + 1).toString(),
+      descField: "",
+      itemId: "",
+      fromBin: null,
+      toBin: null,
+      qtyIn: 0,
+      qtyOut: 0,
+    });
   }
 
-  console.log("Current form state:", currentFormState);
+  function removeDetailLine(index) {
+    console.log(fieldArray.fields.length);
+    console.log(index);
+    // fieldArray.remove(index);
+    fieldArray.fields.length > 1 && fieldArray.remove(index);
+  }
+
+  //automatically get the number of lines
+  useEffect(() => {
+    form.setValue(
+      "itemTrxHeader.numOfLines",
+      fieldArray.fields.length.toString(),
+    );
+  }, [fieldArray.fields.length, form]);
+
+  //5- Enhanced Mutation  (JS available)
+  //! maybe extract into cusom hook
+
+  const mutation = useMutation({
+    mutationFn: async (data) => {
+      //Convert RHF data to FormData for server action compatibility (incase js is unavailable the default data passed is formData. if only js then this conversion will not be needed )
+      const formData = createFormData(data);
+
+      //Call server action directly
+      const result = await createItemTrx(null, formData);
+
+      //Transform server action response for mutation
+      if (!result.success) {
+        const error = new Error(result.message || "Server error occurred");
+        error.zodErrors = result.zodErrors;
+        error.message = result.message;
+        // error.formData = result.formData;
+        throw error;
+      }
+
+      return result;
+    },
+
+    // Optimistic update:
+    onMutate: async (newItemTrx) => {
+      //cancel ongoing refetches for all tags including "bin"
+      await queryClient.cancelQueries({ queryKey: ["itemTrx"] });
+
+      //Snapshot previous values
+      const previousValues = queryClient.getQueryData(["itemTrx", "all"]);
+
+      const tempId = `temp-${Date.now()}`;
+      //optimistically update cache
+      queryClient.setQueryData(["itemTrx", "all"], (old = []) => [
+        ...old,
+        { ...newItemTrx, idField: tempId, optimistic: true },
+      ]);
+
+      return { previousValues };
+    },
+
+    //Success Handling
+    onSuccess: (result, variables) => {
+      //Replace optimistic update with real data
+      // queryClient.setQueryData(["bin"], (old = []) =>
+      //   old.map((bin) =>
+      //     bin.optimistic && bin.nameField === variables.item_name
+      //       ? { ...result.formData,idField: result.idField }
+      //       : bin,
+      //   ),
+      // );
+
+      //! may be should refetch
+      queryClient.invalidateQueries({
+        queryKey: ["bin"],
+        refetchType: "none", //don't show loading state
+      });
+      //UI feedback //! may be grab the newly created id here...
+      toast.success(`Bin ${variables.nameField} was created successfully!`);
+      form.reset();
+      onCloseModal?.();
+    },
+
+    //Error Handling (JS Enhanced)
+    onError: (error, variables, context) => {
+      //Roll back optimistic update
+      if (context?.previousValues) {
+        queryClient.setQueryData(["bin", "all"], context.previousValues);
+      }
+
+      //! may be make a default to redirect the user to login page if the error is 401
+      //Handle Different error types
+      if (error.zodErrors) {
+        //Set field-specific validation errors in RHF
+        Object.entries(error.zodErrors).forEach(([field, errors]) =>
+          form.setError(field, {
+            type: "server",
+            message: Array.isArray(errors) ? errors[0] : errors,
+          }),
+        );
+        // may be put this message on the top of the form
+        // toast.error("Please fix the validation errors");
+      } else if (error.name === "NetworkError") {
+        //Network specific error handling
+        toast.error(
+          "Network error. Please check your connection and try again.",
+        );
+        form.setError("root", {
+          type: "network",
+          message: "Connection failed. Please try again.",
+        });
+      } else {
+        //Generic server errors
+        // toast.error(error.message || "Failed to create bin");
+        form.setError("root", {
+          type: "server",
+          message: error.message || "An unexpected error occurred",
+        });
+      }
+    },
+
+    //retry logic
+    retry: (failureCount, error) => {
+      //Retry network errors but not validation errors
+      return error.name === "NetworkError" && failureCount < 3;
+    },
+  });
+
+  //6- Progressive enhancement submit handler
+
+  function onSubmit(data, e) {
+    console.log("🎪 AddItemTrxForm was submitted with data: ", data);
+
+    // 🎯 BINARY DECISION: JavaScript Available & Mutation Ready?
+    const isJavaScriptReady =
+      mutation && !mutation.isPending && typeof mutation.mutate === "function";
+
+    if (isJavaScriptReady) {
+      // ✅ YES: Enhanced Submission
+      e.preventDefault();
+      // mutation.mutate(data);
+      console.log("🎪 AddItemTrxForm was submitted with data: ", data);
+    }
+    // ❌ NO: Native Form Submission (let it proceed naturally)
+  }
+
+  // Don't render form until schema is loaded and itemToEdit is available  │
+  // if (loadingValidation || !schema) {
+  //   return <div>Loading form...</div>;
+  // }
 
   return (
-    //action={formAction}
-    <Form onSubmit={handleSubmit}>
-      <Form.ZodErrors
-        error={formState?.["message"] || clientFormState?.message}
-      />
+    <>
+      {
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            // action={formAction}
+            // method="POST"
+            className="space-y-8">
+            {/* Global error display */}
+            {(mutation.error?.message ||
+              form.formState.errors?.root ||
+              formState?.message) && (
+              <div className="error-banner rounded border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+                {form.formState.errors.root?.message || formState?.message}
+              </div>
+            )}
 
-      {/* Transaction Header */}
-      <div className="mb-6 rounded-lg bg-neutral-50 p-4">
-        <h3 className="mb-4 text-lg font-semibold text-neutral-700">
-          Transaction Header
-        </h3>
+            <div className="TrxHeader mb-6 rounded-lg bg-neutral-50 p-4">
+              <h3 className="mb-4 text-lg font-semibold text-neutral-700">
+                Transaction Header
+              </h3>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Form.InputSelect
-            name="_trx_header._trx_type_id"
-            error={currentFormState?.zodErrors?.["_trx_header._trx_type_id"]}>
-            <Form.Label>Transaction Type *</Form.Label>
-            <DropDown
-              entity="trxType"
-              name="_trx_header._trx_type_id"
-              required={true}
-            />
-          </Form.InputSelect>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="itemTrxHeader.trxTypeId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Transaction Type * </FormLabel>
+                      <FormControl>
+                        <DropDown
+                          field={field}
+                          entity="trxType"
+                          name="itemTrxHeader.trxTypeId"
+                          // label="location"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Select a transaction type.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="itemTrxHeader.dateField"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Transaction Date</FormLabel>
+                      <FormControl>
+                        <DatePicker
+                          name="itemTrxHeader.dateField"
+                          field={field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Select a transaction date.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <DatePicker
-            name="_trx_header._trx_date"
-            onChange={(value) => handleHeaderChange("_trx_date", value)}
-            error={currentFormState?.zodErrors?.["_trx_header._trx_date"]}
-          />
+                <FormField
+                  control={form.control}
+                  name="itemTrxHeader.marketId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Market</FormLabel>
+                      <FormControl>
+                        <DropDown
+                          field={field}
+                          entity="market"
+                          name="itemTrxHeader.marketId"
+                          // label="location"
+                        />
+                      </FormControl>
+                      <FormDescription>Select markets</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="mt-4">
+                  <FormField
+                    control={form.control}
+                    name="itemTrxHeader.descField"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Transaction description</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter Trx description"
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="itemTrxHeader.numOfLines"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input {...field} type="hidden" />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
-          <Form.InputSelect
-            name="_trx_header._market_id"
-            error={currentFormState?.zodErrors?.["_trx_header._market_id"]}>
-            <Form.Label>Market *</Form.Label>
-            <DropDown
-              entity="market"
-              name="_trx_header._market_id"
-              required={true}
-            />
-          </Form.InputSelect>
-        </div>
-
-        <div className="mt-4">
-          <Form.InputWithLabel
-            name="_trx_header._trx_desc"
-            inputValue={currentFormState.formData?._trx_header?._trx_desc}
-            placeholder="Enter trx description"
-            error={currentFormState?.zodErrors?.["_trx_header._trx_desc"]}
-            required>
-            Transaction Description *
-          </Form.InputWithLabel>
-        </div>
-      </div>
-
-      {/* Transaction Details */}
-      <div className="mb-6 rounded-lg bg-neutral-50 p-4">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-neutral-700">
-            Transaction Details ({detailLines.length} lines)
-          </h3>
-          <Button type="button" variant="secondary" onClick={addDetailLine}>
-            Add Line
-          </Button>
-        </div>
-
-        <div className="overflow-scroll">
-          {detailLines.map((_, index) => (
-            <div
-              key={index}
-              className="mb-4 rounded-lg border border-neutral-200 bg-white p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <h4 className="font-medium text-neutral-600">
-                  Line {index + 1}
-                </h4>
-                {detailLines.length > 1 && (
+              {/* Transaction Details */}
+              <div className="mb-6 rounded-lg bg-neutral-50 p-4">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-neutral-700">
+                    Transaction Details ({fieldArray.fields.length} lines)
+                  </h3>
                   <Button
                     type="button"
-                    variant="danger"
-                    onClick={() => removeDetailLine(index)}>
-                    -
+                    variant="secondary"
+                    onClick={addDetailLine}>
+                    Add Line
                   </Button>
-                )}
+                </div>
+
+                <div className="overflow-scroll">
+                  {fieldArray.fields.map((_, index) => (
+                    <div
+                      key={index}
+                      className="mb-4 rounded-lg border border-neutral-200 bg-white p-4">
+                      <div className="mb-3 flex items-center justify-between">
+                        <h4 className="font-medium text-neutral-600">
+                          Line {index + 1}
+                        </h4>
+                        {fieldArray.fields.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="danger"
+                            onClick={() => removeDetailLine(index)}>
+                            -
+                          </Button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        <FormField
+                          control={form.control}
+                          name={`itemTrxDetails.${index}.itemId`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Item</FormLabel>
+                              <FormControl>
+                                <DropDown
+                                  field={field}
+                                  entity="item"
+                                  name={`itemTrxDetails.${index}.itemId`}
+                                  // label="location"
+                                />
+                              </FormControl>
+                              <FormDescription>Select item</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`itemTrxDetails.${index}.fromBin`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>From Bin</FormLabel>
+                              <FormControl>
+                                <DropDown
+                                  field={field}
+                                  entity="bin"
+                                  name={`itemTrxDetails.${index}.fromBin`}
+                                  // label="location"
+                                />
+                              </FormControl>
+                              <FormDescription>Select from Bin</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`itemTrxDetails.${index}.qtyIn`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Qty In</FormLabel>
+                              <FormControl>
+                                <Input placeholder="0" {...field} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`itemTrxDetails.${index}.toBin`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>To Bin</FormLabel>
+                              <FormControl>
+                                <DropDown
+                                  field={field}
+                                  entity="bin"
+                                  name={`itemTrxDetails.${index}.toBin`}
+                                  // label="location"
+                                />
+                              </FormControl>
+                              <FormDescription>Select To Bin</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`itemTrxDetails.${index}.qtyOut`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Qty Out</FormLabel>
+                              <FormControl>
+                                <Input placeholder="0" {...field} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="mt-4">
+                        <FormField
+                          control={form.control}
+                          name={`itemTrxDetails.${index}.descField`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Line Description</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Enter line description"
+                                  {...field}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <Form.InputSelect
-                  name={`_trx_details[${index}]._item_id`}
-                  error={
-                    currentFormState?.zodErrors?.[
-                      `_trx_details.${index}._item_id`
-                    ]
-                  }>
-                  <Form.Label>Item *</Form.Label>
-                  <DropDown
-                    entity="item"
-                    name={`_trx_details[${index}]._item_id`}
-                    required={true}
-                  />
-                </Form.InputSelect>
-
-                <Form.InputSelect
-                  name={`_trx_details[${index}]._from_bin`}
-                  error={
-                    currentFormState?.zodErrors?.[
-                      `_trx_details.${index}._from_bin`
-                    ]
-                  }>
-                  <Form.Label>From Bin</Form.Label>
-                  <DropDown
-                    entity="bin"
-                    name={`_trx_details[${index}]._from_bin`}
-                  />
-                </Form.InputSelect>
-
-                <Form.InputWithLabel
-                  name={`_trx_details[${index}]._qty_in`}
-                  type="number"
-                  inputValue={
-                    currentFormState.formData?._trx_details?.[index]?._qty_in
-                  }
-                  placeholder="Enter Qty in"
-                  error={
-                    currentFormState?.zodErrors?.[
-                      `_trx_details.${index}._qty_in`
-                    ]
-                  }>
-                  Quantity In
-                </Form.InputWithLabel>
-
-                <Form.InputSelect
-                  name={`_trx_details[${index}]._to_bin`}
-                  error={
-                    currentFormState?.zodErrors?.[
-                      `_trx_details.${index}._to_bin`
-                    ]
-                  }>
-                  <Form.Label>To Bin</Form.Label>
-                  <DropDown
-                    entity="bin"
-                    name={`_trx_details[${index}]._to_bin`}
-                  />
-                </Form.InputSelect>
-
-                <Form.InputWithLabel
-                  name={`_trx_details[${index}]._qty_out`}
-                  type="number"
-                  inputValue={
-                    currentFormState.formData?._trx_details?.[index]?._qty_out
-                  }
-                  placeholder="Enter Qty out"
-                  error={
-                    currentFormState?.zodErrors?.[
-                      `_trx_details.${index}._qty_out`
-                    ]
-                  }>
-                  Quantity Out
-                </Form.InputWithLabel>
-              </div>
-
-              <div className="mt-4">
-                <Form.InputWithLabel
-                  name={`_trx_details[${index}]._item_trx_desc`}
-                  inputValue={
-                    currentFormState.formData?._trx_details?.[index]
-                      ?._item_trx_desc
-                  }
-                  placeholder="Enter item trx description"
-                  error={
-                    currentFormState?.zodErrors?.[
-                      `_trx_details.${index}._item_trx_desc`
-                    ]
-                  }
-                  required>
-                  Item Transaction Description *
-                </Form.InputWithLabel>
+              <div className="flex items-center justify-end gap-3">
+                {/* {loadingValidation || !schema ? null : ( */}
+                <Button
+                  // disabled={mutation.isPending || !form.formState.isValid}
+                  variant="outline"
+                  type="submit">
+                  {mutation.isPending && <SpinnerMini />}
+                  <span> Create Transaction</span>
+                </Button>
+                {/* )} */}
+                <Button
+                  type="button"
+                  onClick={onCloseModal}
+                  variant="destructive"
+                  disabled={mutation.isPending}>
+                  Cancel
+                </Button>
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      <Form.Footer>
-        <Button disabled={pending} variant="secondary" onClick={onCloseModal}>
-          <span>Cancel</span>
-        </Button>
-        <Button disabled={pending} variant="primary" type="submit">
-          {pending && <SpinnerMini />}
-          <span>Create Transaction</span>
-        </Button>
-      </Form.Footer>
-    </Form>
+          </form>
+        </Form>
+      }
+      <DevTool control={form.control} />
+    </>
   );
 }

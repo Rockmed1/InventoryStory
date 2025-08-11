@@ -5,7 +5,7 @@ import Button from "../server/Button";
 import Modal from "./Modal";
 
 export default function AddButtonModal({
-  opensWindowName,
+  opensWindowName = "form",
   buttonLabel,
   description,
   children,

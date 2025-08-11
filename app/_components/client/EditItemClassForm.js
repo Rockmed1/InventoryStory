@@ -1,28 +1,47 @@
 "use client";
 
-import Form from "@/app/_components/_ui/client/Form";
-import { getValidationSchema } from "@/app/_lib/getValidationSchema";
-import { useActionState, useEffect, useState } from "react";
+import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
+import { createFormData } from "@/app/_utils/helpers";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useActionState } from "react";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { updateItemClass } from "../../_lib/server/actions";
-import { useAppStore } from "../../_store/AppProvider";
-import Button from "../_ui/server/Button";
+import useClientData from "@/app/_hooks/useClientData";
+import { DevTool } from "@hookform/devtools";
+import { Button } from "../_ui/client/shadcn-Button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../_ui/client/shadcn-Form";
+import { Input } from "../_ui/client/shadcn-Input";
 import SpinnerMini from "../_ui/server/SpinnerMini";
 
-/**
- * A form for editing an existing item class, designed to be used within a modal.
- * It handles form submission using a server action and displays success notifications.
- *
- * @param {number} id - The item class ID to edit
- * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
- */
-
 export default function EditItemClassForm({ id, onCloseModal }) {
-  // Get existing item classes from the store for validation
-  const existingItemClasses = useAppStore((state) => state.itemClass || []);
-  const [itemClassToEdit] = existingItemClasses.filter(
-    (itemClass) => itemClass.id === id,
-  );
+  const queryClient = useQueryClient();
+
+  const {
+    data: [itemClassToEdit],
+    isLoading: itemClassLoading,
+    isError: itemClassDataError,
+  } = useClientData({ entity: "itemClass", id });
+
+  const {
+    schema,
+    isLoading: loadingValidation,
+    isError,
+    debug,
+  } = useValidationSchema({
+    entity: "itemClass",
+    operation: "update",
+    editedEntityId: id,
+  });
 
   const initialState = {
     success: null,
@@ -34,111 +53,192 @@ export default function EditItemClassForm({ id, onCloseModal }) {
     updateItemClass,
     initialState,
   );
-  const [clientFormState, setClientFormState] = useState(initialState);
 
-  const currentFormState = clientFormState?.message
-    ? clientFormState
-    : formState;
+  const form = useForm({
+    resolver: schema ? zodResolver(schema) : undefined,
+    mode: "onBlur",
+    defaultValues: {
+      idField: itemClassToEdit?.idField || "",
+      nameField: itemClassToEdit?.nameField || "",
+      descField: itemClassToEdit?.descField || "",
+    },
+    shouldUnregister: true,
+  });
 
-  useEffect(() => {
-    if (formState?.success) {
-      toast.success(
-        `Item Class ${formState.formData?._item_class_name} has been updated.`,
+  const mutation = useMutation({
+    onMutate: async (values) => {
+      await queryClient.cancelQueries({ queryKey: ["itemClass"] });
+
+      const previousValues = queryClient.getQueryData(["itemClass", "all"]);
+
+      queryClient.setQueryData(["itemClass", "all"], (old = []) =>
+        old.map((itemClass) => {
+          if (itemClass.idField === values.idField) {
+            return {
+              ...itemClass,
+              nameField: values.nameField,
+              descField: values.descField,
+            };
+          }
+          return itemClass;
+        }),
       );
-      setClientFormState(initialState);
-      onCloseModal?.();
-    }
-  }, [formState, onCloseModal]);
 
-  function isChanged(itemClassToEdit, data) {
-    const { name, description } = itemClassToEdit;
-    const { _item_class_name, _item_class_desc } = data;
+      return { previousValues };
+    },
 
-    // console.log("Name changed:", name.toString() !== _item_class_name.toString());
-    // console.log("Description changed:", description.toString() !== _item_class_desc.toString());
+    mutationFn: async (values) => {
+      const formData = createFormData(values);
+      const result = await updateItemClass(null, formData);
 
-    if (
-      name.toString() !== _item_class_name.toString() ||
-      description.toString() !== _item_class_desc.toString()
-    ) {
-      return true;
-    } else {
-      return false;
-    }
-  }
+      if (!result.success) {
+        const error = new Error(result.message || "Server error occured");
+        error.zodErrors = result.zodErrors;
+        error.message = result.message;
+        throw error;
+      }
 
-  function handleSubmit(e) {
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData);
+      return result;
+    },
 
-    // Don't do anything if no change
-    if (!isChanged(itemClassToEdit, data)) {
-      e.preventDefault();
-      return;
-    }
-
-    // CLIENT VALIDATE FORM DATA for UPDATE operation
-    const validationSchema = getValidationSchema(
-      "itemClass",
-      existingItemClasses,
-      "update",
-      data._item_class_id,
-    );
-
-    const validationResults = validationSchema.safeParse(data);
-
-    if (!validationResults.success) {
-      e.preventDefault();
-      setClientFormState({
-        success: false,
-        formData: data,
-        zodErrors: validationResults.error.flatten().fieldErrors,
-        message: "Please fix the errors below.",
+    onSuccess: (result, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["itemClass"],
+        refetchType: "active",
       });
-    }
-    // If pass validation
-    else {
-      setClientFormState(initialState);
+      toast.success(
+        `Item Class ${variables.nameField} was updated successfully!`,
+      );
+      form.reset();
+      onCloseModal?.();
+    },
+
+    onError: (error, variables, context) => {
+      if (context?.previousValues) {
+        queryClient.setQueryData(["itemClass", "all"], context.previousValues);
+      }
+
+      if (error.zodErrors) {
+        Object.entries(error.zodErrors).forEach(([field, errors]) =>
+          form.setError(field, {
+            type: "server",
+            message: Array.isArray(errors) ? errors[0] : errors,
+          }),
+        );
+      } else if (error.name === "NetworkError") {
+        toast.error(
+          "Network error. Please check your connection and try again.",
+        );
+        form.setError("root", {
+          type: "network",
+          message: "Connection failed. Please try again.",
+        });
+      } else {
+        form.setError("root", {
+          type: "server",
+          message: error.message || "An unexpected error occured",
+        });
+      }
+    },
+
+    retry: (failureCount, error) => {
+      return error.name === "NetworkError" && failureCount < 3;
+    },
+  });
+
+  function onSubmit(values, e) {
+    const isJavaScriptReady =
+      mutation && !mutation.isPending && typeof mutation.mutate === "function";
+
+    if (isJavaScriptReady) {
+      e.preventDefault();
+      mutation.mutate(values);
     }
   }
 
   return (
-    <Form action={formAction} onSubmit={handleSubmit}>
-      <Form.ZodErrors error={currentFormState?.message} />
+    <>
+      {
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            action={formAction}
+            className="space-y-8">
+            {(mutation.error?.message ||
+              form.formState.errors?.root ||
+              form.formState?.message) && (
+              <div className="error-banner rounded border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+                {form.formState.errors.root?.message ||
+                  formState?.message ||
+                  mutation.error?.message}
+              </div>
+            )}
 
-      {/* Hidden ID field */}
-      <input type="hidden" name="_item_class_id" value={itemClassToEdit.id} />
+            <input type="hidden" {...form.register("idField")} />
 
-      <Form.InputWithLabel
-        name={"_item_class_name"}
-        inputValue={
-          currentFormState.formData?._item_class_name || itemClassToEdit.name
-        }
-        placeholder="Enter Item Class name"
-        error={currentFormState?.zodErrors?._item_class_name}>
-        Item Class Name *
-      </Form.InputWithLabel>
+            <FormField
+              control={form.control}
+              name="nameField"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Item Class Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter Item Class name" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Enter a unique name for the item class
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-      <Form.InputWithLabel
-        name={"_item_class_desc"}
-        inputValue={
-          currentFormState.formData?._item_class_desc ||
-          itemClassToEdit.description
-        }
-        placeholder="Enter Item Class description"
-        error={currentFormState?.zodErrors?._item_class_desc}>
-        Item Class Description *
-      </Form.InputWithLabel>
+            <FormField
+              control={form.control}
+              name="descField"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Item Class Description</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter Item Class description"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Provide a description for the item class
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-      <Form.Footer>
-        <Button disabled={pending} variant="secondary" onClick={onCloseModal}>
-          Cancel
-        </Button>
-        <Button disabled={pending} variant="primary">
-          {pending && <SpinnerMini />}
-          Update Item Class
-        </Button>
-      </Form.Footer>
-    </Form>
+            <div className="flex items-center justify-end gap-3">
+              {loadingValidation || !schema ? null : (
+                <Button
+                  disabled={
+                    itemClassLoading ||
+                    mutation.isPending ||
+                    !form.formState.isValid
+                  }
+                  variant="outline"
+                  type="submit">
+                  {mutation.isPending && <SpinnerMini />}
+                  <span> Update Item Class</span>
+                </Button>
+              )}
+              <Button
+                type="button"
+                onClick={onCloseModal}
+                variant="destructive"
+                disabled={mutation.isPending}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </Form>
+      }
+      <DevTool control={form.control} />
+    </>
   );
 }

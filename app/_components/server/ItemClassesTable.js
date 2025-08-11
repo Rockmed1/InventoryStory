@@ -22,7 +22,7 @@ export default async function ItemClassesTable() {
 }
 
 function Fallback() {
-  return <TableLoading labels={labels} />;
+  return <TableLoading entity="itemClass" />;
 }
 
 ItemClassesTable.Fallback = Fallback;

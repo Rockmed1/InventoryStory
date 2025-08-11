@@ -10,12 +10,12 @@ export default function MenuWithModal({ rowData, rowActions }) {
   return (
     <Modal>
       <Menus.Menu>
-        <Menus.MenuToggle id={rowData.id} />
-        <Menus.MenuList id={rowData.id}>
+        <Menus.MenuToggle id={rowData.idField} />
+        <Menus.MenuList id={rowData.idField}>
           {rowActions.map((rowAction) => (
             <Modal.Open
-              key={`${rowAction.windowName}-${rowData.id}`}
-              opensWindowName={`${rowAction.windowName}-${rowData.id}`}>
+              key={`${rowAction.windowName}-${rowData.idField}`}
+              opensWindowName={`${rowAction.windowName}-${rowData.idField}`}>
               <Menus.MenuButton onClick={() => setActiveModal(rowAction)}>
                 <div className="flex items-center justify-between gap-3">
                   {rowAction.icon}
@@ -28,15 +28,15 @@ export default function MenuWithModal({ rowData, rowActions }) {
 
         {activeModal && (
           <Modal.Window
-            key={`${activeModal.windowName}-${rowData.id}`}
-            name={`${activeModal.windowName}-${rowData.id}`}
+            key={`${activeModal.windowName}-${rowData.idField}`}
+            name={`${activeModal.windowName}-${rowData.idField}`}
             title={activeModal.windowName}
             description={activeModal.description}
             isUseOutsideClick={true}>
             {React.isValidElement(activeModal.action)
               ? React.createElement(activeModal.action.type, {
                   ...activeModal.action.props,
-                  id: rowData.id,
+                  id: rowData.idField,
                   onCloseModal: () => setActiveModal(null),
                 })
               : activeModal.action}

@@ -78,7 +78,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_items_classes(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid'];
+	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_item_class_id'];
 	_is_context_set BOOLEAN;
 	_result JSON;
 BEGIN
@@ -95,9 +95,11 @@ BEGIN
 	END IF;
 	--!Main Action Here
 	SELECT
-		INTO _result json_agg(json_build_object('id' , ic.item_class_id , 'name' , ic.item_class_name , 'description' , ic.item_class_desc))
+		INTO _result json_agg(json_build_object('idField' , ic.item_class_id , 'nameField' , ic.item_class_name , 'descField' , ic.item_class_desc))
 	FROM
-		items.v_item_class ic;
+		items.v_item_class ic
+	WHERE (_data ->> '_item_class_id' IS NULL)
+		OR ic.item_class_id =(_data ->> '_item_class_id')::INTEGER;
 
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'No item classes available in this Organization.';
@@ -134,7 +136,9 @@ DECLARE
 	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_item_class_id' , '_item_class_name' , '_item_class_desc'];
 	_is_context_set BOOLEAN;
 	_rows_affected INTEGER;
+	_updated_item_class_id INTEGER;
 	_success BOOLEAN := FALSE;
+	_result_data JSON;
 BEGIN
 	-- verify input parameters and set org context and get usr_id, org_id:
 	SELECT
@@ -154,19 +158,28 @@ BEGIN
 		item_class_name = _data ->> '_item_class_name'
 		, item_class_desc = _data ->> '_item_class_desc'
 	WHERE
-		ic.item_class_id =(_data ->> '_item_class_id')::INTEGER;
+		ic.item_class_id =(_data ->> '_item_class_id')::INTEGER
+	RETURNING
+		item_class_id INTO _updated_item_class_id;
 	GET DIAGNOSTICS _rows_affected = ROW_COUNT;
 
 	IF _rows_affected = 0 THEN
 		RAISE EXCEPTION 'Item Class with ID % not found or you do not have permission to update it.' ,(_data ->> '_item_class_id');
 	END IF;
 
+	SELECT
+		INTO _result_data json_build_object('idField' , ic.item_class_id , 'nameField' , ic.item_class_name , 'descField' , ic.item_class_desc)
+	FROM
+		items.v_item_class ic
+	WHERE
+		ic.item_class_id = _updated_item_class_id;
+
 	_success := TRUE;
 
-	RETURN json_build_object('success' , _success);
+	RETURN json_build_object('success' , _success , 'data' , _result_data , 'message' , 'Item class updated successfully');
 EXCEPTION
 	WHEN OTHERS THEN
-		RAISE;
+		RETURN json_build_object('success' , FALSE , 'error' , json_build_object('code' , SQLSTATE , 'message' , SQLERRM , 'function' , 'fn_update_item_class'));
 END;
 
 $$;
@@ -190,7 +203,7 @@ CREATE OR REPLACE FUNCTION utils.fn_create_location(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_loc_id' , '_loc_name' , '_loc_desc'];
+	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_loc_name' , '_loc_desc'];
 	_is_context_set BOOLEAN;
 	_success BOOLEAN := FALSE;
 BEGIN
@@ -251,7 +264,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_locations(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid'];
+	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_loc_id'];
 	_is_context_set BOOLEAN;
 	_result JSON;
 BEGIN
@@ -269,9 +282,11 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_agg(json_build_object('id' , t.loc_id , 'name' , t.loc_name , 'description' , t.loc_desc))
+		INTO _result json_agg(json_build_object('idField' , t.loc_id , 'nameField' , t.loc_name , 'descField' , t.loc_desc))
 	FROM
-		locations.v_location t;
+		locations.v_location t
+	WHERE (_data ->> '_loc_id' IS NULL)
+		OR t.loc_id =(_data ->> '_loc_id')::INTEGER;
 
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'No records found in locations.location.';
@@ -292,7 +307,7 @@ ALTER FUNCTION utils.fn_get_locations OWNER TO utils_admin;
 --------
 ------
 ---
-/* ## fn_create_location */
+/* ## fn_update_location */
 DROP FUNCTION IF EXISTS utils.fn_update_location;
 
 CREATE OR REPLACE FUNCTION utils.fn_update_location(IN _data JSONB)
@@ -307,7 +322,9 @@ DECLARE
 	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_loc_id' , '_loc_name' , '_loc_desc'];
 	_rows_affected INTEGER;
 	_is_context_set BOOLEAN;
+	_updated_loc_id INTEGER;
 	_success BOOLEAN := FALSE;
+	_result_data JSON;
 BEGIN
 	--
 	-- verify input parameters and set org context and get usr_id, org_id:
@@ -328,19 +345,28 @@ BEGIN
 		loc_name = _data ->> '_loc_name'
 		, loc_desc = _data ->> '_loc_desc'
 	WHERE
-		l.loc_id =(_data ->> '_loc_id')::INTEGER;
+		l.loc_id =(_data ->> '_loc_id')::INTEGER
+	RETURNING
+		loc_id INTO _updated_loc_id;
 	GET DIAGNOSTICS _rows_affected = ROW_COUNT;
 
 	IF _rows_affected = 0 THEN
 		RAISE EXCEPTION 'Location with ID % not found or you do not have permission to update it.' ,(_data ->> '_loc_id');
 	END IF;
 
+	SELECT
+		INTO _result_data json_build_object('idField' , l.loc_id , 'nameField' , l.loc_name , 'descField' , l.loc_desc)
+	FROM
+		locations.v_location l
+	WHERE
+		l.loc_id = _updated_loc_id;
+
 	_success := TRUE;
 
-	RETURN json_build_object('success' , _success);
+	RETURN json_build_object('success' , _success , 'data' , _result_data , 'message' , 'Location updated successfully');
 EXCEPTION
 	WHEN OTHERS THEN
-		RAISE;
+		RETURN json_build_object('success' , FALSE , 'error' , json_build_object('code' , SQLSTATE , 'message' , SQLERRM , 'function' , 'fn_update_location'));
 END;
 
 $$;
@@ -428,7 +454,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_bins(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid'];
+	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_bin_id'];
 	_is_context_set BOOLEAN;
 	_result JSON;
 BEGIN
@@ -446,9 +472,11 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_agg(json_build_object('id' , b.bin_id , 'name' , b.bin_name , 'loc_id' , b.loc_id , 'loc_name' , b.loc_name , 'description' , b.bin_desc))
+		INTO _result json_agg(json_build_object('idField' , b.bin_id , 'nameField' , b.bin_name , 'locationId' , b.loc_id , 'locationName' , b.loc_name , 'descField' , b.bin_desc))
 	FROM
-		locations.v_bin b;
+		locations.v_bin b
+	WHERE (_data ->> '_bin_id' IS NULL)
+		OR b.bin_id =(_data ->> '_bin_id')::INTEGER;
 
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'No records found in locations.bin.';
@@ -484,7 +512,9 @@ DECLARE
 	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_bin_id' , '_bin_name' , '_bin_desc' , '_loc_id'];
 	_is_context_set BOOLEAN;
 	_rows_affected INTEGER;
+	_updated_bin_id INTEGER;
 	_success BOOLEAN := FALSE;
+	_result_data JSON;
 BEGIN
 	-- verify input parameters and set org context and get usr_id, org_id:
 	SELECT
@@ -496,6 +526,7 @@ BEGIN
 	-- if all set:
 	IF NOT _is_context_set THEN
 		RAISE EXCEPTION 'Context could not be set.';
+
 	END IF;
 	--! Main Action Here
 	UPDATE
@@ -505,19 +536,32 @@ BEGIN
 		, bin_desc = _data ->> '_bin_desc'
 		, loc_id =(_data ->> '_loc_id')::INTEGER
 	WHERE
-		b.bin_id =(_data ->> '_bin_id')::INTEGER;
+		b.bin_id =(_data ->> '_bin_id')::INTEGER
+	RETURNING
+		bin_id INTO _updated_bin_id;
+
 	GET DIAGNOSTICS _rows_affected = ROW_COUNT;
 
 	IF _rows_affected = 0 THEN
 		RAISE EXCEPTION 'Bin with ID % not found or you do not have permission to update it.' ,(_data ->> '_bin_id');
+
 	END IF;
+	-- Get the updated bin with joined data
+	SELECT
+		INTO _result_data json_build_object('idField' , b.bin_id , 'nameField' , b.bin_name , 'descField' , b.bin_desc , 'locationId' , b.loc_id , 'locationName' , b.loc_name)
+	FROM
+		locations.v_bin b
+	WHERE
+		b.bin_id = _updated_bin_id;
 
 	_success := TRUE;
 
-	RETURN json_build_object('success' , _success);
+	RETURN json_build_object('success' , _success , 'data' , _result_data , 'message' , 'Bin updated successfully');
+
 EXCEPTION
 	WHEN OTHERS THEN
-		RAISE;
+		RETURN json_build_object('success' , FALSE , 'error' , json_build_object('code' , SQLSTATE , 'message' , SQLERRM , 'function' , 'fn_update_bin'));
+
 END;
 
 $$;
@@ -602,7 +646,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_market_types(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid'];
+	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_market_type_id'];
 	_is_context_set BOOLEAN;
 	_result JSON;
 BEGIN
@@ -620,9 +664,11 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_agg(json_build_object('id' , t.market_type_id , 'name' , t.market_type_name , 'description' , t.market_type_desc))
+		INTO _result json_agg(json_build_object('idField' , t.market_type_id , 'nameField' , t.market_type_name , 'descField' , t.market_type_desc))
 	FROM
-		markets.v_market_type t;
+		markets.v_market_type t
+	WHERE (_data ->> '_market_type_id' IS NULL)
+		OR t.market_type_id =(_data ->> '_market_type_id')::INTEGER;
 
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'No records found in markets.market_type.';
@@ -658,7 +704,9 @@ DECLARE
 	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_market_type_id' , '_market_type_name' , '_market_type_desc'];
 	_is_context_set BOOLEAN;
 	_rows_affected INTEGER;
+	_updated_market_type_id INTEGER;
 	_success BOOLEAN := FALSE;
+	_result_data JSON;
 BEGIN
 	-- verify input parameters and set org context and get usr_id, org_id:
 	SELECT
@@ -670,6 +718,7 @@ BEGIN
 	-- if all set:
 	IF NOT _is_context_set THEN
 		RAISE EXCEPTION 'Context could not be set.';
+
 	END IF;
 	--! Main Action Here
 	UPDATE
@@ -678,19 +727,32 @@ BEGIN
 		market_type_name = _data ->> '_market_type_name'
 		, market_type_desc = _data ->> '_market_type_desc'
 	WHERE
-		mt.market_type_id =(_data ->> '_market_type_id')::INTEGER;
+		mt.market_type_id =(_data ->> '_market_type_id')::INTEGER
+	RETURNING
+		market_type_id INTO _updated_market_type_id;
+
 	GET DIAGNOSTICS _rows_affected = ROW_COUNT;
 
 	IF _rows_affected = 0 THEN
 		RAISE EXCEPTION 'Market Type with ID % not found or you do not have permission to update it.' ,(_data ->> '_market_type_id');
+
 	END IF;
+	-- Get the updated market type data
+	SELECT
+		INTO _result_data json_build_object('idField' , mt.market_type_id , 'nameField' , mt.market_type_name , 'descField' , mt.market_type_desc)
+	FROM
+		markets.v_market_type mt
+	WHERE
+		mt.market_type_id = _updated_market_type_id;
 
 	_success := TRUE;
 
-	RETURN json_build_object('success' , _success);
+	RETURN json_build_object('success' , _success , 'data' , _result_data , 'message' , 'Market Type updated successfully');
+
 EXCEPTION
 	WHEN OTHERS THEN
-		RAISE;
+		RETURN json_build_object('success' , FALSE , 'error' , json_build_object('code' , SQLSTATE , 'message' , SQLERRM , 'function' , 'fn_update_market_type'));
+
 END;
 
 $$;
@@ -780,7 +842,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_markets(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid'];
+	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_market_id'];
 	_is_context_set BOOLEAN;
 	_result JSON;
 BEGIN
@@ -798,9 +860,11 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_agg(json_build_object('id' , t.market_id , 'name' , t.market_name , 'market_type' , t.market_type_name , 'market_type_id' , t.market_type_id , 'description' , t.market_desc , 'market_url' , t.market_url))
+		INTO _result json_agg(json_build_object('idField' , t.market_id , 'nameField' , t.market_name , 'marketTypeName' , t.market_type_name , 'marketTypeId' , t.market_type_id , 'descField' , t.market_desc , 'urlField' , t.market_url))
 	FROM
-		markets.v_market t;
+		markets.v_market t
+	WHERE (_data ->> '_market_id' IS NULL)
+		OR t.market_id =(_data ->> '_market_id')::INTEGER;
 
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'No records found in markets.market.';
@@ -836,7 +900,9 @@ DECLARE
 	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_market_id' , '_market_name' , '_market_desc' , '_market_url' , '_market_type_id'];
 	_is_context_set BOOLEAN;
 	_rows_affected INTEGER;
+	_updated_market_id INTEGER;
 	_success BOOLEAN := FALSE;
+	_result_data JSON;
 BEGIN
 	-- verify input parameters and set org context and get usr_id, org_id:
 	SELECT
@@ -848,6 +914,7 @@ BEGIN
 	-- if all set:
 	IF NOT _is_context_set THEN
 		RAISE EXCEPTION 'Context could not be set.';
+
 	END IF;
 	--! Main Action Here
 	UPDATE
@@ -858,19 +925,32 @@ BEGIN
 		, market_url = _data ->> '_market_url'
 		, market_type_id =(_data ->> '_market_type_id')::INTEGER
 	WHERE
-		m.market_id =(_data ->> '_market_id')::INTEGER;
+		m.market_id =(_data ->> '_market_id')::INTEGER
+	RETURNING
+		market_id INTO _updated_market_id;
+
 	GET DIAGNOSTICS _rows_affected = ROW_COUNT;
 
 	IF _rows_affected = 0 THEN
 		RAISE EXCEPTION 'Market with ID % not found or you do not have permission to update it.' ,(_data ->> '_market_id');
+
 	END IF;
+	-- Get the updated market with joined data
+	SELECT
+		INTO _result_data json_build_object('idField' , m.market_id , 'nameField' , m.market_name , 'descField' , m.market_desc , 'urlField' , m.market_url , 'marketTypeId' , m.market_type_id , 'marketTypeName' , m.market_type_name)
+	FROM
+		markets.v_market m
+	WHERE
+		m.market_id = _updated_market_id;
 
 	_success := TRUE;
 
-	RETURN json_build_object('success' , _success);
+	RETURN json_build_object('success' , _success , 'data' , _result_data , 'message' , 'Market updated successfully');
+
 EXCEPTION
 	WHEN OTHERS THEN
-		RAISE;
+		RETURN json_build_object('success' , FALSE , 'error' , json_build_object('code' , SQLSTATE , 'message' , SQLERRM , 'function' , 'fn_update_market'));
+
 END;
 
 $$;
@@ -981,7 +1061,7 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_agg(json_build_object('id' , i.item_id , 'name' , i.item_name , 'description' , i.item_desc , 'itemClassName' , i.item_class_name , 'itemClassId' , i.item_class_id , 'itemQOH' , COALESCE(i.qoh , 0)))
+		INTO _result json_agg(json_build_object('idField' , i.item_id , 'nameField' , i.item_name , 'descField' , i.item_desc , 'itemClassName' , i.item_class_name , 'itemClassId' , i.item_class_id , 'itemQOH' , COALESCE(i.qoh , 0)))
 	FROM
 		items.v_item i
 	WHERE (_data ->> '_item_id' IS NULL)
@@ -1054,7 +1134,7 @@ BEGIN
 	END IF;
 
 	SELECT
-		INTO _result_data json_build_object('id' , i.item_id , 'name' , i.item_name , 'description' , i.item_desc , 'itemClassName' , i.item_class_name , 'itemClassId' , i.item_class_id , 'itemQOH' , COALESCE(i.qoh , 0))
+		INTO _result_data json_build_object('idField' , i.item_id , 'nameField' , i.item_name , 'descField' , i.item_desc , 'itemClassName' , i.item_class_name , 'itemClassId' , i.item_class_id , 'itemQOH' , COALESCE(i.qoh , 0))
 	FROM
 		items.v_item i
 	WHERE

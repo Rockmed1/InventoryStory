@@ -181,12 +181,12 @@ const schemas = {
       .int()
       .positive({ message: errorMessages.positiveNumber("Quantity out") })
       .nullable(),
-    _from_bin: z.coerce
+    _from_bin_id: z.coerce
       .number()
       .int({ message: errorMessages.invalid("from bin ID") })
       .positive({ message: errorMessages.positiveNumber("From bin ID") })
       .nullable(),
-    _to_bin: z.coerce
+    _to_bin_id: z.coerce
       .number()
       .int({ message: errorMessages.invalid("to bin ID") })
       .positive({ message: errorMessages.positiveNumber("To bin ID") })
@@ -302,14 +302,14 @@ export const getValidationSchema = (
             existingItems.some((item) => item.id === parseInt(id)),
           { message: "Selected item does not exist" },
         ),
-        _from_bin: schemas.itemTrxDetailBase.shape._from_bin.refine(
+        _from_bin_id: schemas.itemTrxDetailBase.shape._from_bin_id.refine(
           (id) =>
             id === null ||
             existingBins.length === 0 ||
             existingBins.some((bin) => bin.id === parseInt(id)),
           { message: "Selected from bin does not exist" },
         ),
-        _to_bin: schemas.itemTrxDetailBase.shape._to_bin.refine(
+        _to_bin_id: schemas.itemTrxDetailBase.shape._to_bin_id.refine(
           (id) =>
             id === null ||
             existingBins.length === 0 ||

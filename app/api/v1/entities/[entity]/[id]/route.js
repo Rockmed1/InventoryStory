@@ -1,4 +1,4 @@
-import { allowedEntities } from "@/app/_lib/server/entityServerOnlyConfig";
+import { allowedEntities } from "@/app/_lib/config/server/entityServerOnlyConfig";
 import { getServerData } from "@/app/_utils/helpers-server";
 import "server-only";
 
@@ -6,7 +6,7 @@ export async function GET(request, { params }) {
   const { entity, id } = await params;
   const ALLOWED_ENTITIES = allowedEntities();
 
-  console.log("api params: ", `entity: ${entity}`, `id: ${id}`);
+  // console.log("api params: ", `entity: ${entity}`, `id: ${id}`);
 
   try {
     const { searchParams } = new URL(request.url);

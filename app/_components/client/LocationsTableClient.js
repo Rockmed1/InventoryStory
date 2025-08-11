@@ -1,12 +1,12 @@
 "use client";
 
+import { useApiData } from "@/app/_hooks/useClientData";
+import { getEntityTableLabels } from "@/app/_utils/helpers";
 import { PencilIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import StoreHydrator from "../../_store/StoreHydrator";
 import Table from "../_ui/client/Table";
 import EditLocationForm from "./EditLocationForm";
-
-const labels = ["Location ID", "Name", "Description"];
 
 const rowActions = [
   {
@@ -19,15 +19,21 @@ const rowActions = [
 
 export default function LocationsTableClient() {
   const { data, isFetching } = useSuspenseQuery({
-    queryKey: ["location"],
-    queryFn: () => useData("location"),
+    queryKey: ["location", "all"],
+    queryFn: () => useApiData("location", "all"),
   });
+  const displayTableLabels = getEntityTableLabels("location");
+
+  const displayData = data.map(
+    ({ locationId, ...displayFields }) => displayFields,
+  );
 
   return (
     <>
       <Table
-        labels={labels}
-        tableData={data}
+        entity="location"
+        // labels={displayTableLabels}
+        tableData={displayData}
         rowActions={rowActions}
         isLoading={isFetching}
       />

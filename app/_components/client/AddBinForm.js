@@ -1,24 +1,40 @@
 "use client";
 
-import Form from "@/app/_components/_ui/client/Form";
-import { getValidationSchema } from "@/app/_lib/getValidationSchema";
-import { useActionState, useEffect, useState } from "react";
+import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
+import { createFormData } from "@/app/_utils/helpers";
+import { DevTool } from "@hookform/devtools";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useActionState } from "react";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { createBin } from "../../_lib/server/actions";
-import { useAppStore } from "../../_store/AppProvider";
 import { DropDown } from "../_ui/client/DropDown";
-import Button from "../_ui/server/Button";
+import { Button } from "../_ui/client/shadcn-Button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../_ui/client/shadcn-Form";
+import { Input } from "../_ui/client/shadcn-Input";
 import SpinnerMini from "../_ui/server/SpinnerMini";
 
-/**
- * A form for adding a new bin, designed to be used within a modal.
- * It handles form submission using a server action and displays success notifications.
- *
- * @param {Function} [onCloseModal] - An optional function to close the modal on successful submission.
- */
 export default function AddBinForm({ onCloseModal }) {
-  const existingBins = useAppStore((state) => state.bin || []);
+  const queryClient = useQueryClient();
 
+  // Get validation schema with refreshed validation data
+  const {
+    schema,
+    isLoading: loadingValidation,
+    isError,
+    debug,
+  } = useValidationSchema({ entity: "bin", operation: "create" });
+
+  //3- server action fallback for progressive enhancement (works withour JS)
   const initialState = {
     success: null,
     zodErrors: null,
@@ -29,77 +45,238 @@ export default function AddBinForm({ onCloseModal }) {
     createBin,
     initialState,
   );
-  const [clientFormState, setClientFormState] = useState(initialState);
 
-  const currentFormState = clientFormState?.message
-    ? clientFormState
-    : formState;
+  //4- Enhanced form management (JS available)
+  const form = useForm({
+    resolver: schema ? zodResolver(schema) : undefined,
+    defaultValues: {
+      locationId: "",
+      nameField: "",
+      descField: "",
+    },
+    mode: "onBlur", //onTouched
+  });
 
-  useEffect(() => {
-    if (formState?.success) {
-      toast.success(`Bin ${formState.formData?._bin_name} has been created.`);
-      setClientFormState(initialState); //clear any client errors
-      onCloseModal?.();
-    }
-  }, [formState, onCloseModal]);
+  //5- Enhanced Mutation  (JS available)
+  //! maybe extract into cusom hook
 
-  function handleSubmit(e) {
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData);
+  const mutation = useMutation({
+    mutationFn: async (data) => {
+      //Convert RHF data to FormData for server action compatibility (incase js is unavailable the default data passed is formData. if only js then this conversion will not be needed )
+      const formData = createFormData(data);
 
-    const validationSchema = getValidationSchema("bin", existingBins, "create");
-    const validationResults = validationSchema.safeParse(data);
+      //Call server action directly
+      const result = await createBin(null, formData);
 
-    if (!validationResults.success) {
-      e.preventDefault();
-      setClientFormState({
-        success: false,
-        formData: data,
-        zodErrors: validationResults.error.flatten().fieldErrors,
-        message: "Fix these errors to proceed.",
+      //Transform server action response for mutation
+      if (!result.success) {
+        const error = new Error(result.message || "Server error occurred");
+        error.zodErrors = result.zodErrors;
+        error.message = result.message;
+        // error.formData = result.formData;
+        throw error;
+      }
+
+      return result;
+    },
+
+    // Optimistic update:
+    onMutate: async (newBin) => {
+      //cancel ongoing refetches for all tags including "bin"
+      await queryClient.cancelQueries({ queryKey: ["bin"] });
+
+      //Snapshot previous values
+      const previousValues = queryClient.getQueryData(["bin", "all"]);
+
+      //optimistically update cache
+      queryClient.setQueryData(["bin", "all"], (old = []) => [
+        ...old,
+        { ...newBin, idField: `temp-${Date.now()}`, optimistic: true },
+      ]);
+
+      return { previousValues };
+    },
+
+    //Success Handling
+    onSuccess: (result, variables) => {
+      //Replace optimistic update with real data
+      // queryClient.setQueryData(["bin"], (old = []) =>
+      //   old.map((bin) =>
+      //     bin.optimistic && bin.nameField === variables.item_name
+      //       ? { ...result.formData,idField: result.idField }
+      //       : bin,
+      //   ),
+      // );
+
+      //! may be should refetch
+      queryClient.invalidateQueries({
+        queryKey: ["bin"],
+        refetchType: "none", //don't show loading state
       });
-    } else {
-      setClientFormState(initialState);
+      //UI feedback //! may be grab the newly created id here...
+      toast.success(`Bin ${variables.nameField} was created successfully!`);
+      form.reset();
+      onCloseModal?.();
+    },
+
+    //Error Handling (JS Enhanced)
+    onError: (error, variables, context) => {
+      //Roll back optimistic update
+      if (context?.previousValues) {
+        queryClient.setQueryData(["bin", "all"], context.previousValues);
+      }
+
+      //! may be make a default to redirect the user to login page if the error is 401
+      //Handle Different error types
+      if (error.zodErrors) {
+        //Set field-specific validation errors in RHF
+        Object.entries(error.zodErrors).forEach(([field, errors]) =>
+          form.setError(field, {
+            type: "server",
+            message: Array.isArray(errors) ? errors[0] : errors,
+          }),
+        );
+        // may be put this message on the top of the form
+        // toast.error("Please fix the validation errors");
+      } else if (error.name === "NetworkError") {
+        //Network specific error handling
+        toast.error(
+          "Network error. Please check your connection and try again.",
+        );
+        form.setError("root", {
+          type: "network",
+          message: "Connection failed. Please try again.",
+        });
+      } else {
+        //Generic server errors
+        // toast.error(error.message || "Failed to create bin");
+        form.setError("root", {
+          type: "server",
+          message: error.message || "An unexpected error occurred",
+        });
+      }
+    },
+
+    //retry logic
+    retry: (failureCount, error) => {
+      //Retry network errors but not validation errors
+      return error.name === "NetworkError" && failureCount < 3;
+    },
+  });
+
+  //6- Progressive enhancement submit handler
+
+  function onSubmit(data, e) {
+    // console.log("Form submitted: ", data);
+
+    // 🎯 BINARY DECISION: JavaScript Available & Mutation Ready?
+    const isJavaScriptReady =
+      mutation && !mutation.isPending && typeof mutation.mutate === "function";
+
+    if (isJavaScriptReady) {
+      // ✅ YES: Enhanced Submission
+      e.preventDefault();
+      mutation.mutate(data);
     }
+    // ❌ NO: Native Form Submission (let it proceed naturally)
+  }
+
+  // Don't render form until schema is loaded and itemToEdit is available  │
+  if (loadingValidation || !schema) {
+    return <div>Loading form...</div>;
   }
 
   return (
-    <Form action={formAction} onSubmit={handleSubmit}>
-      <Form.ZodErrors
-        error={formState?.["message"] || clientFormState?.message}
-      />
-      <Form.InputSelect name={"_loc_id"}>
-        <Form.Label>Select Location *</Form.Label>
-        <DropDown
-          parent="location"
-          name="_loc_id"
-          label="location"
-          required={true}
-        />
-      </Form.InputSelect>
-      <Form.InputWithLabel
-        name={"_bin_name"}
-        inputValue={currentFormState.formData?._bin_name}
-        placeholder="Enter Bin name"
-        error={currentFormState?.zodErrors?._bin_name}>
-        Bin Name *
-      </Form.InputWithLabel>
-      <Form.InputWithLabel
-        name={"_bin_desc"}
-        inputValue={currentFormState.formData?._bin_desc}
-        placeholder="Enter Bin description"
-        error={currentFormState?.zodErrors?._bin_desc}>
-        Bin Description *
-      </Form.InputWithLabel>
-      <Form.Footer>
-        <Button disabled={pending} variant="secondary" onClick={onCloseModal}>
-          <span>Cancel</span>
-        </Button>
-        <Button disabled={pending} variant="secondary" type="submit">
-          {pending && <SpinnerMini />}
-          <span>Add Bin</span>
-        </Button>
-      </Form.Footer>
-    </Form>
+    <>
+      {
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            action={formAction}
+            // method="POST"
+            className="space-y-8">
+            {/* Global error display */}
+            {(mutation.error?.message ||
+              form.formState.errors?.root ||
+              formState?.message) && (
+              <div className="error-banner rounded border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+                {form.formState.errors.root?.message || formState?.message}
+              </div>
+            )}
+
+            <FormField
+              control={form.control}
+              name="locationId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location</FormLabel>
+                  <FormControl>
+                    <DropDown
+                      field={field}
+                      entity="location"
+                      name="locationId"
+                      label="location"
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Select a location for this bin.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="nameField"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bin name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter Bin name" {...field} />
+                  </FormControl>
+                  <FormDescription>Enter new bin name</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="descField"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bin description</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter Bin description" {...field} />
+                  </FormControl>
+                  <FormDescription>Enter new bin description</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex items-center justify-end gap-3">
+              {loadingValidation || !schema ? null : (
+                <Button
+                  disabled={mutation.isPending || !form.formState.isValid}
+                  variant="outline"
+                  type="submit">
+                  {mutation.isPending && <SpinnerMini />}
+                  <span> Add Bin</span>
+                </Button>
+              )}
+              <Button
+                type="button"
+                onClick={onCloseModal}
+                variant="destructive"
+                disabled={mutation.isPending}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </Form>
+      }
+      <DevTool control={form.control} />
+    </>
   );
 }

@@ -3,6 +3,67 @@ RESET ROLE;
 SELECT
 	"current_user"();
 
+-------------
+----------
+--------
+-----
+----
+--
+/* ## fn_get_trx_directions */
+DROP FUNCTION IF EXISTS utils.fn_get_trx_directions;
+
+CREATE OR REPLACE FUNCTION utils.fn_get_trx_directions(IN _data JSONB)
+	RETURNS JSON
+	LANGUAGE plpgsql
+	SECURITY DEFINER
+	SET search_path = utils
+	AS $$
+DECLARE
+	_usr_id INTEGER;
+	_org_id INTEGER;
+	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_trx_direction_id'];
+	_is_context_set BOOLEAN;
+	_result JSON;
+BEGIN
+	-- verify input parameters:
+	-- set org context and get usr_id, org_id:
+	SELECT
+		* INTO _usr_id
+		, _org_id
+		, _is_context_set
+	FROM
+		_fn_set_app_context(_data , _data_keys , 'fn_get_trx_directions');
+	-- if all set:
+	IF NOT _is_context_set THEN
+		RAISE EXCEPTION 'Context could not be set.';
+	END IF;
+	--! Main Action Here
+	SELECT
+		INTO _result json_agg(json_build_object('idField' , td.trx_direction_id , 'nameField' , td.trx_direction))
+	FROM
+		trans.trx_direction td
+	WHERE (_data ->> '_trx_direction_id' IS NULL)
+		OR td.trx_direction_id =(_data ->> '_trx_direction_id')::INTEGER;
+
+	IF NOT FOUND THEN
+		RAISE EXCEPTION 'No records found in trans.trx_direction!';
+	END IF;
+
+	RETURN _result;
+EXCEPTION
+	WHEN OTHERS THEN
+		RAISE;
+END;
+
+$$;
+
+ALTER FUNCTION utils.fn_get_trx_directions OWNER TO utils_admin;
+
+------------
+----------
+--------
+------
+---
 -----
 ----
 --
@@ -70,6 +131,83 @@ ALTER FUNCTION utils.fn_create_trx_type OWNER TO utils_admin;
 --------
 ------------
 ---
+/* ## fn_update_trx_type */
+DROP FUNCTION IF EXISTS utils.fn_update_trx_type;
+
+CREATE OR REPLACE FUNCTION utils.fn_update_trx_type(IN _data JSONB)
+	RETURNS JSON
+	LANGUAGE plpgsql
+	SECURITY DEFINER
+	SET search_path = utils
+	AS $$
+DECLARE
+	_usr_id INTEGER;
+	_org_id INTEGER;
+	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_trx_type_id' , '_trx_type_name' , '_trx_type_desc' , '_trx_direction_id'];
+	_is_context_set BOOLEAN;
+	_rows_affected INTEGER;
+	_updated_trx_type_id INTEGER;
+	_success BOOLEAN := FALSE;
+	_result_data JSON;
+BEGIN
+	-- verify input parameters and set org context and get usr_id, org_id:
+	SELECT
+		* INTO _usr_id
+		, _org_id
+		, _is_context_set
+	FROM
+		_fn_set_app_context(_data , _data_keys , 'fn_update_trx_type');
+	-- if all set:
+	IF NOT _is_context_set THEN
+		RAISE EXCEPTION 'Context could not be set.';
+
+	END IF;
+	--! Main Action Here
+	UPDATE
+		trans.trx_type tt
+	SET
+		trx_type_name = _data ->> '_trx_type_name'
+		, trx_type_desc = _data ->> '_trx_type_desc'
+		-- , trx_direction_id =(_data ->> '_trx_direction_id')::INTEGER
+	WHERE
+		tt.trx_type_id =(_data ->> '_trx_type_id')::INTEGER
+	RETURNING
+		trx_type_id INTO _updated_trx_type_id;
+
+	GET DIAGNOSTICS _rows_affected = ROW_COUNT;
+
+	IF _rows_affected = 0 THEN
+		RAISE EXCEPTION '{ "success": false, "error": { "code": "P0001", "message": "Transaction Type with ID % not found or you do not have permission to update it." } }' , _data ->> '_trx_type_id';
+
+	END IF;
+	-- Get the updated market with joined data
+	SELECT
+		INTO _result_data json_build_object('idField' , tt.trx_type_id , 'nameField' , tt.trx_type_name , 'descField' , tt.trx_type_desc , 'trxDirectionId' , tt.trx_direction_id , 'trxDirection' , tt.trx_direction)
+	FROM
+		trans.v_trx_type tt
+	WHERE
+		tt.trx_type_id = _updated_trx_type_id;
+
+	_success := TRUE;
+
+	RETURN json_build_object('success' , _success , 'data' , _result_data , 'message' , 'Transaction Type updated successfully');
+
+EXCEPTION
+	WHEN OTHERS THEN
+		RAISE EXCEPTION '{ "success": false, "error": { "code": "%_", "message": "%" } }' , SQLSTATE , SQLERRM;
+
+END;
+
+$$;
+
+ALTER FUNCTION utils.fn_update_trx_type OWNER TO utils_admin;
+
+------------
+----------
+-------
+----
+---
+--
 /* ## fn_get_trx_types */
 DROP FUNCTION IF EXISTS utils.fn_get_trx_types;
 
@@ -82,7 +220,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_trx_types(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid'];
+	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_trx_type_id'];
 	_is_context_set BOOLEAN;
 	_result JSON;
 BEGIN
@@ -100,9 +238,11 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_agg(json_build_object('id' , t.trx_type_id , 'name' , t.trx_type_name , 'direction' , t.trx_direction , 'trx_type_desc' , t.trx_type_desc))
+		INTO _result json_agg(json_build_object('idField' , t.trx_type_id , 'nameField' , t.trx_type_name , 'trxDirectionId' , t.trx_direction_id , 'trxDirection' , t.trx_direction , 'descField' , t.trx_type_desc))
 	FROM
-		trans.v_trx_type t;
+		trans.v_trx_type t
+	WHERE (_data ->> '_trx_type_id' IS NULL)
+		OR t.trx_type_id =(_data ->> '_trx_type_id')::INTEGER;
 
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'No records found in trans.trx_type!';
@@ -149,9 +289,11 @@ BEGIN
 		tt.trx_type_id = _trx_type_id;
 
 	RETURN _trx_direction_id;
+
 EXCEPTION
 	WHEN OTHERS THEN
 		RAISE;
+
 END;
 
 $$;
@@ -256,7 +398,7 @@ CREATE OR REPLACE FUNCTION utils._fn_assert_valid_item_trx_input(IN _data JSONB)
 	AS $$
 DECLARE
 	_trx_header_keys TEXT[] := ARRAY['_trx_desc' , '_trx_date' , '_trx_type_id' , '_market_id' , '_num_of_lines'];
-	_trx_detail_line_keys TEXT[] := ARRAY['_trx_line_num' , '_item_trx_desc' , '_item_id' , '_from_bin' , '_to_bin' , '_qty_in' , '_qty_out'];
+	_trx_detail_line_keys TEXT[] := ARRAY['_trx_line_num' , '_item_trx_desc' , '_item_id' , '_from_bin_id' , '_to_bin_id' , '_qty_in' , '_qty_out'];
 	_trx_direction_id INTEGER;
 	_failing_lines JSONB;
 	_error_count INTEGER;
@@ -276,6 +418,24 @@ BEGIN
 	END IF;
 	-- Loop through each detail object to validate required fields. The approach could be to loop through the array elements or use a set approach which is more performant.
 	--! Assert logic here
+	-- It first fetches the direction_id from the trx_type table based on the _trx_type_id provided in the header. Then, for every single detail line, it enforces a different set of rules based on that direction.
+	-- If Direction is `1` (Incoming Transaction):
+	--     qty_in must be provided and be greater than 0.
+	--     to_bin_id (where the items are going) must be provided.
+	--     qty_out must NOT be provided (must be NULL).
+	--     from_bin_id must NOT be provided (must be NULL).
+	-- If Direction is `2` (Outgoing Transaction):
+	--     qty_out must be provided and be greater than 0.
+	--     from_bin_id (where the items are coming from) must be provided.
+	--     qty_in must NOT be provided (must be NULL).
+	--     to_bin_id must NOT be provided (must be NULL).
+	--     It also checks for sufficient Quantity on Hand (QOH) by calling the _fn_not_enough_item_QOH function.
+	-- If Direction is `3` (Transfer Transaction):
+	--     Both qty_in and qty_out must be provided and be greater than 0.
+	--     Both from_bin_id and to_bin_id must be provided.
+	--     Crucially, it checks that to_bin_id is not the same as from_bin_id.
+	--     It also checks for sufficient QOH in the from_bin_id.
+	-- If a line fails any of these direction-specific checks, it's flagged as invalid.
 	-- Collect failing lines with basic error info
 	SELECT
 		jsonb_agg(jsonb_build_object('line' ,(_obj ->> '_trx_line_num')::INT , 'error' , CASE WHEN NOT (_obj ?& _trx_detail_line_keys) THEN
@@ -283,32 +443,32 @@ BEGIN
 				WHEN _trx_direction_id = 1
 					AND (_obj ->> '_qty_in' IS NULL
 						OR ((_obj ->> '_qty_in')::decimal(8 , 2)) = 0
-					OR _obj ->> '_to_bin' IS NULL
+					OR _obj ->> '_to_bin_id' IS NULL
 					OR _obj ->> '_qty_out' IS NOT NULL
-					OR _obj ->> '_from_bin' IS NOT NULL) THEN
+					OR _obj ->> '_from_bin_id' IS NOT NULL) THEN
 					'invalid_in_transaction'
 				WHEN _trx_direction_id = 2
 					AND (_obj ->> '_qty_out' IS NULL
 						OR (((_obj ->> '_qty_out')::decimal(8 , 2))) = 0
-					OR _obj ->> '_from_bin' IS NULL
+					OR _obj ->> '_from_bin_id' IS NULL
 					OR _obj ->> '_qty_in' IS NOT NULL
-					OR _obj ->> '_to_bin' IS NOT NULL
-					-- OR _fn_not_enough_item_QOH((_obj ->> '_item_id')::INT ,(_obj ->> '_from_bin')::INT ,((_obj ->> '_qty_out')::DECIMAL(8 , 2)))
+					OR _obj ->> '_to_bin_id' IS NOT NULL
+					-- OR _fn_not_enough_item_QOH((_obj ->> '_item_id')::INT ,(_obj ->> '_from_bin_id')::INT ,((_obj ->> '_qty_out')::DECIMAL(8 , 2)))
 ) THEN
 					'invalid_out_transaction'
 				WHEN _trx_direction_id = 3
 					AND (_obj ->> '_qty_in' IS NULL
 						OR ((_obj ->> '_qty_in')::decimal(8 , 2)) = 0
-					OR _obj ->> '_to_bin' IS NULL
+					OR _obj ->> '_to_bin_id' IS NULL
 					OR _obj ->> '_qty_out' IS NULL
 					OR ((_obj ->> '_qty_out')::decimal(8 , 2)) = 0
-					OR _obj ->> '_from_bin' IS NULL
-					OR _obj ->> '_to_bin' = _obj ->> '_from_bin'
-					-- OR _fn_not_enough_item_QOH((_obj ->> '_item_id')::INT ,(_obj ->> '_from_bin')::INT ,((_obj ->> '_qty_out')::DECIMAL(8 , 2)))
+					OR _obj ->> '_from_bin_id' IS NULL
+					OR _obj ->> '_to_bin_id' = _obj ->> '_from_bin_id'
+					-- OR _fn_not_enough_item_QOH((_obj ->> '_item_id')::INT ,(_obj ->> '_from_bin_id')::INT ,((_obj ->> '_qty_out')::DECIMAL(8 , 2)))
 ) THEN
 					'invalid_in_out_transaction'
 				WHEN _trx_direction_id IN (2 , 3)
-					AND _fn_not_enough_item_QOH((_obj ->> '_item_id')::INT ,(_obj ->> '_from_bin')::INT ,((_obj ->> '_qty_out')::DECIMAL(8 , 2))) THEN
+					AND _fn_not_enough_item_QOH((_obj ->> '_item_id')::INT ,(_obj ->> '_from_bin_id')::INT ,((_obj ->> '_qty_out')::DECIMAL(8 , 2))) THEN
 					'Not enough QOH. Current QOH is :'
 				ELSE
 					NULL
@@ -322,25 +482,25 @@ WHERE
 		OR (_trx_direction_id = 1
 			AND (_obj ->> '_qty_in' IS NULL
 				OR ((_obj ->> '_qty_in')::decimal(8 , 2)) = 0
-				OR _obj ->> '_to_bin' IS NULL
+				OR _obj ->> '_to_bin_id' IS NULL
 				OR _obj ->> '_qty_out' IS NOT NULL
-				OR _obj ->> '_from_bin' IS NOT NULL))
+				OR _obj ->> '_from_bin_id' IS NOT NULL))
 		OR (_trx_direction_id = 2
 			AND (_obj ->> '_qty_out' IS NULL
 				OR (((_obj ->> '_qty_out')::decimal(8 , 2))) = 0
-				OR _obj ->> '_from_bin' IS NULL
+				OR _obj ->> '_from_bin_id' IS NULL
 				OR _obj ->> '_qty_in' IS NOT NULL
-				OR _obj ->> '_to_bin' IS NOT NULL
-				OR _fn_not_enough_item_QOH((_obj ->> '_item_id')::INT ,(_obj ->> '_from_bin')::INT ,((_obj ->> '_qty_out')::DECIMAL(8 , 2)))))
+				OR _obj ->> '_to_bin_id' IS NOT NULL
+				OR _fn_not_enough_item_QOH((_obj ->> '_item_id')::INT ,(_obj ->> '_from_bin_id')::INT ,((_obj ->> '_qty_out')::DECIMAL(8 , 2)))))
 		OR (_trx_direction_id = 3
 			AND (_obj ->> '_qty_in' IS NULL
 				OR ((_obj ->> '_qty_in')::decimal(8 , 2)) = 0
-				OR _obj ->> '_to_bin' IS NULL
+				OR _obj ->> '_to_bin_id' IS NULL
 				OR _obj ->> '_qty_out' IS NULL
 				OR ((_obj ->> '_qty_out')::decimal(8 , 2)) = 0
-				OR _obj ->> '_from_bin' IS NULL
-				OR _obj ->> '_to_bin' = _obj ->> '_from_bin'
-				OR _fn_not_enough_item_QOH((_obj ->> '_item_id')::INT ,(_obj ->> '_from_bin')::INT ,((_obj ->> '_qty_out')::DECIMAL(8 , 2)))));
+				OR _obj ->> '_from_bin_id' IS NULL
+				OR _obj ->> '_to_bin_id' = _obj ->> '_from_bin_id'
+				OR _fn_not_enough_item_QOH((_obj ->> '_item_id')::INT ,(_obj ->> '_from_bin_id')::INT ,((_obj ->> '_qty_out')::DECIMAL(8 , 2)))));
 	IF _error_count > 0 THEN
 		RAISE EXCEPTION '_fn_assert_valid_item_trx_input failed for % line(s). Details: %' , _error_count , _failing_lines;
 	END IF;
@@ -426,8 +586,8 @@ RETURNING
 		, trx_line_num
 		, item_trx_desc
 		, item_id
-		, from_bin
-		, to_bin
+		, from_bin_id
+		, to_bin_id
 		, qty_in
 		, qty_out
 		, created_by
@@ -437,8 +597,8 @@ RETURNING
 		, d._trx_line_num::INT
 		, d._item_trx_desc
 		, d._item_id::INT
-		, d._from_bin::INT
-		, d._to_bin::INT
+		, d._from_bin_id::INT
+		, d._to_bin_id::INT
 		, d._qty_in::NUMERIC
 		, d._qty_out::INT
 		, _usr_id
@@ -447,8 +607,8 @@ RETURNING
 		jsonb_to_recordset(_data -> '_trx_details') AS d(_trx_line_num INTEGER
 		, _item_trx_desc TEXT
 		, _item_id INTEGER
-		, _from_bin INTEGER
-		, _to_bin INTEGER
+		, _from_bin_id INTEGER
+		, _to_bin_id INTEGER
 		, _qty_in DECIMAL(8 , 2)
 		, _qty_out DECIMAL(8 , 2));
 	get diagnostics _insert_row_count = ROW_COUNT;
@@ -469,9 +629,9 @@ RETURNING
 						d.org_id , i.item_trx_id , d.item_trx_detail_id , d.item_id ,
 							CASE t.trx_direction_id
 							WHEN 1 THEN
-								d.to_bin
+								d.to_bin_id
 							WHEN 2 THEN
-								d.from_bin
+								d.from_bin_id
 							END AS bin_id ,
 								CASE t.trx_direction_id
 								WHEN 1 THEN
@@ -508,7 +668,7 @@ RETURNING
 				a.org_id , a.item_id , a.bin_id , sum(a.qty) AS qty , 1000 AS created_by
 				FROM (
 					SELECT
-						d.org_id , i.item_trx_id , d.item_trx_detail_id , d.item_id , d.from_bin AS bin_id , d.qty_out AS qty
+						d.org_id , i.item_trx_id , d.item_trx_detail_id , d.item_id , d.from_bin_id AS bin_id , d.qty_out AS qty
 					FROM
 						trans.item_trx_detail d
 						JOIN trans.item_trx i ON d.item_trx_id = i.item_trx_id
@@ -567,7 +727,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_item_trans(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid'];
+	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_item_trx_id'];
 	_is_context_set BOOLEAN;
 	_result JSON;
 BEGIN
@@ -584,11 +744,11 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_agg(json_build_object('id' , t.item_trx_id , 'date' , t.trx_date , 'description' , t.trx_desc , 'trx_type_id' , t.trx_type_id , 'trx_type_name' , t.trx_type_name , 'direction' , trx_direction , 'market_id' , t.market_id , 'market_name' , t.market_name , 'URL' , t.market_url))
+		INTO _result json_agg(json_build_object('idField' , t.item_trx_id , 'date' , t.trx_date , 'descField' , t.trx_desc , 'trxTypeId' , t.trx_type_id , 'trxTypeName' , t.trx_type_name , 'direction' , trx_direction , 'marketId' , t.market_id , 'marketName' , t.market_name , 'urlField' , t.market_url))
 	FROM
 		trans.v_item_trx t
-	WHERE (_data ->> 'item_trx_id' IS NULL)
-		OR t.item_trx_id =(_data ->> 'item_trx_id')::INTEGER;
+	WHERE (_data ->> '_item_trx_id' IS NULL)
+		OR t.item_trx_id =(_data ->> '_item_trx_id')::INTEGER;
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'No records found in trans.item_trx!';
 	END IF;
@@ -620,7 +780,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_item_trx_details(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , 'item_trx_id'];
+	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_item_trx_id'];
 	_is_context_set BOOLEAN;
 	_result JSON;
 BEGIN
@@ -637,11 +797,11 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		json_build_object('item_trx_id' , d.item_trx_id , 'item_trx_details' , json_agg(json_build_object('id' , d.trx_line_num , 'item_trx_desc' , d.item_trx_desc , 'item_id' , d.item_id , 'item_name' , d.item_name , 'from_bin' , d.from_bin , 'from_bin_desc' , d.from_bin_desc , 'to_bin' , d.to_bin , 'to_bin_desc' , d.to_bin_desc , 'qty_in' , d.qty_in , 'qty_out' , d.qty_out))) INTO _result
+		json_build_object('itemTrxId' , d.item_trx_id , 'itemTrxDetails' , json_agg(json_build_object('idField' , d.trx_line_num , 'descField' , d.item_trx_desc , 'itemId' , d.item_id , 'itemName' , d.item_name , 'fromBinId' , d.from_bin_id , 'fromBinName' , d.from_bin_name , 'toBinId' , d.to_bin_id , 'toBinName' , d.to_bin_name , 'qtyIn' , d.qty_in , 'qtyOut' , d.qty_out))) INTO _result
 	FROM
 		trans.v_item_trx_detail d
 	WHERE
-		d.item_trx_id =(_data ->> 'item_trx_id')::INTEGER
+		d.item_trx_id =(_data ->> '_item_trx_id')::INTEGER
 	GROUP BY
 		d.item_trx_id;
 
