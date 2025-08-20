@@ -1,7 +1,7 @@
 "use client";
 
 import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
-import { createFormData } from "@/app/_utils/helpers";
+import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -60,6 +60,9 @@ export default function AddBinForm({ onCloseModal }) {
   //5- Enhanced Mutation  (JS available)
   //! maybe extract into cusom hook
 
+  const dataParams = { entity: "bin", id: "all" };
+  const cancelDataParams = { entity: "bin" };
+
   const mutation = useMutation({
     mutationFn: async (data) => {
       //Convert RHF data to FormData for server action compatibility (incase js is unavailable the default data passed is formData. if only js then this conversion will not be needed )
@@ -83,13 +86,17 @@ export default function AddBinForm({ onCloseModal }) {
     // Optimistic update:
     onMutate: async (newBin) => {
       //cancel ongoing refetches for all tags including "bin"
-      await queryClient.cancelQueries({ queryKey: ["bin"] });
+      await queryClient.cancelQueries({
+        queryKey: generateQueryKeys(cancelDataParams),
+      });
 
       //Snapshot previous values
-      const previousValues = queryClient.getQueryData(["bin", "all"]);
+      const previousValues = queryClient.getQueryData(
+        generateQueryKeys(dataParams),
+      );
 
       //optimistically update cache
-      queryClient.setQueryData(["bin", "all"], (old = []) => [
+      queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) => [
         ...old,
         { ...newBin, idField: `temp-${Date.now()}`, optimistic: true },
       ]);
@@ -110,7 +117,7 @@ export default function AddBinForm({ onCloseModal }) {
 
       //! may be should refetch
       queryClient.invalidateQueries({
-        queryKey: ["bin"],
+        queryKey: generateQueryKeys(cancelDataParams),
         refetchType: "none", //don't show loading state
       });
       //UI feedback //! may be grab the newly created id here...
@@ -123,7 +130,10 @@ export default function AddBinForm({ onCloseModal }) {
     onError: (error, variables, context) => {
       //Roll back optimistic update
       if (context?.previousValues) {
-        queryClient.setQueryData(["bin", "all"], context.previousValues);
+        queryClient.setQueryData(
+          generateQueryKeys(dataParams),
+          context.previousValues,
+        );
       }
 
       //! may be make a default to redirect the user to login page if the error is 401

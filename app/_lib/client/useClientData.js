@@ -1,53 +1,34 @@
-import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
+import { generateQueryKeys } from "@/app/_utils/helpers";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
-
-export function clientEntityConfig(entity, id = "all") {
-  const ENTITY_CONFIG = {
-    item: {
-      label: "Item",
-      displayName: "Item",
-      get: "getItems",
-      dependencies: ["itemClass", id],
-      clientQueryOptions: () =>
-        queryOptions({
-          queryKey: [entity, id ?? "all"],
-          queryFn: () => useApiData(entity, id),
-          staleTime: staleTime,
-        }),
-    },
-  };
-
-  const config = ENTITY_CONFIG[entity];
-
-  return config;
-}
-
-const queryKeys = {
-  //queryKeys factory
-};
 
 export default function useClientData({
   entity,
-  id = "all",
+
   staleTime = 1000 * 60 * 5, // 5 minutes,
   gcTime = 1000 * 60 * 10, // 10 minutes garbage collection
   select = null,
+  // All data fetching parameters go into otherParams - UNIFORM PATTERN
+  ...otherParams
 }) {
-  // console.log("useClientData entity: ", entity);
-  // console.log("useClientDataidField: ", id);
-
+  // console.log("useClientData was called with: ", { entity, ...otherParams });
   const queryClient = useQueryClient();
+
+  // Combine all parameters for the API call - UNIFORM PATTERN
+  const apiParams = { entity, id: otherParams.id ?? "all", ...otherParams };
 
   //check if we find the specific id in the "all" cache first
   const cachedData = useMemo(() => {
-    if (id === "all") return undefined;
+    if (apiParams.id === "all") return undefined; //then it's not applicable in this case since we are looking for a specific id
 
-    const allData = queryClient.getQueryData([entity, "all"]);
+    const allData = queryClient.getQueryData(
+      generateQueryKeys({ entity, id: "all" }),
+    );
 
     // console.log(`${entity}-allData: `, allData);
 
     if (allData && Array.isArray(allData)) {
-      const record = allData.find((_) => _.idField === id);
+      const record = allData.find((_) => _.idField === apiParams.id);
       // console.log(`${entity}-record: `, record);
       // const results = {
       //   data: [record],
@@ -58,11 +39,11 @@ export default function useClientData({
     }
 
     return undefined;
-  }, [queryClient, entity, id]);
+  }, [queryClient, entity, otherParams]);
 
   const results = useQuery({
-    queryKey: [entity, id],
-    queryFn: () => useApiData(entity, id),
+    queryKey: generateQueryKeys(apiParams),
+    queryFn: () => useApiData(apiParams),
     staleTime: staleTime,
     gcTime,
     select,
@@ -87,17 +68,30 @@ export default function useClientData({
 /**
  * A generic, client-side data fetching function.
  * It constructs a URL to the optimized API routes and fetches data.
+ * Updated to follow the same parameter pattern as getServerData.
  *
  * @param {string} entity - The name of the entity to fetch (e.g., "itemTrx", "item").
- * @param {string | number} [id] - An optional ID to fetch a specific record.
- * @param {object} [options] - Additional options like type, limit, etc.
+ * @param {...*} otherParams - All other parameters including id, itemId, binId, etc.
  * @returns {Promise<any>} A promise that resolves to the fetched data.
  * @throws {Error} If the network response is not ok.
  */
-export async function useApiData(entity, id = "all" /* , options = {} */) {
+export async function useApiData({ entity, ...otherParams }) {
+  // console.log("useApiData otherParams: ", otherParams);
+
+  if (!entity) throw new Error(`🚨 no entity was provided for useApiData.`);
+
+  // Extract id from otherParams, default to "all"
+  // All other parameters become query parameters - UNIFORM PATTERN
+  // IMPORTANT: Keep id in queryParams for server-side compatibility
+  const { id = "all", ...additionalParams } = otherParams;
+  const queryParams = { id, ...additionalParams };
+  // console.log("useApiData queryParams: ", queryParams);
+
+  // console.log("useApiData id: ", id);
+
   let url;
 
-  if (id === "all" || id === undefined) {
+  if (id === "all" || id === null) {
     // Use query parameter style for collections
     // const params = new URLSearchParams()
     // if (options.limit) params.set('limit', options.limit)
@@ -106,19 +100,25 @@ export async function useApiData(entity, id = "all" /* , options = {} */) {
     // if (params.toString()) {
     //   url += `?${params}`
     // }
+    // Add query parameters if needed
   } else {
     // Use path parameter style for specific IDs
     url = `/api/v1/entities/${entity}/${id}`;
-
-    // Add query parameters if needed
-    // const params = new URLSearchParams()
-    // if (options.type) params.set('type', options.type)
-    // if (params.toString()) {
-    //   url += `?${params}`
-    // }
   }
 
-  // console.log("url: ", url);
+  const params = new URLSearchParams();
+
+  Object.entries(queryParams).forEach(([key, value]) => {
+    //example [{itemId: 7}, {binId: 23}]
+    if ((value !== undefined) & (value !== null))
+      params.set(key, value.toString());
+  });
+
+  if (params.toString()) {
+    url += `?${params}`;
+  }
+
+  // console.log("useApiData url: ", url);
 
   const res = await fetch(url);
 
@@ -132,21 +132,3 @@ export async function useApiData(entity, id = "all" /* , options = {} */) {
 
   return res.json();
 }
-
-// const {
-//   data: entityList,
-//   isLoading,
-//   isError,
-//   error,
-// } = useQuery({
-//   queryKey: [entity, "all"],
-//   queryFn: () => useApiDatay, "all"),
-//   staleTime: 1000 * 60 * 5, // 5 minutes
-//   select: (data) => {
-//     if (!Array.isArray(data)) return [];
-//     return data.map((_) => ({
-//      idField: _.idField,
-//       nameField: _.name,
-//     }));
-//   },
-// });

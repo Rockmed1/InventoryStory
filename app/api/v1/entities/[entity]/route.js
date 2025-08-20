@@ -26,21 +26,27 @@ export async function GET(request, { params }) {
 
     // Validate entity
     if (!ALLOWED_ENTITIES.includes(entity)) {
-      return Response.json({ error: "Invalid entity" }, { status: 400 });
+      return Response.json(
+        { error: `Invalid entity: ${entity}` },
+        { status: 400 },
+      );
     }
+    // Build parameters object for getServerData function
 
-    // Extract query parameters
-    const id = searchParams.get("id");
-    // const type = searchParams.get('type')
-    // const limit = searchParams.get('limit')
+    // console.log("route search params: ", searchParams);
 
-    // Build parameters array for getServerData function
-    const queryParams = [];
-    if (id) queryParams.push(Number(id));
+    const allParams = Object.fromEntries(searchParams);
+
+    // console.log("route[entity]-searchParams: ", searchParams);
+    // console.log("route[entity]-allParams: ", allParams);
+    //TODO: 🚨 Add zod validation and sanitization here
+
+    // if (id) queryParams.push(Number(id));
+
     // if (type) queryParams.push(type === 'simple' ? true : type)
     // if (limit) queryParams.push(Number(limit))
 
-    const data = await getServerData(entity, ...queryParams);
+    const data = await getServerData({ entity, ...allParams });
 
     return Response.json(data, {
       headers: {

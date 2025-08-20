@@ -201,6 +201,7 @@ CREATE TABLE IF NOT EXISTS items.item(
 	--, SKU default no sku
 	--, hold boolean default false
 	--, status active etc.
+	--, unit of measure
 	, item_class_id INTEGER NOT NULL
 	, org_id INTEGER NOT NULL
 	, created_by INTEGER NOT NULL
@@ -218,6 +219,17 @@ CREATE TABLE IF NOT EXISTS items.item(
 
 ALTER TABLE items.item ENABLE ROW LEVEL SECURITY;
 
+-------------------
+-----------------------
+----------------------------
+--! item_variety table ?
+----------------------------
+----------------------------
+--! item_cost table ?
+----------------------------
+------------------------
+---------------------
+-------
 DROP TABLE IF EXISTS items.item_qty;
 
 CREATE TABLE IF NOT EXISTS items.item_qty(

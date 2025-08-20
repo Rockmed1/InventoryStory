@@ -1,8 +1,8 @@
 import { useQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { useApiData } from "../_lib/client/useClientData";
 import { getValidationSchema } from "../_lib/validation/getValidationSchema";
-import { getEntityDependencies } from "../_utils/helpers";
-import { useApiData } from "./useClientData";
+import { generateQueryKeys, getEntityAndDependencies } from "../_utils/helpers";
 
 //Data preparation wrapper for getValidationScheme
 export function useValidationSchema({
@@ -21,15 +21,7 @@ export function useValidationSchema({
 
   // 2. Determine the unique set of entities to fetch.
   const entitiesToFetch = useMemo(() => {
-    // const dependencies = new Set([entity]); // Always include the primary entity
-    // if (entityConfig.foreignKeys) {
-    //   for (const remoteConfig of Object.values(entityConfig.foreignKeys)) {
-    //     const remoteEntity = Object.keys(remoteConfig)[0];
-    //     dependencies.add(remoteEntity);
-    //   }
-    // }
-    // return Array.from(dependencies);
-    return getEntityDependencies(entity);
+    return getEntityAndDependencies(entity);
   }, [entity]);
 
   // console.log("useValidationSchema entities to fetch: ", entitiesToFetch);
@@ -37,7 +29,9 @@ export function useValidationSchema({
   const results = useQueries({
     queries: entitiesToFetch.map((entitytoFetch) => {
       const fieldsToSelect =
-        entitytoFetch !== entity ? new Set(["idField", "nameField"]) : null;
+        entitytoFetch !== entity
+          ? new Set(["idField", "nameField", "trxDirectionId"])
+          : null;
       // Find which field this dependency is referenced by. add the remote primary key field to the entity
       // for (const remoteConfig of Object.values(entityConfig.foreignKeys)) {
       //   const [remoteEntity, remotePkField] = Object.entries(remoteConfig)[0];
@@ -87,9 +81,11 @@ export function useValidationSchema({
           }
         : undefined; //this will select all fields
 
+      const apiParam = { entity: entitytoFetch, id: "all" };
+
       return {
-        queryKey: [entitytoFetch, "all"],
-        queryFn: () => useApiData(entitytoFetch, "all"), //useApiData directly not useClientData
+        queryKey: generateQueryKeys(apiParam),
+        queryFn: () => useApiData(apiParam), //useApiData directly not useClientData
         staleTime: 1000 * 60 * 5, // 5 minutes
         gcTime: 1000 * 60 * 10, // 10 minutes garbage collection
         select,
@@ -131,9 +127,23 @@ export function useValidationSchema({
       const dataDependencies =
         Object.keys(availableData).length > 0 ? availableData : null;
 
-      // console.log("useValidation dataDependencies: ", dataDependencies);
+      // console.log(
+      //   "useValidation ",
+      //   new Date().getMilliseconds(),
+      //   "dataDependencies: ",
+      //   dataDependencies,
+      //   "isSuccess: ",
+      //   isSuccess,
+      //   "isLoading: ",
+      //   isLoading,
+      //   "isError: ",
+      //   isError,
+      //   "results: ",
+      //   results,
+      // );
 
       const schema =
+        isSuccess &&
         dataDependencies &&
         Object.keys(dataDependencies).length === entitiesToFetch.length
           ? (() => {
@@ -148,9 +158,10 @@ export function useValidationSchema({
                 dataDependencies,
                 operation,
                 editedEntityId,
+                universalDataService: useApiData, //injecting the data fetching mechanism for the client
               });
             })()
-          : null;
+          : null; //if any data is missing the schema is set to null
 
       // console.log("Query debug:", {
       //   entitiesToFetch,

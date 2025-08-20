@@ -1,6 +1,6 @@
 "use server";
 
-import { getEntityDependencies } from "@/app/_utils/helpers";
+import { getEntityAndDependencies } from "@/app/_utils/helpers";
 import { getServerData } from "../../../_utils/helpers-server";
 import { getValidationSchema } from "../getValidationSchema";
 
@@ -19,13 +19,13 @@ export async function getServerValidationSchema({
 }) {
   // 1. Determine the unique set of entities to fetch based on foreign keys.
 
-  const entitiesToFetch = getEntityDependencies(entity);
+  const entitiesToFetch = getEntityAndDependencies(entity);
 
-  console.log("Serverr entitiesToFetch: ", entitiesToFetch);
+  // console.log("Serverr entitiesToFetch: ", entitiesToFetch);
 
   // 2. Create an array of data-fetching promises.
   const fetchPromises = Array.from(entitiesToFetch).map((entityName) =>
-    getServerData(entityName).catch((error) => {
+    getServerData({ entity: entityName }).catch((error) => {
       // Log the error but return an empty array so one failed query doesn't block all validation.
       console.error(`Failed to fetch server data for ${entityName}:`, error);
       return [];
@@ -44,7 +44,7 @@ export async function getServerValidationSchema({
     {},
   );
 
-  console.log("server dataDependencies: ", dataDependencies);
+  // console.log("server dataDependencies: ", dataDependencies);
   // 5. Pass the fully prepared data to the schema factory and return the schema.
   const schema = dataDependencies
     ? (() => {
@@ -58,6 +58,7 @@ export async function getServerValidationSchema({
           dataDependencies,
           operation,
           editedEntityId,
+          universalDataService: getServerData, //injecting the data fetching mechanism for the server
         });
       })()
     : null;

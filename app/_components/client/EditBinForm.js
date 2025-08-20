@@ -1,8 +1,8 @@
 "use client";
 
-import useClientData from "@/app/_hooks/useClientData";
 import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
-import { createFormData } from "@/app/_utils/helpers";
+import useClientData from "@/app/_lib/client/useClientData";
+import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -67,17 +67,24 @@ export default function EditBinForm({ id, onCloseModal }) {
     shouldUnregister: true,
   });
 
+  const dataParams = { entity: "bin", id: "all" };
+  const cancelDataParams = { entity: "bin" };
+
   const mutation = useMutation({
     onMutate: async (values) => {
       const locationName = queryClient
-        .getQueryData(["location", "all"])
+        .getQueryData(generateQueryKeys({ entity: "location", id: "all" }))
         .find((_) => _.idField.toString() == values.locationId)?.nameField;
 
-      await queryClient.cancelQueries({ queryKey: ["bin"] });
+      await queryClient.cancelQueries({
+        queryKey: generateQueryKeys(cancelDataParams),
+      });
 
-      const previousValues = queryClient.getQueryData(["bin", "all"]);
+      const previousValues = queryClient.getQueryData(
+        generateQueryKeys(dataParams),
+      );
 
-      queryClient.setQueryData(["bin", "all"], (old = []) =>
+      queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) =>
         old.map((bin) => {
           if (bin.idField === values.idField) {
             return {
@@ -111,7 +118,7 @@ export default function EditBinForm({ id, onCloseModal }) {
 
     onSuccess: (result, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["bin"],
+        queryKey: generateQueryKeys(cancelDataParams),
         refetchType: "active",
       });
       toast.success(`Bin ${variables.nameField} was updated successfully!`);
@@ -121,7 +128,10 @@ export default function EditBinForm({ id, onCloseModal }) {
 
     onError: (error, variables, context) => {
       if (context?.previousValues) {
-        queryClient.setQueryData(["bin", "all"], context.previousValues);
+        queryClient.setQueryData(
+          generateQueryKeys(dataParams),
+          context.previousValues,
+        );
       }
 
       if (error.zodErrors) {

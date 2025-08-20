@@ -210,7 +210,7 @@ const schemas = {
     ),
   ),
 
-  ItemTrx: z.object({
+  itemTrx: z.object({
     _trx_header: z.lazy(() => schemas.itemTrxHeader),
     _trx_details: z
       .array(z.lazy(() => schemas.itemTrxDetail))

@@ -1,15 +1,15 @@
 "use client";
 
 import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
-import { createFormData } from "@/app/_utils/helpers";
+import useClientData from "@/app/_lib/client/useClientData";
+import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
+import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useActionState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { updateItemClass } from "../../_lib/server/actions";
-import useClientData from "@/app/_hooks/useClientData";
-import { DevTool } from "@hookform/devtools";
 import { Button } from "../_ui/client/shadcn-Button";
 import {
   Form,
@@ -65,13 +65,16 @@ export default function EditItemClassForm({ id, onCloseModal }) {
     shouldUnregister: true,
   });
 
+  const dataParams = { entity: "itemClass", id: "all" };
+  const cancelDataParams = { entity: "itemClass" };
+
   const mutation = useMutation({
     onMutate: async (values) => {
-      await queryClient.cancelQueries({ queryKey: ["itemClass"] });
+      await queryClient.cancelQueries({ queryKey: generateQueryKeys(cancelDataParams) });
 
-      const previousValues = queryClient.getQueryData(["itemClass", "all"]);
+      const previousValues = queryClient.getQueryData(generateQueryKeys(dataParams));
 
-      queryClient.setQueryData(["itemClass", "all"], (old = []) =>
+      queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) =>
         old.map((itemClass) => {
           if (itemClass.idField === values.idField) {
             return {
@@ -103,7 +106,7 @@ export default function EditItemClassForm({ id, onCloseModal }) {
 
     onSuccess: (result, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["itemClass"],
+        queryKey: generateQueryKeys(cancelDataParams),
         refetchType: "active",
       });
       toast.success(
@@ -115,7 +118,7 @@ export default function EditItemClassForm({ id, onCloseModal }) {
 
     onError: (error, variables, context) => {
       if (context?.previousValues) {
-        queryClient.setQueryData(["itemClass", "all"], context.previousValues);
+        queryClient.setQueryData(generateQueryKeys(dataParams), context.previousValues);
       }
 
       if (error.zodErrors) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
-import { createFormData } from "@/app/_utils/helpers";
+import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -30,6 +30,7 @@ export default function AddItemForm({ onCloseModal }) {
   const {
     schema,
     isLoading: loadingValidation,
+    errors: validationErrors,
     isError,
     debug,
   } = useValidationSchema({ entity: "item", operation: "create" });
@@ -67,6 +68,9 @@ export default function AddItemForm({ onCloseModal }) {
   //5- Enhanced Mutation  (JS available)
   //! maybe extract into cusom hook
 
+  const dataParams = { entity: "item", id: "all" };
+  const cancelDataParams = { entity: "item" };
+
   const mutation = useMutation({
     mutationFn: async (data) => {
       //Convert RHF data to FormData for server action compatibility (incase js is unavailable the default data passed is formData. if only js then this conversion will not be needed )
@@ -90,13 +94,17 @@ export default function AddItemForm({ onCloseModal }) {
     // Optimistic update:
     onMutate: async (newItem) => {
       //cancel ongoing refetches for all tags including "item"
-      await queryClient.cancelQueries({ queryKey: ["item"] });
+      await queryClient.cancelQueries({
+        queryKey: generateQueryKeys(cancelDataParams),
+      });
 
       //Snapshot previous values
-      const previousValues = queryClient.getQueryData(["item", "all"]);
+      const previousValues = queryClient.getQueryData(
+        generateQueryKeys(dataParams),
+      );
 
       //optimistically update cache
-      queryClient.setQueryData(["item", "all"], (old = []) => [
+      queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) => [
         ...old,
         { ...newItem, idField: `temp-${Date.now()}`, optimistic: true },
       ]);
@@ -117,7 +125,7 @@ export default function AddItemForm({ onCloseModal }) {
 
       //! may be should refetch
       queryClient.invalidateQueries({
-        queryKey: ["item"],
+        queryKey: generateQueryKeys({ entity: "item" }),
         refetchType: "none", //don't show loading state
       });
       //UI feedback //! may be grab the newly created id here...
@@ -130,7 +138,10 @@ export default function AddItemForm({ onCloseModal }) {
     onError: (error, variables, context) => {
       //Roll back optimistic update
       if (context?.previousValues) {
-        queryClient.setQueryData(["item", "all"], context.previousValues);
+        queryClient.setQueryData(
+          generateQueryKeys({ entity: "item", id: "all" }),
+          context.previousValues,
+        );
       }
 
       //! may be make a default to redirect the user to login page if the error is 401
@@ -188,11 +199,16 @@ export default function AddItemForm({ onCloseModal }) {
     // ❌ NO: Native Form Submission (let it proceed naturally)
   }
 
-  // Don't render form until schema is loaded and itemToEdit is available  │
+  // console.log("AddItemForm validation errors:", validationErrors);
+
+  // Don't render form until schema is loaded and itemToEdit is available
+  //TODO: make this better: may be render the form anyways but put a message in the form top...
   if (loadingValidation || !schema) {
+    // if (loadingValidation ) {
     return <div>Loading form...</div>;
   }
 
+  // if (validationErrors) form.setError("root");
   return (
     <>
       {

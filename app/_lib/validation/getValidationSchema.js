@@ -1,11 +1,16 @@
 import {
+  BUSINESS_VALIDATION_BASE,
+  confirmCompositStructure,
   errorMessages,
-  VALIDATION_RULES,
+  FIELD_VALIDATION_RULES,
 } from "@/app/_lib/validation/ZodSchemas";
 import {
+  getCompositeEntities,
+  getEntityBusinessValidationBases,
   getEntityChangeDetectionFields,
   getEntityDisplayName,
   getEntityFieldsValidation,
+  getEntityPatternType,
   getEntityValidationObj,
   getFieldDisplayName,
   getFieldType,
@@ -28,12 +33,12 @@ export function generateBaseSchema(entity, operation) {
   if (!entityFieldsValidation) {
     throw new Error(`Validation for '${entity}' not found.`);
   }
-
   const zodValidationObject = Object.entries(entityFieldsValidation).reduce(
     (acc, [field, fieldValidation]) => {
-      const fieldDisplayName = getFieldDisplayName(entity, field);
+      const fieldDisplayName = getFieldDisplayName({ entity, field });
 
-      acc[field] = VALIDATION_RULES[fieldValidation.type](fieldDisplayName);
+      acc[field] =
+        FIELD_VALIDATION_RULES[fieldValidation.type](fieldDisplayName);
 
       return acc;
     },
@@ -57,10 +62,10 @@ export function generateBaseSchema(entity, operation) {
 
 //Assertion functions:
 const FIELD_ASSERT = {
-  exists: ({ schema, data, field, displayName }) => {
+  exists: ({ schema, data, field, entity }) => {
     // console.log("🐛 exists called with:", {
     //   field,
-    //   displayName,
+    //   entity,
     //   data,
     //   schema,
     // });
@@ -74,6 +79,7 @@ const FIELD_ASSERT = {
     }
 
     // const enhancedSchema = schema;
+    const fieldDisplayName = getFieldDisplayName({ field, entity });
 
     const enhancedSchema = schema.extend({
       [field]: schema.shape[field].refine(
@@ -108,7 +114,7 @@ const FIELD_ASSERT = {
           return true; //unknown type
         },
         {
-          message: errorMessages.notFound(displayName),
+          message: errorMessages.notFound(fieldDisplayName),
         },
       ),
     });
@@ -116,30 +122,80 @@ const FIELD_ASSERT = {
     return enhancedSchema;
   },
 
+  isForeignKeys: ({ entity, schema, dataDependencies }) => {
+    // console.log("🐛 isForeignKeys called with:", {
+    //   entity,
+    //   dataDependencies,
+    //   schema,
+    // });
+    const foreignKeys = getForeignKeys(entity);
+
+    // console.log(`foreignKeys for entity "${entity}": `, foreignKeys);
+
+    let enhancedSchema = schema;
+
+    if (foreignKeys) {
+      for (const [fkField, remoteConfig] of Object.entries(foreignKeys || {})) {
+        const remoteEntity = remoteConfig.entity;
+
+        // console.log("foreignKeys fkField: ", fkField);
+        // console.log("foreignKeys remoteEntity: ", remoteEntity);
+
+        // console.log("fk schema: ", schema);
+
+        if (schema.shape[fkField]) {
+          const fkEntityData = dataDependencies[remoteEntity] || [];
+
+          // console.log("fk dataDependencies: ", dataDependencies);
+          // console.log("fkEntityData: ", fkEntityData);
+          // const fkEntityDisplayName = getEntityDisplayName(remoteEntity);
+
+          enhancedSchema = FIELD_ASSERT.exists({
+            schema: enhancedSchema,
+            data: fkEntityData,
+            field: fkField,
+            entity,
+          });
+        }
+      }
+    }
+    return enhancedSchema;
+  },
+
   isUnique: ({ entity, schema, data, editedEntityId = null }) => {
     // console.log("🐛 isUnique called with:", {
-    //   field,
-    //   displayName,
+    //   entity,
+    //   schema,
+    //   data,
     //   editedEntityId,
-    //   dataLength: data.length,
-    //   data: data,
-    //   fieldType,
     // });
 
     // console.log("fieldType: ", fieldType);
     const uniqueFields = getUniqueFields(entity);
-    // console.log("🐛  uniqueFields: ", uniqueFields);
+    // console.log(
+    //   "🐛  uniqueFields: ",
+    //   uniqueFields,
+    //   "schema.shape.hasOwnProperty(field): ",
+    //   schema.shape.hasOwnProperty(uniqueFields[0]),
+    // );
 
     if (!uniqueFields) return schema;
 
-    let enhancedSchema;
+    // console.log(
+    //   "isUnique filtered uniqueFileds: ",
+    //   uniqueFields.filter((field) => {
+    //     return schema.shape.hasOwnProperty(field);
+    //   }),
+    // );
+
+    let enhancedSchema = schema;
 
     uniqueFields
       .filter((field) => {
-        schema.shape.hasOwnProperty(field);
+        return schema.shape.hasOwnProperty(field);
       })
-      .map((field) => {
-        const fieldDisplayName = getFieldDisplayName(entity, field);
+      .forEach((field) => {
+        const fieldDisplayName = getFieldDisplayName({ entity, field });
         const fieldType = getFieldType(field);
 
         const lookupData = editedEntityId
@@ -150,11 +206,11 @@ const FIELD_ASSERT = {
           [field]: schema.shape[field].refine(
             (value) => {
               // console.log(
-              //   "🐛 Refine function called with value:",
+              //   "☑️ Refine function called with value:",
               //   value,
               //   typeof value,
               // );
-              if (!value || data.length === 0) return true;
+              if (!value || lookupData.length === 0) return true;
 
               // console.log("🐛 editedEntityId:", editedEntityId);
               // console.log("🐛 Filtered lookupData:", lookupData);
@@ -176,7 +232,7 @@ const FIELD_ASSERT = {
                   // console.log("🐛 Match result:", row.name?.toLowerCase().trim() === normalizedValue);
                   return row[field]?.toLowerCase().trim() === normalizedValue;
                 });
-                // console.log("🐛 Final validation result:", result);
+                // console.log("🏁  isUnique validation result:", result);
                 return result;
               }
               return true; // unknown type
@@ -234,13 +290,19 @@ const FIELD_ASSERT = {
     return enhancedSchema;
   },
 
-  isNotRequired: (schema, entity) => {
+  isNotRequired: ({ schema, entity }) => {
     const notRequiredFields = getNotRequiredFields(entity);
+
+    // console.log("entity: ", entity, "notRequiredFields: ", notRequiredFields);
+
     let enhancedSchema = schema;
 
     notRequiredFields.forEach((field) => {
       const originalFieldSchema = schema.shape[field];
-      if (!originalFieldSchema) return;
+
+      // console.log("isNotRequired originalFieldSchema: ", originalFieldSchema);
+
+      if (!originalFieldSchema) return enhancedSchema;
 
       const newFieldSchema = z
         .preprocess(
@@ -261,7 +323,151 @@ const FIELD_ASSERT = {
   },
 };
 
-const ENTITY_ASSERT = {};
+export const ENTITY_ASSERT = {
+  // Apply all business rules to a schema
+  isBusinessRules: ({ schema, entity, context, editedEntityId }) => {
+    // console.log("🐛 isBusinessRules called with:", {
+    //   entity,
+    //   schema,
+    //   context, //  { dataDependencies, universalDataService }
+    //   editedEntityId,
+    // });
+
+    const entityBusinessValidationBases =
+      getEntityBusinessValidationBases(entity);
+    // console.log(
+    //   "entityBusinessValidationBases: ",
+    //   entityBusinessValidationBases,
+    // );
+
+    if (!entityBusinessValidationBases) return schema;
+
+    const entityPatternType = getEntityPatternType(entity);
+
+    let enhancedSchema = schema;
+
+    Object.entries(entityBusinessValidationBases).forEach(
+      ([base, baseDefinition]) => {
+        if ((entityPatternType === "atomic") & (base === "compositeBased")) {
+          enhancedSchema = enhancedSchema.superRefine((data, ctx) => {
+            ctx.addIssue({
+              code: "custom",
+              path: ["root"],
+              message: errorMessages.atomicEntityCompositRuleNotAllowed(entity),
+            });
+          });
+          return;
+        }
+
+        const businessValidationBaseFn = BUSINESS_VALIDATION_BASE[base];
+
+        if (!businessValidationBaseFn) {
+          enhancedSchema = enhancedSchema.superRefine((data, ctx) => {
+            ctx.addIssue({
+              code: "custom",
+              path: ["root"],
+              message: errorMessages.businessValidationBaseFnUndefined(
+                entity,
+                base,
+              ),
+            });
+          });
+          return;
+        }
+
+        enhancedSchema = businessValidationBaseFn({
+          entity,
+          schema: enhancedSchema,
+          baseDefinition,
+          context, //   { dataDependencies,universalDataService},
+        });
+      },
+    );
+
+    return enhancedSchema;
+  },
+
+  compositEntitiesBusinessRules: ({
+    entity,
+    schema,
+    context, //   { dataDependencies,universalDataService},
+  }) => {
+    // console.log("🐛 compositEntitiesBusinessRules called with:", {
+    //   entity,
+    //   schema,
+    //   context, //  { dataDependencies, universalDataService }
+    // });
+
+    let enhancedSchema = schema;
+
+    const { header, line } = getCompositeEntities(entity);
+
+    if (!header || !line) {
+      enhancedSchema = enhancedSchema.superRefine((data, ctx) => {
+        ctx.addIssue({
+          code: "custom",
+          path: ["root"],
+          message: errorMessages.missingValidationRequirement(
+            entity,
+            "composit entities/data",
+          ),
+        });
+
+        return enhancedSchema;
+      });
+    }
+
+    for (const subEntity of [header, line]) {
+      enhancedSchema = ENTITY_ASSERT.isBusinessRules({
+        entity: subEntity,
+        schema,
+        context,
+      });
+    }
+
+    return enhancedSchema;
+  },
+
+  // Header-line consistency validation
+  lineCountConsistency: ({ schema, entity, context }) => {
+    const enhancedSchema = schema.superRefine((data, ctx) => {
+      // console.log("🐛 lineCountConsistency called with:", {
+      //   entity,
+      //   schema,
+      //   context, //  { dataDependencies, universalDataService }
+      // });
+
+      //line consitstency has to be for composit entities
+      const { composite, header, line, headerData, lineData } =
+        confirmCompositStructure(entity, data, ctx);
+      // console.log("confirmCompositStructure: ", {
+      //   composite,
+      //   header,
+      //   line,
+      //   headerData,
+      //   lineData,
+      // });
+
+      if (composite) {
+        const declaredLines = parseInt(headerData.numOfLines) || 0;
+        const actualLines = lineData.length || 0;
+
+        if (declaredLines !== actualLines) {
+          ctx.addIssue({
+            code: "custom",
+            path: [header, "numOfLines"],
+            message: errorMessages.numberOfLinesMismatch(
+              declaredLines,
+              actualLines,
+            ),
+          });
+        }
+      }
+    });
+
+    return enhancedSchema;
+  },
+};
 
 // 5. validation function
 export const getValidationSchema = ({
@@ -269,30 +475,41 @@ export const getValidationSchema = ({
   dataDependencies = {},
   operation = "create",
   editedEntityId = null,
+  universalDataService,
 }) => {
-  const { wrapper, ...entityValidationObj } = getEntityValidationObj(entity);
+  // console.log("🐛 getValidationSchema called with:", {
+  //   entity,
+  //   dataDependencies,
+  //   operation,
+  //   editedEntityId,
+  //   universalDataService,
+  // });
+
+  // isolate the compositWrapper if exists
+  const { compositeWrapper, ...entitiesValidationObj } =
+    getEntityValidationObj(entity);
+  //{main} or {compositWrapper, header, line}
 
   // console.log(
-  //   "wrapper: ",
-  //   wrapper,
-  //   "entityValidationObj: ",
-  //   entityValidationObj,
+  //   "compositeWrapper: ",
+  //   compositeWrapper,
+  //   "entitiesValidationObject: ",
+  //   entitiesValidationObj,
   // );
 
   const schemasObj = {};
+  // Apply Field Validation (both atomic and composit subentities)
+  for (const [key, entityToValidate] of Object.entries(entitiesValidationObj)) {
+    // console.log("key: ", key, "entityToValidate: ", entityToValidate);
 
-  for (const [key, entity] of Object.entries(entityValidationObj)) {
-    // console.log("key: ", key, "entity: ", entity);
+    const baseSchema = generateBaseSchema(entityToValidate, operation);
 
-    const baseSchema = generateBaseSchema(entity, operation);
-
-    const mainEntityData = dataDependencies[entity] || [];
-
-    //:make this FIELD_ASSERT.isForeignKeys
-    const foreignKeys = getForeignKeys(entity);
+    // console.log("baseSchema: ", baseSchema);
+    //Field Validation
+    const mainEntityData = dataDependencies[entityToValidate] || [];
 
     // console.log("🐛 getValidationSChema called with: ", {
-    //   entity,
+    //   entityToValidate,
     //   dataDependencies,
     //   operation,
     //   editedEntityId,
@@ -301,77 +518,80 @@ export const getValidationSchema = ({
     //   foreignKeys,
     // });
 
-    let enhancedSchema = baseSchema;
+    let interimSchema = baseSchema;
     //add not required:
-    enhancedSchema = FIELD_ASSERT.isNotRequired({
-      schema: enhancedSchema,
-      entity,
+    interimSchema = FIELD_ASSERT.isNotRequired({
+      schema: interimSchema,
+      entity: entityToValidate,
     });
 
-    // Shared for Create and Update
-    // Add foreign key validation for all dependencies
-    if (foreignKeys) {
-      for (const [fkField, remoteConfig] of Object.entries(foreignKeys || {})) {
-        const remoteEntity = remoteConfig.entity;
-
-        if (baseSchema.shape[fkField]) {
-          const fkEntityData = dataDependencies[remoteEntity] || [];
-
-          const fkEntityDisplayName = getEntityDisplayName(remoteEntity);
-
-          enhancedSchema = FIELD_ASSERT.exists({
-            schema: enhancedSchema,
-            data: fkEntityData,
-            field: fkField,
-            displayName: fkEntityDisplayName,
-          });
-        }
-      }
-    }
-
-    const mainEntityDisplayName = getEntityDisplayName(entity);
-
-    //add unique:
-    const uniqueFields = getUniqueFields(entity);
-    // console.log("🐛  uniqueFields: ", uniqueFields);
-
-    uniqueFields.map((field) => {
-      const fieldDisplayName = getFieldDisplayName(entity, field);
-      // console.log("🐛 field: ", field);
-      // console.log("🐛  fieldDisplayName: ", fieldDisplayName);
-
-      enhancedSchema = FIELD_ASSERT.isUnique({
-        entity,
-        schema: enhancedSchema,
-        data: mainEntityData,
-        editedEntityId,
-      });
+    interimSchema = FIELD_ASSERT.isForeignKeys({
+      schema: interimSchema,
+      entity: entityToValidate,
+      dataDependencies,
     });
 
-    // if (operation === "create") {
-    //   uniqueFields.map((field) => {
-    //     enhancedSchema = FIELD_ASSERT.isUnique(
-    //       enhancedSchema,
-    //       mainEntityData,
-    //       field,
-    //       mainEntityDisplayName,
-    //     );
-    //   });
+    // //:make this FIELD_ASSERT.isForeignKeys
+    // const foreignKeys = getForeignKeys(entity);
+    // // Shared for Create and Update
+    // // Add foreign key validation for all dependencies
+
+    // if (foreignKeys) {
+    //   for (const [fkField, remoteConfig] of Object.entries(foreignKeys || {})) {
+    //     const remoteEntity = remoteConfig.entity;
+
+    //     if (baseSchema.shape[fkField]) {
+    //       const fkEntityData = dataDependencies[remoteEntity] || [];
+
+    //       const fkEntityDisplayName = getEntityDisplayName(remoteEntity);
+
+    //       interimSchema = FIELD_ASSERT.exists({
+    //         schema: interimSchema,
+    //         data: fkEntityData,
+    //         field: fkField,
+    //         displayName: fkEntityDisplayName,
+    //       });
+    //     }
+    //   }
     // }
+
+    // //add unique:
+    // const uniqueFields = getUniqueFields(entity);
+    // // console.log("🐛  uniqueFields: ", uniqueFields);
+
+    // uniqueFields.map((field) => {
+    //   const fieldDisplayName = getFieldDisplayName({entity, field});
+    //   // console.log("🐛 field: ", field);
+    //   // console.log("🐛  fieldDisplayName: ", fieldDisplayName);
+
+    //   interimSchema = FIELD_ASSERT.isUnique({
+    //     entity,
+    //     schema: interimSchema,
+    //     data: mainEntityData,
+    //     editedEntityId,
+    //   });
+    // });
+
+    interimSchema = FIELD_ASSERT.isUnique({
+      entity: entityToValidate,
+      schema: interimSchema,
+      data: mainEntityData,
+      editedEntityId,
+    });
 
     // For UPDATE: FIELD_ASSERT id exists and there is change
     if (operation === "update") {
       // First, confirm the primary key exists.
-      enhancedSchema = FIELD_ASSERT.exists({
-        schema: enhancedSchema,
+      interimSchema = FIELD_ASSERT.exists({
+        schema: interimSchema,
         data: mainEntityData,
         field: "idField",
-        displayName: mainEntityDisplayName,
+        displayName: getEntityDisplayName(entity),
       });
 
       // Lastly, apply the isChanged validation.
-      enhancedSchema = FIELD_ASSERT.isChanged({
-        schema: enhancedSchema,
+      interimSchema = FIELD_ASSERT.isChanged({
+        schema: interimSchema,
         data: mainEntityData,
         entity,
         editedEntityId,
@@ -379,20 +599,50 @@ export const getValidationSchema = ({
     }
 
     //Lastly: park the enganced schema in the schemasObj
-    schemasObj[key] = enhancedSchema;
+    //keys should either be: {main, header, line}
+    schemasObj[key] = interimSchema;
   }
 
   //Schema factory generator
-  //if no wrapper then it's an atomic entity with just one schema
-  if (!wrapper) return schemasObj["main"];
+  //if no compositeWrapper then it's an atomic entity with just one schema
 
-  // otherwise if there is a wrapper then it's a composite entity and we need to merge the schemas
-  const header = entityValidationObj.header;
-  const line = entityValidationObj.line;
-  let finalSchema = z.object({
-    [header]: schemasObj[header],
-    [line]: z.array(schemasObj[line]).min(1, errorMessages.atLeastOne(line)),
+  let enhancedSchema;
+
+  // -> TODO: Apply business rules only on atomic entity
+  if (!compositeWrapper) {
+    const schema = schemasObj["main"];
+
+    enhancedSchema = ENTITY_ASSERT.isBusinessRules({
+      entity,
+      schema,
+      context: { dataDependencies, universalDataService },
+      editedEntityId,
+    });
+
+    return enhancedSchema;
+  }
+
+  // otherwise if there is a compositeWrapper then it's a composite entity and we need to merge the schemas
+  const { header, line } = entitiesValidationObj;
+
+  enhancedSchema = z.object({
+    [header]: schemasObj["header"],
+    [line]: z.array(schemasObj["line"]).min(1, errorMessages.atLeastOne(line)),
   });
 
-  return finalSchema;
+  // TODO: COMPOSITE VALIDATION WITH BUSINESS RULES on compositeWrapper and sub-entities
+  try {
+    // console.log("⛳ Applying business rules....");
+
+    enhancedSchema = ENTITY_ASSERT.isBusinessRules({
+      entity,
+      schema: enhancedSchema,
+      context: { dataDependencies, universalDataService },
+      editedEntityId,
+    });
+    // console.log("✅ isBusinessRules completed");
+  } catch (error) {
+    console.error("❌ isBusinessRules error: ", error);
+  }
+  return enhancedSchema;
 };

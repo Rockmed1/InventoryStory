@@ -1,7 +1,7 @@
 "use client";
 
-import { useApiData } from "@/app/_hooks/useClientData";
-import { getEntityTableLabels } from "@/app/_utils/helpers";
+import { useApiData } from "@/app/_lib/client/useClientData";
+import { generateQueryKeys, getEntityTableLabels } from "@/app/_utils/helpers";
 import { ArrowsRightLeftIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import StoreHydrator from "../../_store/StoreHydrator";
@@ -24,9 +24,11 @@ const rowActions = [
 ];
 
 export default function ItemsTableClient() {
+  const dataParams = { entity: "item", id: "all" };
+
   const { data, isFetching } = useSuspenseQuery({
-    queryKey: ["item", "all"],
-    queryFn: () => useApiData("item", "all"),
+    queryKey: generateQueryKeys(dataParams),
+    queryFn: () => useApiData(dataParams),
   });
   const displayTableLabels = getEntityTableLabels("item");
 

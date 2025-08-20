@@ -550,3 +550,15 @@ SELECT
 	*
 FROM
 	utils.fn_get_item_trans(jsonb_build_object('_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084' , 'item_trx_id' , '10000'));
+
+---------------
+--* item quantity
+SELECT
+	*
+FROM
+	items.item_qty;
+
+SELECT
+	*
+FROM
+	utils.fn_get_item_qoh(jsonb_build_object('_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084' , '_item_id' , '1001' , '_bin_id' , '1001'));

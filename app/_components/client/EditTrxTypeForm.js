@@ -1,8 +1,8 @@
 "use client";
 
-import useClientData from "@/app/_hooks/useClientData";
 import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
-import { createFormData } from "@/app/_utils/helpers";
+import useClientData from "@/app/_lib/client/useClientData";
+import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -68,17 +68,24 @@ export default function EditTrxTypeForm({ id, onCloseModal }) {
     shouldUnregister: true,
   });
 
+  const dataParams = { entity: "trxType", id: "all" };
+  const cancelDataParams = { entity: "trxType" };
+
   const mutation = useMutation({
     onMutate: async (values) => {
       const trxDirectionName = queryClient
-        .getQueryData(["trxDirection", "all"])
+        .getQueryData(generateQueryKeys({ entity: "trxDirection", id: "all" }))
         .find((_) => _.idField.toString() == values.trxDirectionId)?.nameField;
 
-      await queryClient.cancelQueries({ queryKey: ["trxType"] });
+      await queryClient.cancelQueries({
+        queryKey: generateQueryKeys(cancelDataParams),
+      });
 
-      const previousValues = queryClient.getQueryData(["trxType", "all"]);
+      const previousValues = queryClient.getQueryData(
+        generateQueryKeys(dataParams),
+      );
 
-      queryClient.setQueryData(["trxType", "all"], (old = []) =>
+      queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) =>
         old.map((trxType) => {
           if (trxType.idField === values.idField) {
             return {
@@ -110,7 +117,7 @@ export default function EditTrxTypeForm({ id, onCloseModal }) {
 
     onSuccess: (result, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["trxType"],
+        queryKey: generateQueryKeys(cancelDataParams),
         refetchType: "active",
       });
       toast.success(
@@ -122,7 +129,10 @@ export default function EditTrxTypeForm({ id, onCloseModal }) {
 
     onError: (error, variables, context) => {
       if (context?.previousValues) {
-        queryClient.setQueryData(["trxType", "all"], context.previousValues);
+        queryClient.setQueryData(
+          generateQueryKeys(dataParams),
+          context.previousValues,
+        );
       }
 
       if (error.zodErrors) {

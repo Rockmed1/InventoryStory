@@ -38,7 +38,7 @@ function dbAction(rpcName, entity, operation) {
     const { _org_uuid, _usr_uuid } = session;
 
     // validate the session data
-    const validatedAppContext = appContextSchema.safeParse({
+    const validatedAppContext = await appContextSchema.safeParseAsync({
       _org_uuid,
       _usr_uuid,
     });
@@ -55,7 +55,7 @@ function dbAction(rpcName, entity, operation) {
     let destructuredFormData;
 
     // Special handling for ItemTrx entity
-    if (entity === "ItemTrx") {
+    if (entity === "itemTrx") {
       // Transform FormData using unified pipeline for complex transactions
       destructuredFormData = formDataTransformer.transform(formData);
       // console.log("Transformed ItemTrx data:", destructuredFormData);
@@ -77,7 +77,7 @@ function dbAction(rpcName, entity, operation) {
       editedEntityId,
     });
 
-    const validatedData = schema.safeParse({
+    const validatedData = await schema.safeParseAsync({
       ...destructuredFormData,
     });
 
@@ -107,7 +107,7 @@ function dbAction(rpcName, entity, operation) {
 
     // const destructuredFormData = Object.fromEntries(formData);
 
-    // const validatedData = schema[actionSchema].safeParse({
+    // const validatedData = schema[actionSchema].safeParseAsync({
     //   _org_uuid,
     //   _usr_uuid,
     //   ...destructuredFormData,
@@ -219,7 +219,7 @@ export const updateTrxType = dbAction(
 
 export const createItemTrx = dbAction(
   "fn_create_item_trx",
-  "ItemTrx",
+  "itemTrx",
   "create",
 );
 

@@ -1,4 +1,5 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { generateQueryKeys } from "@/app/_utils/helpers";
 import { getQueryClient } from "../../_store/queryClient";
 import { getServerData } from "../../_utils/helpers-server";
 import TableLoading from "../_ui/client/TableLoading";
@@ -8,10 +9,11 @@ const labels = ["Market ID", "Name", "Description", "Market Type"];
 
 export default async function MarketsTable() {
   const queryClient = getQueryClient();
+  const dataParams = { entity: "market", id: "all" };
 
-  queryClient.prefetchQuery({
-    queryKey: ["market", "all"],
-    queryFn: () => getServerData("market"),
+  await queryClient.prefetchQuery({
+    queryKey: generateQueryKeys(dataParams),
+    queryFn: () => getServerData(dataParams),
   });
 
   return (

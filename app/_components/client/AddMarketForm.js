@@ -1,7 +1,7 @@
 "use client";
 
 import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
-import { createFormData } from "@/app/_utils/helpers";
+import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -60,6 +60,8 @@ export default function AddMarketForm({ onCloseModal }) {
 
   //5- Enhanced Mutation  (JS available)
   //! maybe extract into cusom hook
+  const dataParams = { entity: "market", id: "all" };
+  const cancelDataParams = { entity: "market" };
 
   const mutation = useMutation({
     mutationFn: async (data) => {
@@ -83,12 +85,12 @@ export default function AddMarketForm({ onCloseModal }) {
 
     // Optimistic update
     onMutate: async (newMarket) => {
-      await queryClient.cancelQueries({ queryKey: ["market"] });
+      await queryClient.cancelQueries({ queryKey: generateQueryKeys(cancelDataParams) });
 
-      const previousValues = queryClient.getQueryData(["market", "all"]);
+      const previousValues = queryClient.getQueryData(generateQueryKeys(dataParams));
 
       // Optimistically update cache
-      queryClient.setQueryData(["market", "all"], (old = []) => [
+      queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) => [
         ...old,
         {
           idField: Date.now(), // Temporary ID
@@ -106,7 +108,7 @@ export default function AddMarketForm({ onCloseModal }) {
     //Success Handling
     onSuccess: (result, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["market"],
+        queryKey: generateQueryKeys(cancelDataParams),
         refetchType: "none",
       });
 
@@ -119,7 +121,7 @@ export default function AddMarketForm({ onCloseModal }) {
     onError: (error, variables, context) => {
       //Roll back optimistic update
       if (context?.previousValues) {
-        queryClient.setQueryData(["market", "all"], context.previousValues);
+        queryClient.setQueryData(generateQueryKeys(dataParams), context.previousValues);
       }
 
       //! may be make a default to redirect the user to login page if the error is 401

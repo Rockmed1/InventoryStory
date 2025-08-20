@@ -300,6 +300,11 @@ $$;
 
 ALTER FUNCTION utils._fn_get_trx_direction_id OWNER TO utils_admin;
 
+-- ---------------
+-- -----------
+-- --------
+-- ------
+-- ----
 -- DROP FUNCTION IF EXISTS utils._fn_assert_item_QOH;
 -- CREATE OR REPLACE FUNCTION utils._fn_assert_item_QOH(IN _item_id INTEGER , IN _bin_id INTEGER , _qty_out DECIMAL(8 , 2))
 -- 	RETURNS void
@@ -336,12 +341,11 @@ ALTER FUNCTION utils._fn_get_trx_direction_id OWNER TO utils_admin;
 -- END;
 -- $$;
 -- ALTER FUNCTION utils._fn_assert_item_QOH OWNER TO utils_admin;
--------------
-----------
--------
------
----
---
+---------------
+-----------
+--------
+------
+----
 DROP FUNCTION IF EXISTS utils._fn_not_enough_item_QOH;
 
 CREATE OR REPLACE FUNCTION utils._fn_not_enough_item_QOH(IN _item_id INTEGER , IN _bin_id INTEGER , _qty_out DECIMAL(8 , 2))
@@ -375,6 +379,11 @@ $$;
 
 ALTER FUNCTION utils._fn_not_enough_item_QOH OWNER TO utils_admin;
 
+------------
+----------
+--------
+------
+---
 -------------
 ----------
 -------
@@ -744,7 +753,7 @@ BEGIN
 	END IF;
 	--! Main Action Here
 	SELECT
-		INTO _result json_agg(json_build_object('idField' , t.item_trx_id , 'date' , t.trx_date , 'descField' , t.trx_desc , 'trxTypeId' , t.trx_type_id , 'trxTypeName' , t.trx_type_name , 'direction' , trx_direction , 'marketId' , t.market_id , 'marketName' , t.market_name , 'urlField' , t.market_url))
+		INTO _result json_agg(json_build_object('idField' , t.item_trx_id , 'date' , t.trx_date , 'descField' , t.trx_desc , 'trxTypeId' , t.trx_type_id , 'trxTypeName' , t.trx_type_name , 'trxDirection' , t.trx_direction , 'trxDirectionId' , t.trx_direction_id , 'marketId' , t.market_id , 'marketName' , t.market_name , 'urlField' , t.market_url))
 	FROM
 		trans.v_item_trx t
 	WHERE (_data ->> '_item_trx_id' IS NULL)

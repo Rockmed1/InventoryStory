@@ -1,7 +1,10 @@
 "use client";
 
-import { createFormData } from "@/app/_utils/helpers";
+import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
+import useClientData from "@/app/_lib/client/useClientData";
+import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
 import { DevTool } from "@hookform/devtools";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useActionState, useEffect } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -29,12 +32,13 @@ export default function AddItemTrxForm({ onCloseModal }) {
   const queryClient = useQueryClient();
 
   // Get validation schema with refreshed validation data
-  // const {
-  //   schema,
-  //   isLoading: loadingValidation,
-  //   isError,
-  //   debug,
-  // } = useValidationSchema({ entity: "itemTrx", operation: "create" });
+  const {
+    schema,
+    isLoading: loadingValidation,
+    errors: validationErrors,
+    isError,
+    debug,
+  } = useValidationSchema({ entity: "itemTrx", operation: "create" });
 
   //3- server action fallback for progressive enhancement (works withour JS)
   const initialState = {
@@ -50,13 +54,13 @@ export default function AddItemTrxForm({ onCloseModal }) {
 
   //4- Enhanced form management (JS available)
   const form = useForm({
-    // resolver: schema ? zodResolver(schema) : undefined,
+    resolver: schema ? zodResolver(schema) : undefined,
     defaultValues: {
       itemTrxHeader: {
         trxTypeId: null,
         dateField: new Date(),
         marketId: null,
-        descField: null,
+        descField: "",
         numOfLines: "1",
       },
       itemTrxDetails: [
@@ -93,8 +97,8 @@ export default function AddItemTrxForm({ onCloseModal }) {
   }
 
   function removeDetailLine(index) {
-    console.log(fieldArray.fields.length);
-    console.log(index);
+    // console.log(fieldArray.fields.length);
+    // console.log(index);
     // fieldArray.remove(index);
     fieldArray.fields.length > 1 && fieldArray.remove(index);
   }
@@ -107,8 +111,22 @@ export default function AddItemTrxForm({ onCloseModal }) {
     );
   }, [fieldArray.fields.length, form]);
 
+  // const trxTypeId = form.watch("itemTrxHeader.trxTypeId");
+  // // const { directionId, setDirectionId } = useState(null)
+  // const { data } = useClientData({
+  //   entity: "trxType",
+  //   id: trxTypeId,
+  // });
+
+  // const { trxDirectionId } = data[0];
+  // console.log("watch trxTypeId: ", trxTypeId, "directionId: ", trxDirectionId);
+
+  // useEffect(() => {}, [trxTypeId]);
+
   //5- Enhanced Mutation  (JS available)
   //! maybe extract into cusom hook
+  const dataParams = { entity: "itemTrx", id: "all" };
+  const cancelDataParams = { entity: "itemTrx" };
 
   const mutation = useMutation({
     mutationFn: async (data) => {
@@ -132,15 +150,19 @@ export default function AddItemTrxForm({ onCloseModal }) {
 
     // Optimistic update:
     onMutate: async (newItemTrx) => {
-      //cancel ongoing refetches for all tags including "bin"
-      await queryClient.cancelQueries({ queryKey: ["itemTrx"] });
+      //cancel ongoing refetches for all tags including "itemTrx"
+      await queryClient.cancelQueries({
+        queryKey: generateQueryKeys(cancelDataParams),
+      });
 
       //Snapshot previous values
-      const previousValues = queryClient.getQueryData(["itemTrx", "all"]);
+      const previousValues = queryClient.getQueryData(
+        generateQueryKeys(dataParams),
+      );
 
       const tempId = `temp-${Date.now()}`;
       //optimistically update cache
-      queryClient.setQueryData(["itemTrx", "all"], (old = []) => [
+      queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) => [
         ...old,
         { ...newItemTrx, idField: tempId, optimistic: true },
       ]);
@@ -151,21 +173,21 @@ export default function AddItemTrxForm({ onCloseModal }) {
     //Success Handling
     onSuccess: (result, variables) => {
       //Replace optimistic update with real data
-      // queryClient.setQueryData(["bin"], (old = []) =>
-      //   old.map((bin) =>
-      //     bin.optimistic && bin.nameField === variables.item_name
+      // queryClient.setQueryData(["itemTrx"], (old = []) =>
+      //   old.map((itemTrx) =>
+      //     itemTrx.optimistic && itemTrx.nameField === variables.item_name
       //       ? { ...result.formData,idField: result.idField }
-      //       : bin,
+      //       : itemTrx,
       //   ),
       // );
 
       //! may be should refetch
       queryClient.invalidateQueries({
-        queryKey: ["bin"],
+        queryKey: generateQueryKeys(cancelDataParams),
         refetchType: "none", //don't show loading state
       });
       //UI feedback //! may be grab the newly created id here...
-      toast.success(`Bin ${variables.nameField} was created successfully!`);
+      toast.success(`Transaction was created successfully!`);
       form.reset();
       onCloseModal?.();
     },
@@ -174,7 +196,10 @@ export default function AddItemTrxForm({ onCloseModal }) {
     onError: (error, variables, context) => {
       //Roll back optimistic update
       if (context?.previousValues) {
-        queryClient.setQueryData(["bin", "all"], context.previousValues);
+        queryClient.setQueryData(
+          generateQueryKeys(dataParams),
+          context.previousValues,
+        );
       }
 
       //! may be make a default to redirect the user to login page if the error is 401
@@ -200,7 +225,7 @@ export default function AddItemTrxForm({ onCloseModal }) {
         });
       } else {
         //Generic server errors
-        // toast.error(error.message || "Failed to create bin");
+        // toast.error(error.message || "Failed to create itemTrx");
         form.setError("root", {
           type: "server",
           message: error.message || "An unexpected error occurred",
@@ -228,16 +253,68 @@ export default function AddItemTrxForm({ onCloseModal }) {
       // ✅ YES: Enhanced Submission
       e.preventDefault();
       // mutation.mutate(data);
-      console.log("🎪 AddItemTrxForm was submitted with data: ", data);
     }
     // ❌ NO: Native Form Submission (let it proceed naturally)
   }
 
-  // Don't render form until schema is loaded and itemToEdit is available  │
-  // if (loadingValidation || !schema) {
-  //   return <div>Loading form...</div>;
-  // }
+  // Don't render form until schema is loaded and itemToEdit is available
+  //TODO: make this better: may be render the form anyways but put a message in the form top...
+  // console.log("📝 AddItemTrxForm", {
+  //   isError,
+  //   validationErrors,
+  //   "isValid: ": form.formState.isValid,
+  //   "valiues: ": form.formState.values,
+  // });
 
+  // console.log("📝 AddItemTrxForm DETAILED DEBUG", {
+  //   loadingValidation,
+  //   isValid: form.formState.isValid,
+  //   errors: form.formState.errors,
+  //   touchedFields: form.formState.touchedFields,
+  //   dirtyFields: form.formState.dirtyFields,
+  //   isValidating: form.formState.isValidating,
+  //   submitCount: form.formState.submitCount,
+  //   // Check each field's validation state
+  //   fieldStates: Object.keys(form.getValues()).map((fieldName) => ({
+  //     field: fieldName,
+  //     value: form.getValues(fieldName),
+  //     error: form.formState.errors[fieldName],
+  //     touched: form.formState.touchedFields[fieldName],
+  //     dirty: form.formState.dirtyFields[fieldName],
+  //   })),
+  // });
+
+  // console.log("📝 Deep error check:", {
+  //   rootErrors: form.formState.errors,
+  //   headerErrors: form.formState.errors.itemTrxHeader,
+  //   detailsErrors: form.formState.errors.itemTrxDetails,
+  //   allFormErrors: form.formState.errors,
+  //   // Check if there are any error keys we're missing
+  //   errorKeys: Object.keys(form.formState.errors),
+  //   nestedErrorCheck: JSON.stringify(form.formState.errors, null, 2),
+  // });
+
+  // console.log("📝 Root error debug:", {
+  //   rootError: form.formState.errors.root,
+  //   rootErrorType: typeof form.formState.errors.root,
+  //   rootErrorKeys: form.formState.errors.root
+  //     ? Object.keys(form.formState.errors.root)
+  //     : null,
+  //   allErrorsStringified: JSON.stringify(form.formState.errors, null, 2),
+  // });
+
+  // const allErrors = form.formState.errors;
+  // console.log("📝 All error keys:", Object.keys(allErrors));
+  // console.log("📝 Stringified errors:", JSON.stringify(allErrors, null, 2));
+
+  console.log("📝 form state: ", form.formState);
+
+  if (loadingValidation || !schema) {
+    // if (loadingValidation ) {
+    return <div>Loading form...</div>;
+  }
+
+  // if (validationErrors) form.setError("root");
   return (
     <>
       {
@@ -252,7 +329,11 @@ export default function AddItemTrxForm({ onCloseModal }) {
               form.formState.errors?.root ||
               formState?.message) && (
               <div className="error-banner rounded border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-                {form.formState.errors.root?.message || formState?.message}
+                {typeof form.formState.errors.root === "string"
+                  ? form.formState.errors.root
+                  : form.formState.errors.root.message ||
+                    formState?.message ||
+                    "Validation error occurred"}
               </div>
             )}
 
@@ -335,6 +416,7 @@ export default function AddItemTrxForm({ onCloseModal }) {
                             {...field}
                           />
                         </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -434,6 +516,7 @@ export default function AddItemTrxForm({ onCloseModal }) {
                               <FormControl>
                                 <Input placeholder="0" {...field} />
                               </FormControl>
+                              <FormMessage />
                             </FormItem>
                           )}
                         />
@@ -467,6 +550,7 @@ export default function AddItemTrxForm({ onCloseModal }) {
                               <FormControl>
                                 <Input placeholder="0" {...field} />
                               </FormControl>
+                              <FormMessage />
                             </FormItem>
                           )}
                         />
@@ -485,6 +569,7 @@ export default function AddItemTrxForm({ onCloseModal }) {
                                   {...field}
                                 />
                               </FormControl>
+                              <FormMessage />
                             </FormItem>
                           )}
                         />
@@ -495,21 +580,34 @@ export default function AddItemTrxForm({ onCloseModal }) {
               </div>
 
               <div className="flex items-center justify-end gap-3">
-                {/* {loadingValidation || !schema ? null : ( */}
-                <Button
-                  // disabled={mutation.isPending || !form.formState.isValid}
-                  variant="outline"
-                  type="submit">
-                  {mutation.isPending && <SpinnerMini />}
-                  <span> Create Transaction</span>
-                </Button>
-                {/* )} */}
+                {loadingValidation || !schema ? null : (
+                  <Button
+                    disabled={mutation.isPending || !form.formState.isValid}
+                    variant="outline"
+                    type="submit">
+                    {mutation.isPending && <SpinnerMini />}
+                    <span> Create Transaction</span>
+                  </Button>
+                )}
                 <Button
                   type="button"
                   onClick={onCloseModal}
                   variant="destructive"
                   disabled={mutation.isPending}>
                   Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={async () => {
+                    console.log("Manual validation check:");
+                    const result = await form.trigger(); // Validate all fields
+                    console.log("Trigger result:", result);
+                    console.log("Form state after trigger:", {
+                      isValid: form.formState.isValid,
+                      errors: form.formState.errors,
+                    });
+                  }}>
+                  Test Validation
                 </Button>
               </div>
             </div>

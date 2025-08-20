@@ -20,6 +20,12 @@ const FIELD_CONFIG = {
     display: { name: "Item Class", label: "Item Class" },
     foreignKey: { entity: "itemClass", field: "idField" },
   },
+  itemQoh: {
+    _type: "number",
+    fieldValidation: { type: "decimal", required: false, unique: false },
+    display: { name: "Quantity Out", label: "Qty Out" },
+  },
+
   locationId: {
     _type: "number",
     fieldValidation: { type: "positiveInteger", required: true, unique: false },
@@ -69,9 +75,13 @@ const FIELD_CONFIG = {
   // Item Transaction Detail fields
   itemTrxId: {
     _type: "number",
-    fieldValidation: { type: "positiveInteger", required: true, unique: false },
+    fieldValidation: {
+      type: "positiveInteger",
+      required: false,
+      unique: false,
+    },
     display: { name: "Transaction ID", label: "Trx ID" },
-    foreignKey: { entity: "itemTrx", field: "idField" },
+    foreignKey: { entity: "itemTrx", field: "idField", forValidation: false },
   },
   trxLineNum: {
     _type: "number",
@@ -85,15 +95,35 @@ const FIELD_CONFIG = {
     display: { name: "Item ID ", label: "Item Id" },
     foreignKey: { entity: "item", field: "idField" },
   },
+
+  binId: {
+    _type: "number",
+    fieldValidation: {
+      type: "positiveInteger",
+      required: true,
+      unique: false,
+    },
+    display: { name: "Bin Id", label: "Bin Id" },
+    foreignKey: { entity: "bin", field: "idField" },
+  },
+
   fromBin: {
     _type: "number",
-    fieldValidation: { type: "positiveInteger", required: true, unique: false },
+    fieldValidation: {
+      type: "positiveInteger",
+      required: false,
+      unique: false,
+    },
     display: { name: "From Bin", label: "From Bin" },
     foreignKey: { entity: "bin", field: "idField" },
   },
   toBin: {
     _type: "number",
-    fieldValidation: { type: "positiveInteger", required: true, unique: false },
+    fieldValidation: {
+      type: "positiveInteger",
+      required: false,
+      unique: false,
+    },
     display: { name: "To Bin", label: "To Bin" },
     foreignKey: { entity: "bin", field: "idField" },
   },
@@ -107,6 +137,37 @@ const FIELD_CONFIG = {
     fieldValidation: { type: "decimal", required: false, unique: false },
     display: { name: "Quantity Out", label: "Qty Out" },
   },
+
+  fromField: {
+    _type: "number",
+    fieldValidation: {
+      type: "positiveInteger",
+      required: false,
+      unique: false,
+    },
+    display: { name: "From", label: "From" },
+    foreignKey: { entity: "", field: "idField" },
+  },
+  toField: {
+    _type: "number",
+    fieldValidation: {
+      type: "positiveInteger",
+      required: false,
+      unique: false,
+    },
+    display: { name: "To", label: "To" },
+    foreignKey: { entity: "", field: "idField" },
+  },
+  valueIn: {
+    _type: "number",
+    fieldValidation: { type: "decimal", required: false, unique: false },
+    display: { name: "Value In", label: "value In" },
+  },
+  valueOut: {
+    _type: "number",
+    fieldValidation: { type: "decimal", required: false, unique: false },
+    display: { name: "Value Out", label: "value Out" },
+  },
 };
 
 const {
@@ -114,6 +175,7 @@ const {
   nameField,
   descField,
   itemClassId,
+  itemQoh,
   locationId,
   urlField,
   marketTypeId,
@@ -125,6 +187,7 @@ const {
   itemTrxId,
   trxLineNum,
   itemId,
+  binId,
   fromBin,
   toBin,
   qtyIn,
@@ -137,7 +200,10 @@ const ENTITY_CONFIG = {
     pattern: "master",
     fields: {
       idField,
-      nameField: { ...nameField, fieldValidation: "string100" },
+      nameField: {
+        ...nameField,
+        fieldValidation: { ...nameField.fieldValidation, type: "string100" },
+      },
       descField,
       itemClassId,
     },
@@ -246,6 +312,17 @@ const ENTITY_CONFIG = {
     urlIdentifer: "trxDirectionId",
   },
 
+  itemQoh: {
+    display: { name: "Quantity On Hand", label: "Qoh" },
+    pattern: "aggregate",
+    fields: {
+      idField,
+      itemId,
+      binId,
+      itemQoh,
+    },
+  },
+
   itemTrx: {
     display: { name: "Item Transaction", label: "Item Trx" },
     pattern: "transaction",
@@ -276,7 +353,12 @@ const ENTITY_CONFIG = {
     ],
     urlIdentifer: "itemTrxId",
     businessRules: {
-      a: "sum of detail lines equals itemTrxHeader.numOfLines",
+      compositeBased: {
+        validations: [
+          "lineCountConsistency", //numOfLines match actual line count
+          "compositEntitiesBusinessRules", //header.trxType drives line validation
+        ],
+      },
     },
   },
   itemTrxHeader: {
@@ -344,30 +426,47 @@ const ENTITY_CONFIG = {
     ],
     urlIdentifer: "itemTrxId",
     businessRules: {
-      a: "based on itemTrxHeader.trxTypeId get the corresponding trxDirectionId from trxType query.
-        
-      `        * If Direction is '1'(Incoming Transaction) ->          
-       * qty_in must be provided and be greater than 0.
-       * to_bin_id (where the items are going) must be provided.
-       * qty_out must NOT be provided (must be NULL).
-       * from_bin_id must NOT be provided (must be NULL).
-`
-   `* If Direction is '2' (Outgoing Transaction):
-       * qty_out must be provided and be greater than 0.
-       * from_bin_id (where the items are coming from) must be
-         provided.
-       * qty_in must NOT be provided (must be NULL).
-       * to_bin_id must NOT be provided (must be NULL).
-       * It also checks for sufficient Quantity on Hand (QOH) by
-         calling the _fn_not_enough_item_QOH function.
-``
-   * If Direction is '3' (Transfer Transaction):
-       * Both qty_in and qty_out must be provided and be greater than
-         0.
-       * Both from_bin_id and to_bin_id must be provided.
-       * Crucially, it checks that to_bin_id is not the same as
-         from_bin_id.
-       * It also checks for sufficient QOH in the from_bin_id.` ",
+      directionBased: {
+        directionSource: {
+          directionSourceEntity: "itemTrxHeader",
+          directionSourceField: "trxTypeId",
+          lookupEntity: "trxType",
+          lookupField: "idField",
+          targetField: "trxDirectionId",
+        },
+
+        rules: {
+          1: {
+            // Incoming Transaction
+            name: "incoming",
+            required: ["qtyIn", "toBin"],
+            forbidden: ["qtyOut", "fromBin"],
+            conditions: [{ field: "qtyIn", operator: ">", value: 0 }],
+            // No customValidations needed for incoming
+          },
+          2: {
+            // Outgoing Transaction
+            name: "outgoing",
+            required: ["qtyOut", "fromBin"],
+            forbidden: ["qtyIn", "toBin"],
+            conditions: [{ field: "qtyOut", operator: ">", value: 0 }],
+            customValidations: ["checkSufficientQOH"],
+          },
+          3: {
+            // Transfer Transaction
+            name: "transfer",
+            required: ["qtyIn", "qtyOut", "fromBin", "toBin"],
+            forbidden: [],
+            conditions: [
+              { field: "qtyIn", operator: ">", value: 0 },
+              { field: "qtyOut", operator: ">", value: 0 },
+              { field: "qtyOut", operator: "==", compareField: "qtyIn" },
+              { field: "fromBin", operator: "!=", compareField: "toBin" },
+            ],
+            customValidations: ["checkSufficientQOH"],
+          },
+        },
+      },
     },
   },
 };

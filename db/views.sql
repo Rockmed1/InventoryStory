@@ -143,14 +143,14 @@ DROP VIEW IF EXISTS trans.v_trx_type;
 
 CREATE OR REPLACE VIEW trans.v_trx_type AS
 SELECT
-	t.trx_type_id
-	, t.trx_type_name
-	, t.trx_direction_id
+	y.trx_type_id
+	, y.trx_type_name
+	, y.trx_direction_id
 	, d.trx_direction
-	, t.trx_type_desc
+	, y.trx_type_desc
 FROM
-	trans.trx_type t
-	JOIN trans.trx_direction d ON t.trx_direction_id = d.trx_direction_id;
+	trans.trx_type y
+	JOIN trans.trx_direction d ON y.trx_direction_id = d.trx_direction_id;
 
 ----------------
 --------------
@@ -168,6 +168,7 @@ SELECT
 	, t.trx_type_id
 	, y.trx_type_name
 	, d.trx_direction
+	, y.trx_direction_id
 	, t.market_id
 	, m.market_name
 	, m.market_url

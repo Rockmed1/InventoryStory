@@ -1,7 +1,7 @@
 "use client";
 
 import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
-import { createFormData } from "@/app/_utils/helpers";
+import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -55,6 +55,8 @@ export default function AddLocationForm({ onCloseModal }) {
 
   //5- Enhanced Mutation  (JS available)
   //! maybe extract into cusom hook
+  const dataParams = { entity: "location", id: "all" };
+  const cancelDataParams = { entity: "location" };
 
   const mutation = useMutation({
     mutationFn: async (data) => {
@@ -79,13 +81,13 @@ export default function AddLocationForm({ onCloseModal }) {
     // Optimistic update:
     onMutate: async (newLocation) => {
       //cancel ongoing refetches for all tags including "location"
-      await queryClient.cancelQueries({ queryKey: ["location"] });
+      await queryClient.cancelQueries({ queryKey: generateQueryKeys(cancelDataParams) });
 
       //Snapshot previous values
-      const previousValues = queryClient.getQueryData(["location", "all"]);
+      const previousValues = queryClient.getQueryData(generateQueryKeys(dataParams));
 
       //optimistically update cache
-      queryClient.setQueryData(["location", "all"], (old = []) => [
+      queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) => [
         ...old,
         { ...newLocation, idField: `temp-${Date.now()}`, optimistic: true },
       ]);
@@ -106,7 +108,7 @@ export default function AddLocationForm({ onCloseModal }) {
 
       //! may be should refetch
       queryClient.invalidateQueries({
-        queryKey: ["location"],
+        queryKey: generateQueryKeys(cancelDataParams),
         refetchType: "none", //don't show loading state
       });
       //UI feedback //! may be grab the newly created id here...
@@ -121,7 +123,7 @@ export default function AddLocationForm({ onCloseModal }) {
     onError: (error, variables, context) => {
       //Roll back optimistic update
       if (context?.previousValues) {
-        queryClient.setQueryData(["location", "all"], context.previousValues);
+        queryClient.setQueryData(generateQueryKeys(dataParams), context.previousValues);
       }
 
       //! may be make a default to redirect the user to login page if the error is 401

@@ -1,5 +1,6 @@
 "server-only";
 
+import { getEntityFieldMapping } from "@/app/_utils/helpers-server";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -8,7 +9,7 @@ import { supabase } from "./supabase";
 
 //!Factory pattern is used as it is better for multi-tennant applications caching to ensure org scoped operations
 
-export function createDataService() {
+export async function createDataService() {
   // if (!org_uuid) throw new Error("Organization UUID is required");
 
   //1- authenticate the user
@@ -26,7 +27,7 @@ export function createDataService() {
 
   let _data = { _org_uuid, _usr_uuid };
 
-  const validatedAppContext = appContextSchema.safeParse({
+  const validatedAppContext = await appContextSchema.safeParseAsync({
     _org_uuid,
     _usr_uuid,
   });
@@ -38,7 +39,9 @@ export function createDataService() {
   }
 
   return {
-    getItems: async (itemId = "all", options = {}) => {
+    getItems: async (params) => {
+      const { id: itemId = "all", options = {} } = params;
+
       const { forceRefresh = false, cacheTTL = 300 } = options;
 
       if (forceRefresh) {
@@ -76,7 +79,9 @@ export function createDataService() {
       )();
     },
 
-    getLocations: async (locationId = "all", options = {}) => {
+    getLocations: async (params) => {
+      const { id: locationId = "all", options = {} } = params;
+
       const { forceRefresh = false, cacheTTL = 300 } = options;
 
       if (forceRefresh) {
@@ -106,7 +111,8 @@ export function createDataService() {
       )();
     },
 
-    getBins: async (binId = "all", options = {}) => {
+    getBins: async (params) => {
+      const { id: binId = "all", options = {} } = params;
       const { forceRefresh = false, cacheTTL = 300 } = options;
 
       if (forceRefresh) {
@@ -136,7 +142,8 @@ export function createDataService() {
       )();
     },
 
-    getItemClasses: async (itemClassId = "all", options = {}) => {
+    getItemClasses: async (params) => {
+      const { id: itemClassId = "all", options = {} } = params;
       const { forceRefresh = false, cacheTTL = 300 } = options;
 
       if (forceRefresh) {
@@ -166,7 +173,9 @@ export function createDataService() {
       )();
     },
 
-    getMarketTypes: async (marketTypeId = "all", options = {}) => {
+    getMarketTypes: async (params) => {
+      const { id: marketTypeId = "all", options = {} } = params;
+
       const { forceRefresh = false, cacheTTL = 300 } = options;
 
       if (forceRefresh) {
@@ -196,7 +205,9 @@ export function createDataService() {
       )();
     },
 
-    getMarkets: async (marketId = "all", options = {}) => {
+    getMarkets: async (params) => {
+      const { id: marketId = "all", options = {} } = params;
+
       const { forceRefresh = false, cacheTTL = 300 } = options;
 
       if (forceRefresh) {
@@ -226,7 +237,8 @@ export function createDataService() {
       )();
     },
 
-    getTrxTypes: async (trxTypeId = "all", options = {}) => {
+    getTrxTypes: async (params) => {
+      const { id: trxTypeId = "all", options = {} } = params;
       const { forceRefresh = false, cacheTTL = 300 } = options;
 
       if (forceRefresh) {
@@ -256,12 +268,14 @@ export function createDataService() {
       )();
     },
 
-    getTrxDirections: async (trxDirectionId = "all", options = {}) => {
-      const { forceRefresh = false, cacheTTL = 300 } = options;
+    getTrxDirections: async (params) => {
+      const { id: trxDirectionId = "all" } = params;
+      // Remove forceRefresh logic since we're caching forever
+      // const { forceRefresh = false, cacheTTL = 300 } = options;
 
-      if (forceRefresh) {
-        revalidateTag(`trxDirection-${_org_uuid}-${trxDirectionId}`);
-      }
+      // if (forceRefresh) {
+      //   revalidateTag(`trxDirection-${_org_uuid}-${trxDirectionId}`);
+      // }
 
       return unstable_cache(
         async () => {
@@ -281,16 +295,61 @@ export function createDataService() {
         [`trxDirection-${_org_uuid}-${trxDirectionId}`],
         {
           tags: [`trxDirection-${_org_uuid}-${trxDirectionId}`],
+          revalidate: false, //Cache forever
+        },
+      )();
+    },
+
+    getItemQoh: async (params) => {
+      const { itemId, binId, options = {} } = params;
+
+      if (!itemId || !binId)
+        throw new Error(
+          `🚨 itemId and binId are required for getItemQoh. recieved itemId: ${itemId} and binId: ${binId}`,
+        );
+      const { forceRefresh = false, cacheTTL = 300 } = options;
+
+      if (forceRefresh) {
+        revalidateTag(`itemQoh-${_org_uuid}-${itemId}-${binId}`);
+      }
+
+      return unstable_cache(
+        async () => {
+          const mappedFields = getEntityFieldMapping("itemQoh");
+          const dbReadyData = {
+            [mappedFields["itemId"]]: itemId,
+            [mappedFields["binId"]]: binId,
+            ..._data,
+          };
+
+          // console.log("dbReadyData: ", dbReadyData);
+
+          const { data, error } = await supabase.rpc("fn_get_item_qoh", {
+            _data: dbReadyData,
+          });
+
+          // console.log("data: ", data, "error: ", error);
+
+          if (error) {
+            console.log(error);
+            throw new Error("Item QOH could not be loaded.");
+          }
+          return data || [];
+        },
+        [`itemQoh-${_org_uuid}-${itemId}-${binId}`],
+        {
+          tags: [`itemQoh-${_org_uuid}-${itemId}-${binId}`],
           revalidate: cacheTTL,
         },
       )();
     },
 
-    getItemTrx: async (itemTrxId = "all", options = {}) => {
+    getItemTrx: async (params) => {
+      const { id: itemTrxId = "all", options = {} } = params;
       const { forceRefresh = false, cacheTTL = 300 } = options;
 
       if (forceRefresh) {
-        revalidateTag(`ItemTrx-${_org_uuid}-${itemTrxId}`);
+        revalidateTag(`itemTrx-${_org_uuid}-${itemTrxId}`);
       }
 
       return unstable_cache(
@@ -311,20 +370,23 @@ export function createDataService() {
           }
           return data || [];
         },
-        [`ItemTrx-${_org_uuid}-${itemTrxId}`],
+        [`itemTrx-${_org_uuid}-${itemTrxId}`],
         {
-          tags: [`ItemTrx-${_org_uuid}-${itemTrxId}`],
+          tags: [`itemTrx-${_org_uuid}-${itemTrxId}`],
           revalidate: cacheTTL,
         },
       )();
     },
 
-    getItemTrxDetails: async (itemTrxId, options = {}) => {
+    getItemTrxDetails: async (params) => {
+      const { id: itemTrxId, options = {} } = params;
       const { forceRefresh = false, cacheTTL = 300 } = options;
 
       if (forceRefresh) {
         revalidateTag(`itemTrxDetails-${itemTrxId}-${_org_uuid}`);
       }
+
+      // console.log("getItemTrxDetails itemTrxId:", itemTrxId);
 
       return unstable_cache(
         async () => {

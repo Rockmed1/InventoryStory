@@ -17,8 +17,7 @@ function StyledModal({ children, ref }) {
   return (
     <div
       ref={ref}
-      className="fixed top-1/2 left-1/2 w-full max-w-[calc(100%-2rem)] -translate-1/2 rounded-xl border border-neutral-300 bg-white p-6 shadow-lg transition-all duration-200 sm:w-md"
-    >
+      className="fixed top-1/2 left-1/2 w-full max-w-[calc(100%-2rem)] -translate-1/2 rounded-xl border border-neutral-300 bg-white p-6 shadow-lg transition-all duration-200 sm:w-2xl">
       <div>{children}</div>
     </div>
   );
@@ -93,7 +92,7 @@ function Window({
         </div>
       </StyledModal>
     </Overlay>,
-    document.body
+    document.body,
   );
 }
 

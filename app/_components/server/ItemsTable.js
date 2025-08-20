@@ -1,3 +1,4 @@
+import { generateQueryKeys } from "@/app/_utils/helpers";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { getQueryClient } from "../../_store/queryClient";
 import { getServerData } from "../../_utils/helpers-server";
@@ -9,9 +10,11 @@ const labels = ["Item ID", "Name", "Description", "Class"];
 export default async function ItemsTable() {
   const queryClient = getQueryClient();
 
+  const dataParams = { entity: "item", id: "all" };
+
   queryClient.prefetchQuery({
-    queryKey: ["item", "all"],
-    queryFn: () => getServerData("item", "all"),
+    queryKey: generateQueryKeys(dataParams),
+    queryFn: () => getServerData(dataParams),
   });
 
   return (

@@ -1,3 +1,4 @@
+import { generateQueryKeys } from "@/app/_utils/helpers";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { getQueryClient } from "../../_store/queryClient";
 import { getServerData } from "../../_utils/helpers-server";
@@ -18,23 +19,22 @@ const labels = [
 export default async function ItemsTrxTable({ type = "compound", itemTrxId }) {
   const queryClient = getQueryClient();
 
+  const dataParams = {
+    entity: "itemTrx",
+    id: type === "simple" ? itemTrxId : "all",
+  };
+
   // DO NOT AWAIT. This starts the fetch and lets rendering continue.
   queryClient.prefetchQuery({
-    queryKey: ["itemTrx", type === "simple" ? itemTrxId : "all"],
-    queryFn: () => {
-      if (type === "simple" && itemTrxId) {
-        return getServerData("itemTrx", itemTrxId);
-      } else {
-        return getServerData("itemTrx");
-      }
-    },
+    queryKey: generateQueryKeys(dataParams),
+    queryFn: () => getServerData(dataParams),
   });
 
   // Also prefetch itemTrxDetails if we have an itemTrxId
   if (itemTrxId) {
     queryClient.prefetchQuery({
-      queryKey: ["itemTrxDetails", itemTrxId],
-      queryFn: () => getServerData("itemTrxDetails", itemTrxId),
+      queryKey: generateQueryKeys({ entity: "itemTrxDetails", id: itemTrxId }),
+      queryFn: () => getServerData({ entity: "itemTrxDetails", id: itemTrxId }),
     });
   }
 

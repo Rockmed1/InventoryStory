@@ -7,12 +7,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/_components/_ui/client/shadcn-Select";
-import useClientData from "@/app/_hooks/useClientData";
+import useClientData from "@/app/_lib/client/useClientData";
 import { getEntityDisplayLabel } from "@/app/_utils/helpers";
 import { useEffect, useState } from "react";
 import SpinnerMini from "../server/SpinnerMini";
 
-export function DropDown({ field, entity, ...props }) {
+export function DropDown({ entity, field, ...props }) {
   const [isMounted, setIsMounted] = useState(false);
 
   const {
@@ -20,7 +20,6 @@ export function DropDown({ field, entity, ...props }) {
     isLoading,
     isError,
     error,
-    isPlaceholderData,
   } = useClientData({
     entity,
     select: (data) => {
@@ -64,7 +63,7 @@ export function DropDown({ field, entity, ...props }) {
   }
 
   if (entityList.length === 0) {
-    console.log(`⚠️🔍 ${entity} data array is empty`);
+    console.error(`⚠️🔍 ${entity} data array is empty!`);
     return (
       <Select disabled>
         <SelectTrigger className="w-m">
@@ -90,39 +89,43 @@ export function DropDown({ field, entity, ...props }) {
     <Select
       onValueChange={async (value) => {
         // console.log("🔍 DropDown onValueChange triggered with:", value);
-
-        const newSelected = entityList.find(
-          (_) => _.idField.toString() === value?.toString(),
-        );
-
-        // console.log("🔍 newSelected:", newSelected);
-
-        if (newSelected) {
-          // console.log("🔍 Before field.onChange, field.value:", field.value);
-
-          field.onChange(parseInt(value));
-          // console.log("🔍 After field.onChange, field.value:", field.value);
-
-          // Wait a tick for the change to propagate
-          // await new Promise((resolve) => setTimeout(resolve, 0));
-
-          // console.log("🔍 Calling field.onBlur()");
-
+        if (value === "none") {
+          field.onChange(null);
           field.onBlur();
+        } else {
+          const newSelected = entityList.find(
+            (_) => _.idField.toString() === value?.toString(),
+          );
 
-          // console.log("🔍 Calling validationTrigger for field:", field.name);
+          // console.log("🔍 newSelected:", newSelected);
 
-          // const validationResult = await form?.trigger?.(field.name);
+          if (newSelected) {
+            // console.log("🔍 Before field.onChange, field.value:", field.value);
 
-          // console.log("🔍 Validation result:", validationResult);
+            field.onChange(parseInt(value));
+            // console.log("🔍 After field.onChange, field.value:", field.value);
 
-          // Also check form state after validation
-          // console.log("🔍 Form state after validation:", {
-          //   isValid: form.formState.isValid,
-          //   errors: form.formState.errors,
-          //   values: form.getValues(),
-          // });
-          // console.log("🔍 After form.trigger, field.value:", field.value);
+            // Wait a tick for the change to propagate
+            // await new Promise((resolve) => setTimeout(resolve, 0));
+
+            // console.log("🔍 Calling field.onBlur()");
+
+            field.onBlur();
+
+            // console.log("🔍 Calling validationTrigger for field:", field.name);
+
+            // const validationResult = await form?.trigger?.(field.name);
+
+            // console.log("🔍 Validation result:", validationResult);
+
+            // Also check form state after validation
+            // console.log("🔍 Form state after validation:", {
+            //   isValid: form.formState.isValid,
+            //   errors: form.formState.errors,
+            //   values: form.getValues(),
+            // });
+            // console.log("🔍 After form.trigger, field.value:", field.value);
+          }
         }
       }}
       value={field.value?.toString() || ""}
@@ -137,6 +140,9 @@ export function DropDown({ field, entity, ...props }) {
       </SelectTrigger>
       {/* </FormControl> */}
       <SelectContent className="z-[2000]">
+        <SelectItem value="none">
+          <span className="text-gray-500 italic">-- None --</span>
+        </SelectItem>
         {entityList.map((_) => (
           <SelectItem key={_.idField} value={_.idField.toString()}>
             {_.nameField}

@@ -1,15 +1,15 @@
 "use client";
 
 import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
-import { createFormData } from "@/app/_utils/helpers";
+import useClientData from "@/app/_lib/client/useClientData";
+import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
+import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useActionState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { updateMarketType } from "../../_lib/server/actions";
-import useClientData from "@/app/_hooks/useClientData";
-import { DevTool } from "@hookform/devtools";
 import { Button } from "../_ui/client/shadcn-Button";
 import {
   Form,
@@ -65,13 +65,16 @@ export default function EditMarketTypeForm({ id, onCloseModal }) {
     shouldUnregister: true,
   });
 
+  const dataParams = { entity: "marketType", id: "all" };
+  const cancelDataParams = { entity: "marketType" };
+
   const mutation = useMutation({
     onMutate: async (values) => {
-      await queryClient.cancelQueries({ queryKey: ["marketType"] });
+      await queryClient.cancelQueries({ queryKey: generateQueryKeys(cancelDataParams) });
 
-      const previousValues = queryClient.getQueryData(["marketType", "all"]);
+      const previousValues = queryClient.getQueryData(generateQueryKeys(dataParams));
 
-      queryClient.setQueryData(["marketType", "all"], (old = []) =>
+      queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) =>
         old.map((marketType) => {
           if (marketType.idField === values.idField) {
             return {
@@ -103,7 +106,7 @@ export default function EditMarketTypeForm({ id, onCloseModal }) {
 
     onSuccess: (result, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["marketType"],
+        queryKey: generateQueryKeys(cancelDataParams),
         refetchType: "active",
       });
       toast.success(
@@ -115,7 +118,7 @@ export default function EditMarketTypeForm({ id, onCloseModal }) {
 
     onError: (error, variables, context) => {
       if (context?.previousValues) {
-        queryClient.setQueryData(["marketType", "all"], context.previousValues);
+        queryClient.setQueryData(generateQueryKeys(dataParams), context.previousValues);
       }
 
       if (error.zodErrors) {

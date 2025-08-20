@@ -10,6 +10,7 @@ export function allowedEntities() {
     "itemClass",
     "location",
     "marketType",
+    "itemQoh",
     "itemTrx",
     "itemTrxDetails",
   ];
@@ -95,6 +96,14 @@ export default function entityServerOnlyConfig(entity) {
       },
     },
 
+    itemQoh: {
+      get: "getItemQoh",
+      fieldMappings: {
+        itemId: "_item_id",
+        binId: "_bin_id",
+        itemQoh: "_item_qty",
+      },
+    },
     itemTrx: {
       get: "getItemTrx",
       fieldMappings: {

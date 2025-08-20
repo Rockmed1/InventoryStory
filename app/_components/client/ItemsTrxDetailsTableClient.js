@@ -1,6 +1,7 @@
 "use client";
 
-import { useApiData } from "@/app/_hooks/useClientData";
+import { useApiData } from "@/app/_lib/client/useClientData";
+import { generateQueryKeys } from "@/app/_utils/helpers";
 import { ArrowsRightLeftIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import StoreHydrator from "../../_store/StoreHydrator";
@@ -23,13 +24,16 @@ const rowActions = [
 ];
 
 export default function ItemsTrxDetailsTableClient({ itemTrxId }) {
+  const dataParams = { entity: "itemTrxDetails", id: itemTrxId };
   const { data, isFetching } = useSuspenseQuery({
-    queryKey: ["itemTrxDetails", itemTrxId],
-    queryFn: () => useApiData("itemTrxDetails", itemTrxId),
+    queryKey: generateQueryKeys(dataParams),
+    queryFn: () => useApiData(dataParams),
   });
   // const displayTableLabels = getEntityTableLabels("itemTrxDetails");
 
   // No isLoading check is needed. The <Suspense> boundary handles it.
+
+  // console.log(data);
   const tableData = data?.["itemTrxDetails"] || [];
   // console.log("itemTrxDetailsData: ", tableData);
 

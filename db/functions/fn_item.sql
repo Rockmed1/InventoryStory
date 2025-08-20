@@ -1158,3 +1158,74 @@ ALTER FUNCTION utils.fn_update_item OWNER TO utils_admin;
 --------
 ------
 ---
+DROP FUNCTION IF EXISTS utils.fn_get_item_qoh;
+
+CREATE OR REPLACE FUNCTION utils.fn_get_item_qoh(_data JSONB)
+	RETURNS
+	/* JSON */
+	DECIMAL (
+		8 , 2)
+	LANGUAGE plpgsql
+	SECURITY DEFINER
+	SET search_path = utils
+	AS $$
+DECLARE
+	_usr_id INTEGER;
+	_org_id INTEGER;
+	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_item_id' , '_bin_id'];
+	_is_context_set BOOLEAN;
+	-- _result JSON;
+	_QOH DECIMAL(8 , 2) := 0;
+BEGIN
+	-- verify input parameters:
+	-- set org context and get usr_id, org_id:
+	SELECT
+		* INTO _usr_id
+		, _org_id
+		, _is_context_set
+	FROM
+		_fn_set_app_context(_data , _data_keys , 'fn_get_trx_types');
+	-- if all set:
+	IF NOT _is_context_set THEN
+		RAISE EXCEPTION 'Context could not be set.';
+	END IF;
+	--! Main Action Here
+	--get current QOH
+	SELECT
+		q.item_qty INTO _QOH
+	FROM
+		items.item_qty q
+	WHERE
+		q.item_id =(_data ->> '_item_id')::INTEGER
+		AND q.bin_id =(_data ->> '_bin_id')::INTEGER;
+	-- SELECT
+	-- 	INTO _result json_agg(json_build_object('idField' , q.item_qty_id , 'itemId' , q.item_Id , 'binId' , q.bin_id , 'itemQoh' , q.item_qty))
+	-- FROM
+	-- 	items.item_qty q
+	-- WHERE
+	-- 	q.item_id =(_data ->> '_item_id')::INTEGER
+	-- 	AND q.bin_id =(_data ->> '_bin_id')::INTEGER;
+	IF NOT FOUND THEN
+		RAISE EXCEPTION 'No item quantity exists for item % and bin %.' ,(_data ->> '_item_id') ,(_data ->> '_bin_id');
+	END IF;
+	-- make sure it is not negative
+	IF _QOH < 0 THEN
+		RAISE EXCEPTION 'Negative QOH Error. Contact admin. The current QOH is % for item % in bin %.' , _QOH , _item_id , _bin_id;
+	END IF;
+
+	RETURN _QOH;
+EXCEPTION
+	WHEN OTHERS THEN
+		RAISE;
+END;
+
+$$;
+
+ALTER FUNCTION utils.fn_get_item_qoh OWNER TO utils_admin;
+
+-----------
+----------
+-------
+-----
+---
+--

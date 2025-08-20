@@ -4,6 +4,7 @@ import "server-only";
 
 export async function GET(request, { params }) {
   const { entity, id } = await params;
+
   const ALLOWED_ENTITIES = allowedEntities();
 
   // console.log("api params: ", `entity: ${entity}`, `id: ${id}`);
@@ -24,13 +25,17 @@ export async function GET(request, { params }) {
     // Extract additional query parameters
     // const type = searchParams.get("type");
 
-    // Build parameters array for getServerData function
-    const queryParams = [Number(id)];
+    const allParams = Object.fromEntries(searchParams);
+
+    console.log("route[id] - allParams: ", allParams);
+    //TODO: 🚨 Add zod validation and sanitization here
+
+    // if (id) queryParams.push(Number(id));
+
     // if (type) queryParams.push(type === 'simple' ? true : type)
+    // if (limit) queryParams.push(Number(limit))
 
-    // console.log("queryParams: ", queryParams);
-
-    const data = await getServerData(entity, ...queryParams);
+    const data = await getServerData({ entity, id, ...allParams });
 
     return Response.json(data, {
       headers: {

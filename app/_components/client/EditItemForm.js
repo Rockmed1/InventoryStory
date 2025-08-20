@@ -1,7 +1,7 @@
 "use client";
 
 import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
-import { createFormData } from "@/app/_utils/helpers";
+import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useActionState } from "react";
@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import { updateItem } from "../../_lib/server/actions";
 import { DropDown } from "../_ui/client/DropDown";
 // import Button from "../_ui/server/Button";
-import useClientData from "@/app/_hooks/useClientData";
+import useClientData from "@/app/_lib/client/useClientData";
 import { DevTool } from "@hookform/devtools";
 import { Button } from "../_ui/client/shadcn-Button";
 import {
@@ -129,6 +129,8 @@ export default function EditItemForm({ id, onCloseModal }) {
 
   //5- Enhanced Mutation  (JS available)
   //! maybe extract into cusom hook
+  const dataParams = { entity: "item", id: "all" };
+  const cancelDataParams = { entity: "item" };
 
   const mutation = useMutation({
     // 1- Optimistic update: this fires first before the mutation function
@@ -138,16 +140,20 @@ export default function EditItemForm({ id, onCloseModal }) {
       //cancel ongoing refetches for all tags including "item"
 
       const itemClassName = queryClient
-        .getQueryData(["itemClass", "all"])
+        .getQueryData(generateQueryKeys({ entity: "itemClass", id: "all" }))
         .find((_) => _.idField.toString() == values.itemClassId)?.nameField;
 
-      await queryClient.cancelQueries({ queryKey: ["item"] });
+      await queryClient.cancelQueries({
+        queryKey: generateQueryKeys(cancelDataParams),
+      });
 
       //Snapshot previous values
-      const previousValues = queryClient.getQueryData(["item", "all"]);
+      const previousValues = queryClient.getQueryData(
+        generateQueryKeys(dataParams),
+      );
 
       //optimistically update cache
-      queryClient.setQueryData(["item", "all"], (old = []) =>
+      queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) =>
         old.map((item) => {
           if (item.idField === values.idField) {
             return {
@@ -213,7 +219,7 @@ export default function EditItemForm({ id, onCloseModal }) {
 
       //! may be should refetch
       queryClient.invalidateQueries({
-        queryKey: ["item"],
+        queryKey: generateQueryKeys(cancelDataParams),
         refetchType: "active", //refetch immediately all active item queries
       });
       // Remove the cache entirely, forcing fresh fetch
@@ -230,7 +236,10 @@ export default function EditItemForm({ id, onCloseModal }) {
     onError: (error, variables, context) => {
       //Roll back optimistic update
       if (context?.previousValues) {
-        queryClient.setQueryData(["item", "all"], context.previousValues);
+        queryClient.setQueryData(
+          generateQueryKeys(dataParams),
+          context.previousValues,
+        );
       }
 
       //! may be make a default to redirect the user to login page if the error is 401

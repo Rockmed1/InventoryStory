@@ -3,10 +3,66 @@ import entityClientConfig, {
   PATTERN_CONFIG,
 } from "../_lib/config/entityClientConfig";
 
+export function lookup({ data, lookupField, findValue, targetField }) {
+  // const value = data?.find((_) => _[lookupField] === findValue);
+
+  // Get the field type from entityClientConfig
+  const fieldType = getFieldType(lookupField) || null;
+
+  // Cast the findValue based on field type
+  let castedFindValue = findValue;
+  if (fieldType && findValue !== null && findValue !== undefined) {
+    switch (fieldType) {
+      case "number":
+        castedFindValue = Number(findValue);
+        break;
+      case "string":
+        castedFindValue = String(findValue);
+        break;
+      case "boolean":
+        castedFindValue = Boolean(findValue);
+        break;
+      case "date":
+        castedFindValue = new Date(findValue);
+        break;
+      default:
+        castedFindValue = findValue; // Keep original value for  unknown types
+    }
+  }
+
+  // Perform the lookup with casted value
+  const value = data?.find((_) => _[lookupField] === castedFindValue);
+  // if targetField is not provided then return the whole row
+  return targetField !== undefined ? value?.[targetField] : value;
+}
+
+// Helper functions for QOH checking
+export async function getCurrentQOH({ itemId, binId, universalDataService }) {
+  const currentQOH = await universalDataService({
+    entity: "itemQoh",
+    itemId,
+    binId,
+  });
+
+  //TODO: provide a fallback mechanism incase qoh could not be fetched.
+  return currentQOH;
+}
+
+//queryKeys factory
+export function generateQueryKeys({ entity, ...params }) {
+  // Remove undefined values and sort for consistency
+  const cleanParams = Object.fromEntries(
+    Object.entries(params)
+      .filter(([_, value]) => value !== undefined)
+      .sort(([a], [b]) => a.localeCompare(b)),
+  );
+  return [entity, cleanParams];
+}
+
 export function destructuredFormData(state, formData) {
   const formDataObject = Object.fromEntries(formData.entries());
 
-  // 3. Combine and return the two arrays
+  // Combine and return the two arrays
   return { ...state, ...formDataObject };
 }
 
@@ -73,7 +129,7 @@ export function getFieldValidation(entity, field) {
  * // returns: "Name"
  * getFieldDisplayName("item", "nameField");
  */
-export function getFieldDisplayName(entity, field) {
+export function getFieldDisplayName({ field, entity }) {
   const fieldDef = getFieldDefinition(entity, field);
   return fieldDef?.display.name || field;
 }
@@ -148,16 +204,34 @@ export function getEntityChangeDetectionFields(entity) {
  * @returns {string[]} An array of unique entity names required for validation.
  * @example
  * // returns: ["item", "itemClass"]
- * getEntityDependencies("item");
+ * getEntityAndDependencies("item");
  */
-export function getEntityDependencies(entity) {
-  const foreignKeys = getForeignKeys(entity);
-  const foreignEntities = Object.values(foreignKeys).map((fk) => fk.entity);
+export function getEntityAndDependencies(entity) {
+  const entityPatternType = getEntityPatternType(entity);
 
-  return [
-    entity, // Always include the main entity
-    ...new Set(foreignEntities), // Add unique foreign entities
-  ];
+  switch (entityPatternType) {
+    case "atomic":
+      const foreignKeys = getForeignKeys(entity);
+      const foreignEntities = Object.values(foreignKeys).map((fk) => fk.entity);
+      return [
+        entity, // Always include the main entity
+        ...new Set(foreignEntities), // Add unique foreign entities
+      ];
+
+    //!==> fix the composite dependencies
+    case "composite":
+      const compositDependencies = [];
+      const compositeEntities = getCompositeEntities(entity);
+      Object.entries(compositeEntities).forEach(([key, subEntity]) => {
+        const foreignKeys = getForeignKeys(subEntity);
+        const foreignEntities = Object.values(foreignKeys)
+          .filter((fk) => fk.forValidation !== false)
+          .map((fk) => fk.entity);
+
+        compositDependencies.push(...new Set(foreignEntities));
+      });
+      return compositDependencies;
+  }
 }
 
 /**
@@ -174,8 +248,8 @@ export function getEntityFieldsValidation(entity) {
     return {};
   }
   return Object.entries(config.fields).reduce((acc, [field, def]) => {
-    if (def.validation) {
-      acc[field] = def.validation;
+    if (def.fieldValidation) {
+      acc[field] = def.fieldValidation;
     }
     return acc;
   }, {});
@@ -209,6 +283,9 @@ export function getEntityPattern(entity) {
 
 export function getEntityPatternType(entity) {
   const pattern = getEntityPattern(entity);
+  if (!pattern) {
+    throw new Error(`No entity pattern is defined for entity ${entity}`);
+  }
   return PATTERN_CONFIG[pattern];
 }
 
@@ -228,17 +305,28 @@ export function getCompositeEntities(entity) {
 export function getEntityValidationObj(entity) {
   const entityPatternType = getEntityPatternType(entity);
 
-  const entityValidationObj = {};
+  const entitiesValidationObj = {};
 
   if (entityPatternType === "atomic") {
-    entityValidationObj["main"] = entity;
+    entitiesValidationObj["main"] = entity;
   }
   if (entityPatternType === "composite") {
-    entityValidationObj["wrapper"] = entity;
+    entitiesValidationObj["compositeWrapper"] = entity;
     const { header, line } = getCompositeEntities(entity);
-    entityValidationObj[header] = header;
-    entityValidationObj[line] = line;
+    entitiesValidationObj["header"] = header;
+    entitiesValidationObj["line"] = line;
   }
 
-  return { wrapper: entityValidationObj["wrapper"], ...entityValidationObj };
+  return entitiesValidationObj;
+}
+
+export function getEntityBusinessValidationBases(entity) {
+  const config = entityClientConfig(entity);
+  const businessRules = config?.businessRules;
+  return businessRules;
+}
+
+export function getEntityDirectionRules(entity) {
+  const businessRules = getEntityBusinessValidationBases(entity);
+  return businessRules?.directionBased?.rules;
 }

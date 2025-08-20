@@ -1,7 +1,7 @@
 "use client";
 
 import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
-import { createFormData } from "@/app/_utils/helpers";
+import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -58,6 +58,9 @@ export default function AddItemClassForm({ onCloseModal }) {
   //5- Enhanced Mutation  (JS available)
   //! maybe extract into cusom hook
 
+  const dataParams = { entity: "itemClass", id: "all" };
+  const cancelDataParams = { entity: "itemClass" };
+
   const mutation = useMutation({
     mutationFn: async (data) => {
       //Convert RHF data to FormData for server action compatibility (incase js is unavailable the default data passed is formData. if only js then this conversion will not be needed )
@@ -80,12 +83,16 @@ export default function AddItemClassForm({ onCloseModal }) {
 
     // Optimistic update
     onMutate: async (newItemClass) => {
-      await queryClient.cancelQueries({ queryKey: ["itemClass"] });
+      await queryClient.cancelQueries({
+        queryKey: generateQueryKeys(cancelDataParams),
+      });
 
-      const previousValues = queryClient.getQueryData(["itemClass", "all"]);
+      const previousValues = queryClient.getQueryData(
+        generateQueryKeys(dataParams),
+      );
 
       // Optimistically update cache
-      queryClient.setQueryData(["itemClass", "all"], (old = []) => [
+      queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) => [
         ...old,
         {
           idField: Date.now(), // Temporary ID
@@ -101,7 +108,7 @@ export default function AddItemClassForm({ onCloseModal }) {
     //Success Handling
     onSuccess: (result, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["itemClass"],
+        queryKey: generateQueryKeys(cancelDataParams),
         refetchType: "none",
       });
 
@@ -116,7 +123,10 @@ export default function AddItemClassForm({ onCloseModal }) {
     onError: (error, variables, context) => {
       //Roll back optimistic update
       if (context?.previousValues) {
-        queryClient.setQueryData(["itemClass", "all"], context.previousValues);
+        queryClient.setQueryData(
+          generateQueryKeys(dataParams),
+          context.previousValues,
+        );
       }
 
       //! may be make a default to redirect the user to login page if the error is 401

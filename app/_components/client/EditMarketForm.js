@@ -1,8 +1,8 @@
 "use client";
 
-import useClientData from "@/app/_hooks/useClientData";
 import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
-import { createFormData } from "@/app/_utils/helpers";
+import useClientData from "@/app/_lib/client/useClientData";
+import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -68,17 +68,24 @@ export default function EditMarketForm({ id, onCloseModal }) {
     shouldUnregister: true,
   });
 
+  const dataParams = { entity: "market", id: "all" };
+  const cancelDataParams = { entity: "market" };
+
   const mutation = useMutation({
     onMutate: async (values) => {
       const marketTypeName = queryClient
-        .getQueryData(["marketType", "all"])
+        .getQueryData(generateQueryKeys({ entity: "marketType", id: "all" }))
         .find((_) => _.idField.toString() == values.marketTypeId)?.nameField;
 
-      await queryClient.cancelQueries({ queryKey: ["market"] });
+      await queryClient.cancelQueries({
+        queryKey: generateQueryKeys(cancelDataParams),
+      });
 
-      const previousValues = queryClient.getQueryData(["market", "all"]);
+      const previousValues = queryClient.getQueryData(
+        generateQueryKeys(dataParams),
+      );
 
-      queryClient.setQueryData(["market", "all"], (old = []) =>
+      queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) =>
         old.map((market) => {
           if (market.idField === values.idField) {
             return {
@@ -113,7 +120,7 @@ export default function EditMarketForm({ id, onCloseModal }) {
 
     onSuccess: (result, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["market"],
+        queryKey: generateQueryKeys(cancelDataParams),
         refetchType: "active",
       });
       toast.success(`Market ${variables.nameField} was updated successfully!`);
@@ -123,7 +130,10 @@ export default function EditMarketForm({ id, onCloseModal }) {
 
     onError: (error, variables, context) => {
       if (context?.previousValues) {
-        queryClient.setQueryData(["market", "all"], context.previousValues);
+        queryClient.setQueryData(
+          generateQueryKeys(dataParams),
+          context.previousValues,
+        );
       }
 
       if (error.zodErrors) {
