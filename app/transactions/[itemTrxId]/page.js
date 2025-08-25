@@ -14,7 +14,7 @@ export async function generateMetadata({ params }) {
 export default async function Page({ params }) {
   const { itemTrxId } = await params;
   const numericItemTrxId = Number(itemTrxId);
-  console.log(numericItemTrxId);
+  // console.log(numericItemTrxId);
 
   if (itemTrxId === "error" || !itemTrxId || isNaN(numericItemTrxId)) {
     throw new Error("transaction Id error");

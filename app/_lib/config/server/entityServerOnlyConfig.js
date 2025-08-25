@@ -128,6 +128,7 @@ export default function entityServerOnlyConfig(entity) {
       get: "getItemTrxDetails",
       fieldMappings: {
         itemTrxId: "_item_trx_id",
+        descField: "_item_trx_desc",
         trxLineNum: "_trx_line_num",
         itemId: "_item_id",
         fromBinId: "_from_bin_id",

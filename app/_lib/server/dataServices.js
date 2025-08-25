@@ -9,7 +9,7 @@ import { supabase } from "./supabase";
 
 //!Factory pattern is used as it is better for multi-tennant applications caching to ensure org scoped operations
 
-export async function createDataService() {
+export async function createDataService(globalOptions = {}) {
   // if (!org_uuid) throw new Error("Organization UUID is required");
 
   //1- authenticate the user
@@ -38,14 +38,39 @@ export async function createDataService() {
     };
   }
 
+  const {
+    forceRefresh: globalForceRefresh = false,
+    cacheTTL: globalCacheTTL = 300,
+    skipCache: globalSkipCache = false,
+    ...additionalGlobalOptions
+  } = globalOptions;
+
   return {
     getItems: async (params) => {
-      const { id: itemId = "all", options = {} } = params;
+      const { id: itemId = "all", options = {}, ...otherParams } = params;
 
-      const { forceRefresh = false, cacheTTL = 300 } = options;
+      const {
+        forceRefresh = globalForceRefresh,
+        cacheTTL = globalCacheTTL,
+        skipCache = globalSkipCache,
+        ...additionalMethodOptions
+      } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
         revalidateTag(`item-${_org_uuid}-${itemId}`);
+      }
+
+      if (skipCache) {
+        const filteredData = {
+          _item_id: itemId === "all" ? null : itemId,
+          ..._data,
+          ...otherParams,
+        };
+        const { data, error } = await supabase.rpc("fn_get_items", {
+          _data: filteredData,
+        });
+        if (error) throw new Error("Item(s) could not be loaded.");
+        return data ?? [];
       }
 
       return unstable_cache(
@@ -53,39 +78,48 @@ export async function createDataService() {
           const filteredData = {
             _item_id: itemId === "all" ? null : itemId,
             ..._data,
+            ...otherParams,
           };
-          //TODO: confirm fetch from cache first before making db call
-
-          // console.log(filteredData);
-          // For testing
-          // await new Promise(res => setTimeout(res, 2000));
           const { data, error } = await supabase.rpc("fn_get_items", {
             _data: filteredData,
           });
-          // console.log(data, error);
-          if (error) {
-            console.error(error);
-            throw new Error("Item(s) could not be loaded.");
-          }
-          // console.log("itemServerData: ", data);
-
-          return data || [];
+          if (error) throw new Error("Item(s) could not be loaded.");
+          return data ?? [];
         },
         [`item-${_org_uuid}-${itemId}`],
         {
           tags: [`item-${_org_uuid}-${itemId}`],
           revalidate: cacheTTL,
+          ...additionalMethodOptions,
         },
       )();
     },
 
     getLocations: async (params) => {
-      const { id: locationId = "all", options = {} } = params;
+      const { id: locationId = "all", options = {}, ...otherParams } = params;
 
-      const { forceRefresh = false, cacheTTL = 300 } = options;
+      const {
+        forceRefresh = globalForceRefresh,
+        cacheTTL = globalCacheTTL,
+        skipCache = globalSkipCache,
+        ...additionalMethodOptions
+      } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
         revalidateTag(`location-${_org_uuid}-${locationId}`);
+      }
+
+      if (skipCache) {
+        const filteredData = {
+          _loc_id: locationId === "all" ? null : locationId,
+          ..._data,
+          ...otherParams,
+        };
+        const { data, error } = await supabase.rpc("fn_get_locations", {
+          _data: filteredData,
+        });
+        if (error) throw new Error("Locations could not be loaded.");
+        return data ?? [];
       }
 
       return unstable_cache(
@@ -93,6 +127,7 @@ export async function createDataService() {
           const filteredData = {
             _loc_id: locationId === "all" ? null : locationId,
             ..._data,
+            ...otherParams,
           };
           const { data, error } = await supabase.rpc("fn_get_locations", {
             _data: filteredData,
@@ -101,22 +136,41 @@ export async function createDataService() {
             console.log(error);
             throw new Error("Locations could not be loaded.");
           }
-          return data || [];
+          return data ?? [];
         },
         [`location-${_org_uuid}-${locationId}`],
         {
           tags: [`location-${_org_uuid}-${locationId}`],
           revalidate: cacheTTL,
+          ...additionalMethodOptions,
         },
       )();
     },
 
     getBins: async (params) => {
-      const { id: binId = "all", options = {} } = params;
-      const { forceRefresh = false, cacheTTL = 300 } = options;
+      const { id: binId = "all", options = {}, ...otherParams } = params;
+      const {
+        forceRefresh = globalForceRefresh,
+        cacheTTL = globalCacheTTL,
+        skipCache = globalSkipCache,
+        ...additionalMethodOptions
+      } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
         revalidateTag(`bin-${_org_uuid}-${binId}`);
+      }
+
+      if (skipCache) {
+        const filteredData = {
+          _bin_id: binId === "all" ? null : binId,
+          ..._data,
+          ...otherParams,
+        };
+        const { data, error } = await supabase.rpc("fn_get_bins", {
+          _data: filteredData,
+        });
+        if (error) throw new Error("Bins could not be loaded.");
+        return data ?? [];
       }
 
       return unstable_cache(
@@ -124,6 +178,7 @@ export async function createDataService() {
           const filteredData = {
             _bin_id: binId === "all" ? null : binId,
             ..._data,
+            ...otherParams,
           };
           const { data, error } = await supabase.rpc("fn_get_bins", {
             _data: filteredData,
@@ -132,22 +187,41 @@ export async function createDataService() {
             console.log(error);
             throw new Error("Bins could not be loaded.");
           }
-          return data || [];
+          return data ?? [];
         },
         [`bin-${_org_uuid}-${binId}`],
         {
           tags: [`bin-${_org_uuid}-${binId}`],
           revalidate: cacheTTL,
+          ...additionalMethodOptions,
         },
       )();
     },
 
     getItemClasses: async (params) => {
-      const { id: itemClassId = "all", options = {} } = params;
-      const { forceRefresh = false, cacheTTL = 300 } = options;
+      const { id: itemClassId = "all", options = {}, ...otherParams } = params;
+      const {
+        forceRefresh = globalForceRefresh,
+        cacheTTL = globalCacheTTL,
+        skipCache = globalSkipCache,
+        ...additionalMethodOptions
+      } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
         revalidateTag(`itemClass-${_org_uuid}-${itemClassId}`);
+      }
+
+      if (skipCache) {
+        const filteredData = {
+          _item_class_id: itemClassId === "all" ? null : itemClassId,
+          ..._data,
+          ...otherParams,
+        };
+        const { data, error } = await supabase.rpc("fn_get_items_classes", {
+          _data: filteredData,
+        });
+        if (error) throw new Error("ItemClass could not be loaded.");
+        return data ?? [];
       }
 
       return unstable_cache(
@@ -155,6 +229,7 @@ export async function createDataService() {
           const filteredData = {
             _item_class_id: itemClassId === "all" ? null : itemClassId,
             ..._data,
+            ...otherParams,
           };
           const { data, error } = await supabase.rpc("fn_get_items_classes", {
             _data: filteredData,
@@ -163,23 +238,42 @@ export async function createDataService() {
             console.log(error);
             throw new Error("ItemClass could not be loaded.");
           }
-          return data || [];
+          return data ?? [];
         },
         [`itemClass-${_org_uuid}-${itemClassId}`],
         {
           tags: [`itemClass-${_org_uuid}-${itemClassId}`],
           revalidate: cacheTTL,
+          ...additionalMethodOptions,
         },
       )();
     },
 
     getMarketTypes: async (params) => {
-      const { id: marketTypeId = "all", options = {} } = params;
+      const { id: marketTypeId = "all", options = {}, ...otherParams } = params;
 
-      const { forceRefresh = false, cacheTTL = 300 } = options;
+      const {
+        forceRefresh = globalForceRefresh,
+        cacheTTL = globalCacheTTL,
+        skipCache = globalSkipCache,
+        ...additionalMethodOptions
+      } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
         revalidateTag(`marketType-${_org_uuid}-${marketTypeId}`);
+      }
+
+      if (skipCache) {
+        const filteredData = {
+          _market_type_id: marketTypeId === "all" ? null : marketTypeId,
+          ..._data,
+          ...otherParams,
+        };
+        const { data, error } = await supabase.rpc("fn_get_market_types", {
+          _data: filteredData,
+        });
+        if (error) throw new Error("Market Types could not be loaded.");
+        return data ?? [];
       }
 
       return unstable_cache(
@@ -187,6 +281,7 @@ export async function createDataService() {
           const filteredData = {
             _market_type_id: marketTypeId === "all" ? null : marketTypeId,
             ..._data,
+            ...otherParams,
           };
           const { data, error } = await supabase.rpc("fn_get_market_types", {
             _data: filteredData,
@@ -195,23 +290,42 @@ export async function createDataService() {
             console.log(error);
             throw new Error("Market Types could not be loaded.");
           }
-          return data || [];
+          return data ?? [];
         },
         [`marketType-${_org_uuid}-${marketTypeId}`],
         {
           tags: [`marketType-${_org_uuid}-${marketTypeId}`],
           revalidate: cacheTTL,
+          ...additionalMethodOptions,
         },
       )();
     },
 
     getMarkets: async (params) => {
-      const { id: marketId = "all", options = {} } = params;
+      const { id: marketId = "all", options = {}, ...otherParams } = params;
 
-      const { forceRefresh = false, cacheTTL = 300 } = options;
+      const {
+        forceRefresh = globalForceRefresh,
+        cacheTTL = globalCacheTTL,
+        skipCache = globalSkipCache,
+        ...additionalMethodOptions
+      } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
         revalidateTag(`market-${_org_uuid}-${marketId}`);
+      }
+
+      if (skipCache) {
+        const filteredData = {
+          _market_id: marketId === "all" ? null : marketId,
+          ..._data,
+          ...otherParams,
+        };
+        const { data, error } = await supabase.rpc("fn_get_markets", {
+          _data: filteredData,
+        });
+        if (error) throw new Error("Markets could not be loaded.");
+        return data ?? [];
       }
 
       return unstable_cache(
@@ -219,6 +333,7 @@ export async function createDataService() {
           const filteredData = {
             _market_id: marketId === "all" ? null : marketId,
             ..._data,
+            ...otherParams,
           };
           const { data, error } = await supabase.rpc("fn_get_markets", {
             _data: filteredData,
@@ -227,22 +342,42 @@ export async function createDataService() {
             console.log(error);
             throw new Error("Markets could not be loaded.");
           }
-          return data || [];
+          return data ?? [];
         },
         [`market-${_org_uuid}-${marketId}`],
         {
           tags: [`market-${_org_uuid}-${marketId}`],
           revalidate: cacheTTL,
+          ...additionalMethodOptions,
         },
       )();
     },
 
     getTrxTypes: async (params) => {
-      const { id: trxTypeId = "all", options = {} } = params;
-      const { forceRefresh = false, cacheTTL = 300 } = options;
+      const { id: trxTypeId = "all", options = {}, ...otherParams } = params;
+
+      const {
+        forceRefresh = globalForceRefresh,
+        cacheTTL = globalCacheTTL,
+        skipCache = globalSkipCache,
+        ...additionalMethodOptions
+      } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
         revalidateTag(`trxType-${_org_uuid}-${trxTypeId}`);
+      }
+
+      if (skipCache) {
+        const filteredData = {
+          _trx_type_id: trxTypeId === "all" ? null : trxTypeId,
+          ..._data,
+          ...otherParams,
+        };
+        const { data, error } = await supabase.rpc("fn_get_trx_types", {
+          _data: filteredData,
+        });
+        if (error) throw new Error("Transaction Types could not be loaded.");
+        return data ?? [];
       }
 
       return unstable_cache(
@@ -250,38 +385,65 @@ export async function createDataService() {
           const filteredData = {
             _trx_type_id: trxTypeId === "all" ? null : trxTypeId,
             ..._data,
+            ...otherParams,
           };
+
           const { data, error } = await supabase.rpc("fn_get_trx_types", {
             _data: filteredData,
           });
+
           if (error) {
             console.log(error);
             throw new Error("Transaction Types could not be loaded.");
           }
-          return data || [];
+          return data ?? [];
         },
         [`trxType-${_org_uuid}-${trxTypeId}`],
         {
           tags: [`trxType-${_org_uuid}-${trxTypeId}`],
           revalidate: cacheTTL,
+          ...additionalMethodOptions,
         },
       )();
     },
 
     getTrxDirections: async (params) => {
-      const { id: trxDirectionId = "all" } = params;
-      // Remove forceRefresh logic since we're caching forever
-      // const { forceRefresh = false, cacheTTL = 300 } = options;
+      const {
+        id: trxDirectionId = "all",
+        options = {},
+        ...otherParams
+      } = params;
+      const {
+        forceRefresh = globalForceRefresh,
+        cacheTTL = globalCacheTTL,
+        skipCache = globalSkipCache,
+        ...additionalMethodOptions
+      } = { ...additionalGlobalOptions, ...options };
 
-      // if (forceRefresh) {
-      //   revalidateTag(`trxDirection-${_org_uuid}-${trxDirectionId}`);
-      // }
+      if (forceRefresh) {
+        revalidateTag(`trxDirection-${_org_uuid}-${trxDirectionId}`);
+      }
+
+      if (skipCache) {
+        const filteredData = {
+          _trx_direction_id: trxDirectionId === "all" ? null : trxDirectionId,
+          ..._data,
+          ...otherParams,
+        };
+        const { data, error } = await supabase.rpc("fn_get_trx_directions", {
+          _data: filteredData,
+        });
+        if (error)
+          throw new Error("Transaction Directions could not be loaded.");
+        return data ?? [];
+      }
 
       return unstable_cache(
         async () => {
           const filteredData = {
             _trx_direction_id: trxDirectionId === "all" ? null : trxDirectionId,
             ..._data,
+            ...otherParams,
           };
           const { data, error } = await supabase.rpc("fn_get_trx_directions", {
             _data: filteredData,
@@ -290,27 +452,52 @@ export async function createDataService() {
             console.log(error);
             throw new Error("Transaction Directions could not be loaded.");
           }
-          return data || [];
+          return data ?? [];
         },
         [`trxDirection-${_org_uuid}-${trxDirectionId}`],
         {
           tags: [`trxDirection-${_org_uuid}-${trxDirectionId}`],
           revalidate: false, //Cache forever
+          ...additionalMethodOptions,
         },
       )();
     },
 
     getItemQoh: async (params) => {
-      const { itemId, binId, options = {} } = params;
+      const { itemId, binId, options = {}, ...otherParams } = params;
+
+      // console.log("getItemQoh was called with: ", { params });
 
       if (!itemId || !binId)
         throw new Error(
           `🚨 itemId and binId are required for getItemQoh. recieved itemId: ${itemId} and binId: ${binId}`,
         );
-      const { forceRefresh = false, cacheTTL = 300 } = options;
+      const {
+        forceRefresh = globalForceRefresh,
+        cacheTTL = globalCacheTTL,
+        skipCache = globalSkipCache,
+        ...additionalMethodOptions
+      } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
         revalidateTag(`itemQoh-${_org_uuid}-${itemId}-${binId}`);
+      }
+
+      if (skipCache) {
+        const mappedFields = getEntityFieldMapping("itemQoh");
+        const dbReadyData = {
+          [mappedFields["itemId"]]: itemId,
+          [mappedFields["binId"]]: binId,
+          ..._data,
+          ...otherParams,
+        };
+        const { data, error } = await supabase.rpc("fn_get_item_qoh", {
+          _data: dbReadyData,
+        });
+        if (error) throw new Error("Item QOH could not be loaded.");
+
+        console.log("getItemQoh skipCache returned: ", data);
+        return data ?? [];
       }
 
       return unstable_cache(
@@ -320,36 +507,54 @@ export async function createDataService() {
             [mappedFields["itemId"]]: itemId,
             [mappedFields["binId"]]: binId,
             ..._data,
+            ...otherParams,
           };
-
-          // console.log("dbReadyData: ", dbReadyData);
 
           const { data, error } = await supabase.rpc("fn_get_item_qoh", {
             _data: dbReadyData,
           });
 
-          // console.log("data: ", data, "error: ", error);
-
           if (error) {
             console.log(error);
             throw new Error("Item QOH could not be loaded.");
           }
-          return data || [];
+          // console.log("getItemQoh unstable_cache returned: ", data);
+
+          return data ?? [];
         },
         [`itemQoh-${_org_uuid}-${itemId}-${binId}`],
         {
           tags: [`itemQoh-${_org_uuid}-${itemId}-${binId}`],
           revalidate: cacheTTL,
+          ...additionalMethodOptions,
         },
       )();
     },
 
     getItemTrx: async (params) => {
-      const { id: itemTrxId = "all", options = {} } = params;
-      const { forceRefresh = false, cacheTTL = 300 } = options;
+      const { id: itemTrxId = "all", options = {}, ...otherParams } = params;
+      const {
+        forceRefresh = globalForceRefresh,
+        cacheTTL = globalCacheTTL,
+        skipCache = globalSkipCache,
+        ...additionalMethodOptions
+      } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
         revalidateTag(`itemTrx-${_org_uuid}-${itemTrxId}`);
+      }
+
+      if (skipCache) {
+        const filteredData = {
+          _item_trx_id: itemTrxId === "all" ? null : itemTrxId,
+          ..._data,
+          ...otherParams,
+        };
+        const { data, error } = await supabase.rpc("fn_get_item_trans", {
+          _data: filteredData,
+        });
+        if (error) throw new Error("Item Transactions could not be loaded.");
+        return data ?? [];
       }
 
       return unstable_cache(
@@ -357,40 +562,62 @@ export async function createDataService() {
           const filteredData = {
             _item_trx_id: itemTrxId === "all" ? null : itemTrxId,
             ..._data,
+            ...otherParams,
           };
 
           const { data, error } = await supabase.rpc("fn_get_item_trans", {
             _data: filteredData,
           });
 
-          // console.log(data, error);
           if (error) {
             console.log(error);
             throw new Error("Item Transactions could not be loaded.");
           }
-          return data || [];
+          return data ?? [];
         },
         [`itemTrx-${_org_uuid}-${itemTrxId}`],
         {
           tags: [`itemTrx-${_org_uuid}-${itemTrxId}`],
           revalidate: cacheTTL,
+          ...additionalMethodOptions,
         },
       )();
     },
 
     getItemTrxDetails: async (params) => {
-      const { id: itemTrxId, options = {} } = params;
-      const { forceRefresh = false, cacheTTL = 300 } = options;
+      const { id: itemTrxId, options = {}, ...otherParams } = params;
+      const {
+        forceRefresh = globalForceRefresh,
+        cacheTTL = globalCacheTTL,
+        skipCache = globalSkipCache,
+        ...additionalMethodOptions
+      } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
         revalidateTag(`itemTrxDetails-${itemTrxId}-${_org_uuid}`);
       }
 
-      // console.log("getItemTrxDetails itemTrxId:", itemTrxId);
+      if (skipCache) {
+        const filteredData = {
+          _item_trx_id: itemTrxId,
+          ..._data,
+          ...otherParams,
+        };
+        const { data, error } = await supabase.rpc("fn_get_item_trx_details", {
+          _data: filteredData,
+        });
+        if (error)
+          throw new Error("Item Transaction Details could not be loaded.");
+        return data ?? [];
+      }
 
       return unstable_cache(
         async () => {
-          const filteredData = { _item_trx_id: itemTrxId, ..._data };
+          const filteredData = {
+            _item_trx_id: itemTrxId,
+            ..._data,
+            ...otherParams,
+          };
 
           const { data, error } = await supabase.rpc(
             "fn_get_item_trx_details",
@@ -398,139 +625,35 @@ export async function createDataService() {
               _data: filteredData,
             },
           );
-          // console.log(data, error);
           if (error) {
             console.log(error);
             throw new Error("Item Transaction Details could not be loaded.");
           }
-          return data || [];
+          return data ?? [];
         },
         [`itemTrxDetails-${itemTrxId}-${_org_uuid}`],
         {
           tags: [`itemTrxDetails-${itemTrxId}-${_org_uuid}`],
           revalidate: cacheTTL,
+          ...additionalMethodOptions,
         },
       )();
     },
   };
 }
-// export const getItems = async function () {
-//   const _data = {
-//     _org_uuid: ORG_UUID,
-//     _usr_uuid: USR_UUID,
-//   };
-//   // For testing
-//   // await new Promise(res => setTimeout(res, 2000));
 
-//   //Cashing:
-//   // no-store is deprecated
-//   // The connection() function allows you to indicate rendering should wait for an incoming user request before continuing.
+// export async function getServerData({ entity, options = {}, ...otherParams }) {
+//   if (!entity) throw new Error(`🚨 no entity was provided for getServerData.`);
 
-//
-//   const { data, error } = await supabase.rpc("fn_get_items", {
-//     _data,
-//   });
-//   // console.log(data, error);
+//   const dataService = await createDataService(options);
+//   const { get } = entityServerOnlyConfig(entity);
 
-//   if (error) {
-//     console.error(error);
-//     throw new Error("Items could not be loaded.");
+//   if (!get) {
+//     throw new Error(
+//       `Data service method not found for entity '${entity}' in entityServerOnlyConfig.`,
+//     );
 //   }
-//   return data;
-// };
 
-// export const getLocations = cache(
-//   async function (_org_uuid) {
-//     if (!org_uuid) throw new Error("Organization UUID is required");
-
-//
-//     const { data, error } = await supabase.rpc("fn_get_locations", { _data });
-//     // console.log(data, error);
-//     if (error) {
-//       console.log(error);
-//       throw new Error("Locations could not be loaded.");
-//     }
-//     return data;
-//   },
-//   ["locations"], // A unique key for this specific query
-//   { tags: ["locations"] }, // The tag we will use to revalidate this data
-// );
-
-// export const getBins = cache(
-//   async function () {
-//     const _data = {
-//       _org_uuid: ORG_UUID,
-//       _usr_uuid: USR_UUID,
-//     };
-//
-//     const { data, error } = await supabase.rpc("fn_get_bins", { _data });
-//     // console.log(data, error);
-//     if (error) {
-//       console.log(error);
-//       throw new Error("Bins could not be loaded.");
-//     }
-//     return data;
-//   },
-//   ["bins"],
-//   { tags: ["bins"] },
-// );
-
-// export const getItemClasses = async function () {
-//   const _data = {
-//     _org_uuid: ORG_UUID,
-//     _usr_uuid: USR_UUID,
-//   };
-//
-//   const { data, error } = await supabase.rpc("fn_get_items_classes", { _data });
-//   // console.log(data, error);
-//   if (error) {
-//     console.log(error);
-//     throw new Error("ItemClass could not be loaded.");
-//   }
-//   return data;
-// };
-
-// export const getMarketTypes = async function () {
-//   const _data = {
-//     _org_uuid: ORG_UUID,
-//     _usr_uuid: USR_UUID,
-//   };
-//
-//   const { data, error } = await supabase.rpc("fn_get_market_types", { _data });
-//   // console.log(data, error);
-//   if (error) {
-//     console.log(error);
-//     throw new Error("Market Types could not be loaded.");
-//   }
-//   return data;
-// };
-
-// export const getMarkets = async function () {
-//   const _data = {
-//     _org_uuid: ORG_UUID,
-//     _usr_uuid: USR_UUID,
-//   };
-//
-//   const { data, error } = await supabase.rpc("fn_get_markets", { _data });
-//   // console.log(data, error);
-//   if (error) {
-//     console.log(error);
-//     throw new Error("Markets could not be loaded.");
-//   }
-//   return data;
-// };
-
-// export const getTrxTypes = async function () {
-//   const _data = {
-//     _org_uuid: ORG_UUID,
-//     _usr_uuid: USR_UUID,
-//   };
-//
-//   const { data, error } = await supabase.rpc("fn_get_trx_types", { _data });
-//   // console.log(data, error);
-//   if (error) {
-//     console.log(error);
-//     throw new Error("Transaction Types could not be loaded.");
-//   }
-//   return data;
-// };
+//   const entityData = await dataService[get]({ ...otherParams, options });
+//   return entityData;
+// }

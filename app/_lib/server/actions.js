@@ -2,11 +2,11 @@
 
 import { revalidateTag } from "next/cache";
 // import { auth } from "./auth"; // Placeholder for your actual auth function
+import { dbReadyData } from "@/app/_utils/helpers-server";
 import z from "zod";
 import { appContextSchema } from "../validation/getValidationSchema";
 import { getServerValidationSchema } from "../validation/server/getServerValidationSchema";
 import { supabase } from "./supabase";
-import { dbReadyData, formDataTransformer } from "./transformers";
 
 /**
  * Massages validated data to match database field mappings
@@ -52,22 +52,24 @@ function dbAction(rpcName, entity, operation) {
     }
 
     // prepare and validate the form data
-    let destructuredFormData;
+    // let destructuredFormData;
 
-    // Special handling for ItemTrx entity
-    if (entity === "itemTrx") {
-      // Transform FormData using unified pipeline for complex transactions
-      destructuredFormData = formDataTransformer.transform(formData);
-      // console.log("Transformed ItemTrx data:", destructuredFormData);
-    } else {
-      // Standard FormData handling for other entities
-      destructuredFormData = Object.fromEntries(formData);
-    }
+    // // Special handling for ItemTrx entity
+    // if (entity === "itemTrx") {
+    //   // Transform FormData using unified pipeline for complex transactions
+    //   destructuredFormData = formDataTransformer.transform(formData);
+    //   // console.log("Transformed ItemTrx data:", destructuredFormData);
+    // } else {
+    //   // Standard FormData handling for other entities
+    //   destructuredFormData = Object.fromEntries(formData);
+    // }
 
-    // console.log("server destructuredFormData: ", destructuredFormData);
+    // destructuredFormData = Object.fromEntries(formData);
+
+    // console.log("server formData: ", formData);
 
     const editedEntityId =
-      operation === "update" ? parseInt(destructuredFormData.idField) : null;
+      operation === "update" ? parseInt(formData.idField) : null;
 
     // console.log("server editedEntityId: ", editedEntityId);
 
@@ -77,16 +79,14 @@ function dbAction(rpcName, entity, operation) {
       editedEntityId,
     });
 
-    const validatedData = await schema.safeParseAsync({
-      ...destructuredFormData,
-    });
+    const validatedData = await schema.safeParseAsync(formData);
 
-    console.log("server validatedData: ", validatedData);
+    // console.log("server validatedData: ", validatedData);
 
     if (!validatedData.success) {
       return {
         success: false,
-        formData: destructuredFormData,
+        formData: formData,
         zodErrors: z.flattenError(validatedData.error).fieldErrors,
         message: "Server validation Error. Operation aborted.",
       };
@@ -97,7 +97,7 @@ function dbAction(rpcName, entity, operation) {
 
     const _data = { _org_uuid, _usr_uuid, ...readyData };
 
-    console.log(_data);
+    // console.log("RPC_data", _data);
     // await connection();
 
     // For testing
@@ -131,6 +131,8 @@ function dbAction(rpcName, entity, operation) {
       _data,
     });
 
+    // console.log("resultData: ", resultData, "dbError: ", error);
+
     // 4. Handle errors.
     if (error || !resultData?.success) {
       const errorMessage = error.message || `Failed to execute ${rpcName}.`;
@@ -138,7 +140,7 @@ function dbAction(rpcName, entity, operation) {
       console.error(`Error in ${rpcName}:`, errorMessage);
       return {
         success: false,
-        formData: destructuredFormData,
+        formData,
         zodErrors: validatedData.error?.flatten().fieldErrors,
         message: errorMessage,
       };

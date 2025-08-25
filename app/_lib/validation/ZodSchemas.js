@@ -56,15 +56,19 @@ export const errorMessages = {
     `${field} is required for ${trxTypeName} transactions`,
   directionForbidden: (field, trxTypeName) =>
     `${field} is not allowed for ${trxTypeName} transactions`,
+
   businessRuleCondition: ({ condition, entity, trxTypeName }) => {
-    const { field, operator, value, compareField } = condition;
-    const compareValue = compareField
-      ? getFieldDisplayName({ entity, compareField })
+    const { field, operator, value, compareToField } = condition;
+
+    const compareValue = compareToField
+      ? getFieldDisplayName({ entity, field: compareToField })
       : value;
+
     const operatorName = getOperatorName(operator);
     const fieldName = getFieldDisplayName({ entity, field });
-    return `${fieldName} must be ${operatorName} ${compareValue} for ${trxTypeName} transactions`;
+    return `${fieldName} must be ${operatorName} ${compareValue} for ${trxTypeName} transactions.`;
   },
+
   missingValidationRequirement: (entity, req = "") =>
     `🛑 ${entity} is missing necessary validation requirement "${req}"`,
 
@@ -78,8 +82,8 @@ export const errorMessages = {
     `Business validation base funciton "${base}" for entity "${entity}" is not defined.`,
   businessValidationBaseUndefined: (entity) =>
     `Business validation base for entity "${entity}" is not defined.`,
-  insufficientQOH: (item, bin, required, available) =>
-    `Insufficient quantity in ${bin} for ${item}. Required: ${required}, Available: ${available}`,
+  insufficientQOH: (required, available) =>
+    `Insufficient quantity. Required: ${required}, Available: ${available}`,
   sameBinTransfer: () =>
     "From Bin and To Bin cannot be the same for transfer transactions",
   invalidDirection: (direction) =>
@@ -281,7 +285,7 @@ export const BUSINESS_VALIDATION_BASE = {
       const applyEntityValidationRule = ENTITY_ASSERT[rule];
 
       if (!applyEntityValidationRule) {
-        enhancedSchema = enhancedSchema.superRefine((data, ctx) => {
+        enhancedSchema = enhancedSchema.superRefine(async (data, ctx) => {
           ctx.addIssue({
             code: "custom",
             path: ["root"],
@@ -318,7 +322,7 @@ export const BUSINESS_VALIDATION_BASE = {
 
     if (!baseDefinition) {
       // console.log("❌  !baseDefinition");
-      return enhancedSchema.superRefine((data, ctx) => {
+      return enhancedSchema.superRefine(async (data, ctx) => {
         ctx.addIssue({
           code: "custom",
           path: ["root"],
@@ -329,7 +333,7 @@ export const BUSINESS_VALIDATION_BASE = {
 
     if (!dataDependencies) {
       // console.log("❌  !dataDependencies");
-      return enhancedSchema.superRefine((data, ctx) => {
+      return enhancedSchema.superRefine(async (data, ctx) => {
         ctx.addIssue({
           code: "custom",
           path: ["root"],
@@ -344,7 +348,7 @@ export const BUSINESS_VALIDATION_BASE = {
     if (!universalDataService) {
       // console.log("❌  !universalDataService");
 
-      return enhancedSchema.superRefine((data, ctx) => {
+      return enhancedSchema.superRefine(async (data, ctx) => {
         ctx.addIssue({
           code: "custom",
           path: ["root"],
@@ -361,7 +365,7 @@ export const BUSINESS_VALIDATION_BASE = {
     if (!directionSource) {
       // console.log("❌  !directionSource");
 
-      return enhancedSchema.superRefine((data, ctx) => {
+      return enhancedSchema.superRefine(async (data, ctx) => {
         ctx.addIssue({
           code: "custom",
           path: ["root"],
@@ -391,7 +395,7 @@ export const BUSINESS_VALIDATION_BASE = {
       //   "❌ !directionSourceEntity || !directionSourceField ||!lookupEntity || !lookupField || !targetField",
       // );
 
-      return enhancedSchema.superRefine((data, ctx) => {
+      return enhancedSchema.superRefine(async (data, ctx) => {
         ctx.addIssue({
           code: "custom",
           path: ["root"],
@@ -406,7 +410,7 @@ export const BUSINESS_VALIDATION_BASE = {
     if (!rules) {
       // console.log("❌  !rules");
 
-      return enhancedSchema.superRefine((data, ctx) => {
+      return enhancedSchema.superRefine(async (data, ctx) => {
         ctx.addIssue({
           code: "custom",
           path: ["root"],
@@ -417,18 +421,6 @@ export const BUSINESS_VALIDATION_BASE = {
         });
       });
     }
-
-    // const isCompositSubentity = ["header", "line"].includes(
-    //   getEntityPattern(entity),
-    // );
-
-    // const { nameField: trxTypeName, [targetField]: directionId } = lookup({
-    //   data: dataDependencies[lookupEntity],
-    //   lookupField,
-    //   findValue: "1009",
-    //   // targetField, //when this is not provided the lookup fn returns the whole row
-    // });
-
     // console.log("🆕 directionBased schema build start...", {
     //   entity,
     //   data: dataDependencies[lookupEntity],
@@ -445,7 +437,7 @@ export const BUSINESS_VALIDATION_BASE = {
 
     let enhancedSchema = schema;
 
-    enhancedSchema = enhancedSchema.superRefine((data, ctx) => {
+    enhancedSchema = enhancedSchema.superRefine(async (data, ctx) => {
       // console.log("🚀 SUPERREFINE STARTED");
       // console.log("🚀 data structure:", data);
       // console.log(
@@ -498,10 +490,14 @@ export const BUSINESS_VALIDATION_BASE = {
       }
 
       //!-->
-      Object.entries(rule)
-        .filter(([key, _]) => key !== "name")
-        .forEach(([validationRule, ruleDefinition]) => {
-          ENTITY_VALIDATION_RULES[validationRule]({
+      //🔁 Note: Use for...of loop instead of .forEach() — .forEach() cannot await async functions.
+      for (const [validationRule, ruleDefinition] of Object.entries(rule)) {
+        if (validationRule === "name") continue;
+
+        const validator = ENTITY_VALIDATION_RULES[validationRule];
+
+        if (validator) {
+          await validator({
             entity,
             trxTypeName,
             ruleDefinition,
@@ -509,7 +505,8 @@ export const BUSINESS_VALIDATION_BASE = {
             context,
             ctx,
           });
-        });
+        }
+      }
     });
 
     return enhancedSchema;
@@ -543,7 +540,14 @@ export const BUSINESS_VALIDATION_BASE = {
 
 export const ENTITY_VALIDATION_RULES = {
   // Required field validation
-  required: ({ entity, trxTypeName, ruleDefinition, data, context, ctx }) => {
+  required: async ({
+    entity,
+    trxTypeName,
+    ruleDefinition,
+    data,
+    context,
+    ctx,
+  }) => {
     // console.log("🐛 required called with:", {
     //   entity,
     //   trxTypeName,
@@ -560,38 +564,15 @@ export const ENTITY_VALIDATION_RULES = {
 
     if (!dataToValidate) return;
 
-    if (Array.isArray(dataToValidate)) {
-      dataToValidate.forEach((record, recordIndex) => {
-        ruleDefinition.forEach((field) => {
-          // console.log("🚀 required inside loop: ", {
-          //   dataToValidate,
-          //   record,
-          //   recordIndex,
-          //   field,
-          // });
-
-          if (!record[field] || record[field] <= 0 || record[field] === "") {
-            ctx.addIssue({
-              code: "custom",
-              path: [entity, recordIndex, field],
-              message: errorMessages.directionRequired(
-                getFieldDisplayName({ entity, field }),
-                trxTypeName,
-              ),
-            });
-          }
-        });
-      });
-    } else {
+    const validate = (row, index) => {
       ruleDefinition.forEach((field) => {
-        if (
-          !dataToValidate[field] ||
-          dataToValidate[field] <= 0 ||
-          dataToValidate[field] === ""
-        ) {
+        const fieldErrorPath =
+          index != null ? [entity, index, field] : [entity, field];
+
+        if (row[field] == null || row[field] === "") {
           ctx.addIssue({
             code: "custom",
-            path: [entity, field],
+            path: fieldErrorPath,
             message: errorMessages.directionRequired(
               getFieldDisplayName({ entity, field }),
               trxTypeName,
@@ -599,107 +580,19 @@ export const ENTITY_VALIDATION_RULES = {
           });
         }
       });
+    };
+
+    if (Array.isArray(dataToValidate)) {
+      dataToValidate.forEach((record, recordIndex) => {
+        validate(record, recordIndex);
+      });
+    } else {
+      validate(dataToValidate);
     }
   },
 
   // Forbidden field validation
-  forbidden: ({ entity, trxTypeName, ruleDefinition, data, context, ctx }) => {
-    const isCompositSubentity = ["header", "line"].includes(
-      getEntityPattern(entity),
-    );
-    const dataToValidate = isCompositSubentity ? data?.[entity] : data;
-
-    if (!dataToValidate) return;
-
-    if (Array.isArray(dataToValidate)) {
-      dataToValidate.forEach((record, recordIndex) => {
-        ruleDefinition.forEach((field) => {
-          if (
-            record[field] &&
-            record[field] !== 0 &&
-            record[field] !== "" &&
-            record[field] !== null
-          ) {
-            ctx.addIssue({
-              code: "custom",
-              message: errorMessages.directionForbidden(
-                getFieldDisplayName({ entity, field }),
-                trxTypeName,
-              ),
-              path: [entity, recordIndex, field],
-            });
-          }
-        });
-      });
-    } else {
-      ruleDefinition.forEach((field) => {
-        if (
-          dataToValidate[field] &&
-          dataToValidate[field] !== 0 &&
-          dataToValidate[field] !== "" &&
-          dataToValidate[field] !== null
-        ) {
-          ctx.addIssue({
-            code: "custom",
-            message: errorMessages.directionForbidden(
-              getFieldDisplayName({ entity, field }),
-              trxTypeName,
-            ),
-            path: [entity, field],
-          });
-        }
-      });
-    }
-  },
-
-  // Conditional validation (no exists operator)
-  conditions: ({ entity, trxTypeName, ruleDefinition, data, context, ctx }) => {
-    const isCompositSubentity = ["header", "line"].includes(
-      getEntityPattern(entity),
-    );
-    const dataToValidate = isCompositSubentity ? data?.[entity] : data;
-
-    if (!dataToValidate) return;
-
-    if (Array.isArray(dataToValidate)) {
-      dataToValidate.forEach((record, recordIndex) => {
-        ruleDefinition.forEach((condition) => {
-          if (!evaluateCondition(record, condition)) {
-            ctx.addIssue({
-              code: "custom",
-              message:
-                condition.message ||
-                errorMessages.businessRuleCondition({
-                  condition,
-                  entity,
-                  trxTypeName,
-                }),
-              path: [entity, recordIndex, condition.field],
-            });
-          }
-        });
-      });
-    } else {
-      ruleDefinition.forEach((condition) => {
-        if (!evaluateCondition(dataToValidate, condition)) {
-          ctx.addIssue({
-            code: "custom",
-            message:
-              condition.message ||
-              errorMessages.businessRuleCondition({
-                condition,
-                entity,
-                trxTypeName,
-              }),
-            path: [entity, condition.field],
-          });
-        }
-      });
-    }
-  },
-
-  // Custom business validations
-  customValidations: ({
+  forbidden: async ({
     entity,
     trxTypeName,
     ruleDefinition,
@@ -707,11 +600,153 @@ export const ENTITY_VALIDATION_RULES = {
     context,
     ctx,
   }) => {
-    ruleDefinition.forEach((customValidation) => {
+    const isCompositSubentity = ["header", "line"].includes(
+      getEntityPattern(entity),
+    );
+    const dataToValidate = isCompositSubentity ? data?.[entity] : data;
+
+    if (!dataToValidate) return;
+
+    const validate = (row, index) => {
+      ruleDefinition.forEach((field) => {
+        const fieldErrorPath =
+          index != null ? [entity, index, field] : [entity, field];
+        if (
+          row[field] &&
+          row[field] !== 0 &&
+          row[field] !== "" &&
+          row[field] !== null
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            message: errorMessages.directionForbidden(
+              getFieldDisplayName({ entity, field }),
+              trxTypeName,
+            ),
+            path: fieldErrorPath,
+          });
+        }
+      });
+    };
+
+    if (Array.isArray(dataToValidate)) {
+      dataToValidate.forEach((record, recordIndex) => {
+        validate(record, recordIndex);
+      });
+    } else {
+      validate(dataToValidate);
+    }
+  },
+
+  // Conditional validation (no exists operator)
+  conditions: async ({
+    entity,
+    trxTypeName,
+    ruleDefinition,
+    data,
+    context,
+    ctx,
+  }) => {
+    const isCompositSubentity = ["header", "line"].includes(
+      getEntityPattern(entity),
+    );
+    const dataToValidate = isCompositSubentity ? data?.[entity] : data;
+
+    if (!dataToValidate) return;
+    // Helper functions for business rule evaluation
+    const evaluateCondition = (data, condition) => {
+      const { field, operator, value, compareToField } = condition;
+      const fieldValue = data[field];
+      const compareValue = compareToField ? data[compareToField] : value;
+
+      switch (operator) {
+        case ">":
+          return fieldValue > compareValue;
+        case "<":
+          return fieldValue < compareValue;
+        case ">=":
+          return fieldValue >= compareValue;
+        case "<=":
+          return fieldValue <= compareValue;
+        case "==":
+          return fieldValue == compareValue;
+        case "!=":
+          return fieldValue != compareValue;
+        default:
+          return true;
+      }
+    };
+
+    const validate = (data, index) => {
+      ruleDefinition.forEach((condition) => {
+        if (!evaluateCondition(data, condition)) {
+          // console.log("evaluateCondition: ", {
+          //   condition,
+          //   data,
+          //   evaluation: evaluateCondition(data, condition),
+          //   field: condition.field,
+          //   compareToField: condition.compareToField,
+          // });
+          const fieldErrorPath =
+            index != null
+              ? [entity, index, condition.field]
+              : [entity, condition.field];
+
+          const compareToFieldErrorPath =
+            index != null
+              ? [entity, index, condition.compareToField]
+              : [entity, condition.compareToField];
+
+          const errorMessage =
+            condition.message ||
+            errorMessages.businessRuleCondition({
+              condition,
+              entity,
+              trxTypeName,
+            });
+
+          // Add error to the main field
+          ctx.addIssue({
+            code: "custom",
+            message: errorMessage,
+            path: fieldErrorPath,
+          });
+
+          // Also add error to the compare field if it exists
+          if (condition.compareToField) {
+            ctx.addIssue({
+              code: "custom",
+              message: errorMessage,
+              path: compareToFieldErrorPath,
+            });
+          }
+        }
+      });
+    };
+
+    if (Array.isArray(dataToValidate)) {
+      dataToValidate.forEach((row, rowIndex) => {
+        validate(row, rowIndex);
+      });
+    } else {
+      validate(dataToValidate);
+    }
+  },
+
+  // Custom business validations
+  customValidations: async ({
+    entity,
+    trxTypeName,
+    ruleDefinition,
+    data,
+    context,
+    ctx,
+  }) => {
+    for (const customValidation of ruleDefinition) {
       const validator = ENTITY_VALIDATION_RULES[customValidation];
 
       if (validator) {
-        validator({
+        await validator({
           entity,
           trxTypeName,
           ruleDefinition,
@@ -720,11 +755,11 @@ export const ENTITY_VALIDATION_RULES = {
           ctx,
         });
       }
-    });
+    }
   },
 
   //!-->
-  checkSufficientQOH: ({
+  checkSufficientQOH: async ({
     entity,
     trxTypeName,
     ruleDefinition,
@@ -737,10 +772,17 @@ export const ENTITY_VALIDATION_RULES = {
     );
     const dataToValidate = isCompositSubentity ? data?.[entity] : data;
 
+    // console.log("checkSufficientQoh was called with: ", {
+    //   entity,
+    //   dataToValidate,
+    //   context,
+    //   ctx,
+    // });
+
     if (!dataToValidate) return;
 
     if (Array.isArray(dataToValidate)) {
-      dataToValidate.forEach((record, recordIndex) => {
+      for (const [recordIndex, record] of dataToValidate.entries()) {
         if (!record.qtyOut || record.qtyOut <= 0) {
           return; // Let required validation handle this
         }
@@ -750,70 +792,44 @@ export const ENTITY_VALIDATION_RULES = {
         // Get current QOH for the item in the from bin
         const { universalDataService } = context;
         const itemId = record.itemId;
-        const fromBinId = record.fromBin;
+        const fromBinId = record.fromBinId;
         const requiredQty = record.qtyOut;
 
         if (!itemId || !fromBinId) {
           return; // Let required validation handle missing fields
         }
 
-        const currentQOH = getCurrentQOH({
+        const currentQOH = await getCurrentQOH({
           itemId,
-          fromBinId: fromBinId,
+          binId: fromBinId,
           universalDataService,
         });
 
-        if (currentQOH < requiredQty) {
-          const itemName = getFieldDisplayName({ entity, field: "itemId" });
-          const binName = getFieldDisplayName({
-            entity,
-            field: "fromBinId",
-          });
+        // console.log(
+        //   "currentQOH: ",
+        //   currentQOH,
+        //   "requiredQty: ",
+        //   requiredQty,
+        //   "recordIndex: ",
+        //   recordIndex,
+        // );
 
+        if (currentQOH < requiredQty) {
           ctx.addIssue({
             code: "tooSmall",
             path: [entity, recordIndex, "qtyOut"],
-            message: errorMessages.insufficientQOH(
-              itemName,
-              binName,
-              requiredQty,
-              currentQOH,
-            ),
+            message: errorMessages.insufficientQOH(requiredQty, currentQOH),
           });
         }
-      });
+      }
     }
   },
 };
 
-// Helper functions for business rule evaluation
-function evaluateCondition(data, condition) {
-  const { field, operator, value, compareField } = condition;
-  const fieldValue = data[field];
-  const compareValue = compareField ? data[compareField] : value;
-
-  switch (operator) {
-    case ">":
-      return fieldValue > compareValue;
-    case "<":
-      return fieldValue < compareValue;
-    case ">=":
-      return fieldValue >= compareValue;
-    case "<=":
-      return fieldValue <= compareValue;
-    case "==":
-      return fieldValue == compareValue;
-    case "!=":
-      return fieldValue != compareValue;
-    default:
-      return true;
-  }
-}
-
 function getConditionErrorMessage({ condition, entity, trxTypeName }) {
-  const { field, operator, value, compareField } = condition;
-  const compareValue = compareField
-    ? getFieldDisplayName({ entity, field: compareField })
+  const { field, operator, value, compareToField } = condition;
+  const compareValue = compareToField
+    ? getFieldDisplayName({ entity, field: compareToField })
     : value;
 
   const operatorName = getOperatorName(operator);

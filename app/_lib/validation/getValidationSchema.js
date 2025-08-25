@@ -349,7 +349,7 @@ export const ENTITY_ASSERT = {
     Object.entries(entityBusinessValidationBases).forEach(
       ([base, baseDefinition]) => {
         if ((entityPatternType === "atomic") & (base === "compositeBased")) {
-          enhancedSchema = enhancedSchema.superRefine((data, ctx) => {
+          enhancedSchema = enhancedSchema.superRefine(async (data, ctx) => {
             ctx.addIssue({
               code: "custom",
               path: ["root"],
@@ -362,7 +362,7 @@ export const ENTITY_ASSERT = {
         const businessValidationBaseFn = BUSINESS_VALIDATION_BASE[base];
 
         if (!businessValidationBaseFn) {
-          enhancedSchema = enhancedSchema.superRefine((data, ctx) => {
+          enhancedSchema = enhancedSchema.superRefine(async (data, ctx) => {
             ctx.addIssue({
               code: "custom",
               path: ["root"],
@@ -403,7 +403,7 @@ export const ENTITY_ASSERT = {
     const { header, line } = getCompositeEntities(entity);
 
     if (!header || !line) {
-      enhancedSchema = enhancedSchema.superRefine((data, ctx) => {
+      enhancedSchema = enhancedSchema.superRefine(async (data, ctx) => {
         ctx.addIssue({
           code: "custom",
           path: ["root"],
@@ -430,7 +430,7 @@ export const ENTITY_ASSERT = {
 
   // Header-line consistency validation
   lineCountConsistency: ({ schema, entity, context }) => {
-    const enhancedSchema = schema.superRefine((data, ctx) => {
+    const enhancedSchema = schema.superRefine(async (data, ctx) => {
       // console.log("🐛 lineCountConsistency called with:", {
       //   entity,
       //   schema,
@@ -531,47 +531,6 @@ export const getValidationSchema = ({
       dataDependencies,
     });
 
-    // //:make this FIELD_ASSERT.isForeignKeys
-    // const foreignKeys = getForeignKeys(entity);
-    // // Shared for Create and Update
-    // // Add foreign key validation for all dependencies
-
-    // if (foreignKeys) {
-    //   for (const [fkField, remoteConfig] of Object.entries(foreignKeys || {})) {
-    //     const remoteEntity = remoteConfig.entity;
-
-    //     if (baseSchema.shape[fkField]) {
-    //       const fkEntityData = dataDependencies[remoteEntity] || [];
-
-    //       const fkEntityDisplayName = getEntityDisplayName(remoteEntity);
-
-    //       interimSchema = FIELD_ASSERT.exists({
-    //         schema: interimSchema,
-    //         data: fkEntityData,
-    //         field: fkField,
-    //         displayName: fkEntityDisplayName,
-    //       });
-    //     }
-    //   }
-    // }
-
-    // //add unique:
-    // const uniqueFields = getUniqueFields(entity);
-    // // console.log("🐛  uniqueFields: ", uniqueFields);
-
-    // uniqueFields.map((field) => {
-    //   const fieldDisplayName = getFieldDisplayName({entity, field});
-    //   // console.log("🐛 field: ", field);
-    //   // console.log("🐛  fieldDisplayName: ", fieldDisplayName);
-
-    //   interimSchema = FIELD_ASSERT.isUnique({
-    //     entity,
-    //     schema: interimSchema,
-    //     data: mainEntityData,
-    //     editedEntityId,
-    //   });
-    // });
-
     interimSchema = FIELD_ASSERT.isUnique({
       entity: entityToValidate,
       schema: interimSchema,
@@ -608,7 +567,7 @@ export const getValidationSchema = ({
 
   let enhancedSchema;
 
-  // -> TODO: Apply business rules only on atomic entity
+  // ->  Apply business rules only on atomic entity
   if (!compositeWrapper) {
     const schema = schemasObj["main"];
 
@@ -630,7 +589,7 @@ export const getValidationSchema = ({
     [line]: z.array(schemasObj["line"]).min(1, errorMessages.atLeastOne(line)),
   });
 
-  // TODO: COMPOSITE VALIDATION WITH BUSINESS RULES on compositeWrapper and sub-entities
+  // COMPOSITE VALIDATION WITH BUSINESS RULES on compositeWrapper and sub-entities
   try {
     // console.log("⛳ Applying business rules....");
 

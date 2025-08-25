@@ -185,8 +185,7 @@ export default function AddItemForm({ onCloseModal }) {
   //6- Progressive enhancement submit handler
 
   function onSubmit(data, e) {
-    // console.log("Form submitted: ", data);
-
+    console.log("🎪 AddItemForm was submitted with data: ", data);
     // 🎯 BINARY DECISION: JavaScript Available & Mutation Ready?
     const isJavaScriptReady =
       mutation && !mutation.isPending && typeof mutation.mutate === "function";

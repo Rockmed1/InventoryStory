@@ -107,7 +107,7 @@ const FIELD_CONFIG = {
     foreignKey: { entity: "bin", field: "idField" },
   },
 
-  fromBin: {
+  fromBinId: {
     _type: "number",
     fieldValidation: {
       type: "positiveInteger",
@@ -117,7 +117,7 @@ const FIELD_CONFIG = {
     display: { name: "From Bin", label: "From Bin" },
     foreignKey: { entity: "bin", field: "idField" },
   },
-  toBin: {
+  toBinId: {
     _type: "number",
     fieldValidation: {
       type: "positiveInteger",
@@ -188,8 +188,8 @@ const {
   trxLineNum,
   itemId,
   binId,
-  fromBin,
-  toBin,
+  fromBinId,
+  toBinId,
   qtyIn,
   qtyOut,
 } = FIELD_CONFIG;
@@ -402,16 +402,16 @@ const ENTITY_CONFIG = {
         display: { name: "Line Description", label: "Line Desc" },
       },
       itemId,
-      fromBin,
-      toBin,
+      fromBinId,
+      toBinId,
       qtyIn,
       qtyOut,
     },
     changeDetectionFields: [
       "descField",
       "itemId",
-      "fromBin",
-      "toBin",
+      "fromBinId",
+      "toBinId",
       "qtyIn",
       "qtyOut",
     ],
@@ -439,29 +439,29 @@ const ENTITY_CONFIG = {
           1: {
             // Incoming Transaction
             name: "incoming",
-            required: ["qtyIn", "toBin"],
-            forbidden: ["qtyOut", "fromBin"],
+            required: ["qtyIn", "toBinId"],
+            forbidden: ["qtyOut", "fromBinId"],
             conditions: [{ field: "qtyIn", operator: ">", value: 0 }],
             // No customValidations needed for incoming
           },
           2: {
             // Outgoing Transaction
             name: "outgoing",
-            required: ["qtyOut", "fromBin"],
-            forbidden: ["qtyIn", "toBin"],
+            required: ["qtyOut", "fromBinId"],
+            forbidden: ["qtyIn", "toBinId"],
             conditions: [{ field: "qtyOut", operator: ">", value: 0 }],
             customValidations: ["checkSufficientQOH"],
           },
           3: {
             // Transfer Transaction
             name: "transfer",
-            required: ["qtyIn", "qtyOut", "fromBin", "toBin"],
+            required: ["qtyIn", "qtyOut", "fromBinId", "toBinId"],
             forbidden: [],
             conditions: [
               { field: "qtyIn", operator: ">", value: 0 },
               { field: "qtyOut", operator: ">", value: 0 },
-              { field: "qtyOut", operator: "==", compareField: "qtyIn" },
-              { field: "fromBin", operator: "!=", compareField: "toBin" },
+              { field: "qtyOut", operator: "==", compareToField: "qtyIn" },
+              { field: "fromBinId", operator: "!=", compareToField: "toBinId" },
             ],
             customValidations: ["checkSufficientQOH"],
           },

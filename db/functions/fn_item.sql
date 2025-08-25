@@ -1025,11 +1025,7 @@ ALTER FUNCTION utils.fn_create_item OWNER TO utils_admin;
 ----------
 --------
 ------
-SELECT
-	*
-FROM
-	items.v_item;
-
+---
 ---
 /* ## fn_get_items */
 DROP FUNCTION IF EXISTS utils.fn_get_items;
@@ -1205,9 +1201,10 @@ BEGIN
 	-- WHERE
 	-- 	q.item_id =(_data ->> '_item_id')::INTEGER
 	-- 	AND q.bin_id =(_data ->> '_bin_id')::INTEGER;
-	IF NOT FOUND THEN
-		RAISE EXCEPTION 'No item quantity exists for item % and bin %.' ,(_data ->> '_item_id') ,(_data ->> '_bin_id');
-	END IF;
+	-- IF NOT FOUND THEN
+	-- RAISE EXCEPTION 'No item quantity exists for item % and bin %.' ,(_data ->> '_item_id') ,(_data ->> '_bin_id');
+	_QOH := 0;
+END IF;
 	-- make sure it is not negative
 	IF _QOH < 0 THEN
 		RAISE EXCEPTION 'Negative QOH Error. Contact admin. The current QOH is % for item % in bin %.' , _QOH , _item_id , _bin_id;

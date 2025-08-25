@@ -1,12 +1,12 @@
 "use client";
 
 import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
-import useClientData from "@/app/_lib/client/useClientData";
-import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
+import { generateQueryKeys, getForbiddenKeys } from "@/app/_utils/helpers";
+import { formUtils, useTrxDirectionId } from "@/app/_utils/helpers-client";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useActionState, useEffect } from "react";
+import { useActionState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { createItemTrx } from "../../_lib/server/actions";
@@ -24,6 +24,7 @@ import {
 } from "../_ui/client/shadcn-Form";
 import { Input } from "../_ui/client/shadcn-Input";
 import SpinnerMini from "../_ui/server/SpinnerMini";
+import LineQohDisplay from "./LineQohDisplay";
 
 export default function AddItemTrxForm({ onCloseModal }) {
   //
@@ -68,8 +69,8 @@ export default function AddItemTrxForm({ onCloseModal }) {
           trxLineNum: "1",
           descField: "",
           itemId: null,
-          fromBin: null,
-          toBin: null,
+          fromBinId: null,
+          toBinId: null,
           qtyIn: 0,
           qtyOut: 0,
         },
@@ -84,54 +85,107 @@ export default function AddItemTrxForm({ onCloseModal }) {
     name: "itemTrxDetails",
   });
 
-  function addDetailLine() {
+  async function addDetailLine() {
+    await handleAddLine();
+
+    console.log("isFormValid?: ", form.formState.isValid);
+
+    if (!form.formState.isValid) {
+      return;
+    }
+
+    const newLineNumber = fieldArray.fields.length + 1;
+
     fieldArray.append({
-      trxLineNum: (fieldArray.fields.length + 1).toString(),
+      trxLineNum: newLineNumber.toString(),
       descField: "",
       itemId: "",
-      fromBin: null,
-      toBin: null,
+      fromBinId: null,
+      toBinId: null,
       qtyIn: 0,
       qtyOut: 0,
     });
+
+    // Update numOfLines immediately after adding
+    form.setValue("itemTrxHeader.numOfLines", newLineNumber.toString());
   }
 
   function removeDetailLine(index) {
-    // console.log(fieldArray.fields.length);
-    // console.log(index);
-    // fieldArray.remove(index);
     fieldArray.fields.length > 1 && fieldArray.remove(index);
+    // Update numOfLines immediately after removing
+    const newLineCount = fieldArray.fields.length - 1;
+    form.setValue("itemTrxHeader.numOfLines", newLineCount.toString());
   }
 
-  //automatically get the number of lines
-  useEffect(() => {
-    form.setValue(
-      "itemTrxHeader.numOfLines",
-      fieldArray.fields.length.toString(),
-    );
-  }, [fieldArray.fields.length, form]);
+  const watchedTrxTypeId = form.watch("itemTrxHeader.trxTypeId");
+  const trxDirectionId = useTrxDirectionId(watchedTrxTypeId);
+  const forbiddenKeys = getForbiddenKeys({
+    entity: "itemTrxDetails",
+    rule: trxDirectionId,
+  });
 
-  // const trxTypeId = form.watch("itemTrxHeader.trxTypeId");
-  // // const { directionId, setDirectionId } = useState(null)
-  // const { data } = useClientData({
-  //   entity: "trxType",
-  //   id: trxTypeId,
-  // });
+  const handleTrxTypeChange = () => {
+    if (form.formState.isDirty) {
+      // console.log("Transaction type changed, resetting transaction details...");
 
-  // const { trxDirectionId } = data[0];
-  // console.log("watch trxTypeId: ", trxTypeId, "directionId: ", trxDirectionId);
+      // Only reset the transaction details, keep header info
+      form.setValue("itemTrxDetails", [
+        {
+          trxLineNum: "1",
+          descField: "",
+          itemId: "",
+          fromBin: null,
+          toBin: null,
+          qtyIn: 0,
+          qtyOut: 0,
+        },
+      ]);
 
-  // useEffect(() => {}, [trxTypeId]);
+      // Reset field array
+      fieldArray.replace([
+        {
+          trxLineNum: "1",
+          descField: "",
+          itemId: "",
+          fromBin: null,
+          toBin: null,
+          qtyIn: 0,
+          qtyOut: 0,
+        },
+      ]);
+
+      // Clear any validation errors
+      form.clearErrors();
+    }
+  };
+
+  const handleAddLine = async () => {
+    await form.trigger();
+  };
+
+  const handleLineFieldChange = async () => {
+    const touchedPaths = formUtils.getTouchedPaths("itemTrxDetails", form);
+
+    // console.log("📝 touched paths:", touchedPaths);
+    // console.log("📝 Before trigger - errors:", form.formState.errors);
+
+    // await form.trigger(errorFieldsPaths);
+    await form.trigger(touchedPaths);
+
+    // console.log("📝 After trigger - errors:", form.formState.errors);
+    // console.log("📝 After trigger - error paths:", getAllErrorPaths());
+  };
 
   //5- Enhanced Mutation  (JS available)
-  //! maybe extract into cusom hook
   const dataParams = { entity: "itemTrx", id: "all" };
   const cancelDataParams = { entity: "itemTrx" };
 
+  //! maybe extract into cusom hook
   const mutation = useMutation({
     mutationFn: async (data) => {
       //Convert RHF data to FormData for server action compatibility (incase js is unavailable the default data passed is formData. if only js then this conversion will not be needed )
-      const formData = createFormData(data);
+      // const formData = createFormData(data);
+      const formData = data;
 
       //Call server action directly
       const result = await createItemTrx(null, formData);
@@ -161,10 +215,25 @@ export default function AddItemTrxForm({ onCloseModal }) {
       );
 
       const tempId = `temp-${Date.now()}`;
+
+      const optimisticItem = {
+        idField: tempId,
+        optimistic: true,
+        // Flatten or transform the structure to match what your table expects
+        trxTypeId: newItemTrx.itemTrxHeader.trxTypeId,
+        dateField:
+          newItemTrx.itemTrxHeader.dateField instanceof Date
+            ? newItemTrx.itemTrxHeader.dateField.toISOString().split("T")[0] // YYYY-MM-DD format
+            : newItemTrx.itemTrxHeader.dateField,
+        descField: newItemTrx.itemTrxHeader.descField,
+        marketId: newItemTrx.itemTrxHeader.marketId,
+        numOfLines: newItemTrx.itemTrxHeader.numOfLines,
+        // Add other fields as needed for your table display
+      };
       //optimistically update cache
       queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) => [
         ...old,
-        { ...newItemTrx, idField: tempId, optimistic: true },
+        optimisticItem,
       ]);
 
       return { previousValues };
@@ -243,7 +312,7 @@ export default function AddItemTrxForm({ onCloseModal }) {
   //6- Progressive enhancement submit handler
 
   function onSubmit(data, e) {
-    console.log("🎪 AddItemTrxForm was submitted with data: ", data);
+    // console.log("🎪 AddItemTrxForm was submitted with data: ", data);
 
     // 🎯 BINARY DECISION: JavaScript Available & Mutation Ready?
     const isJavaScriptReady =
@@ -252,13 +321,11 @@ export default function AddItemTrxForm({ onCloseModal }) {
     if (isJavaScriptReady) {
       // ✅ YES: Enhanced Submission
       e.preventDefault();
-      // mutation.mutate(data);
+      mutation.mutate(data);
     }
     // ❌ NO: Native Form Submission (let it proceed naturally)
   }
 
-  // Don't render form until schema is loaded and itemToEdit is available
-  //TODO: make this better: may be render the form anyways but put a message in the form top...
   // console.log("📝 AddItemTrxForm", {
   //   isError,
   //   validationErrors,
@@ -305,10 +372,34 @@ export default function AddItemTrxForm({ onCloseModal }) {
 
   // const allErrors = form.formState.errors;
   // console.log("📝 All error keys:", Object.keys(allErrors));
-  // console.log("📝 Stringified errors:", JSON.stringify(allErrors, null, 2));
+  // console.log("📝 error paths:", getAllErrorPaths());
 
-  console.log("📝 form state: ", form.formState);
+  // console.log("📝 form state: ", form.formState);
 
+  // useEffect(() => {
+  //   if (schema) {
+  //     console.log("🔍 Validation schema debug:", {
+  //       trxDirectionId,
+  //       forbi√√ddenKeys,
+  //       schemaExists: !!schema,
+  //       // Try to parse a test object to see what validation runs
+  //       testValidation: (() => {
+  //         try {
+  //           const result = schema.safeParse(form.getValues());
+  //           return {
+  //             success: result.success,
+  //             errors: result.success ? null : result.error.issues,
+  //           };
+  //         } catch (e) {
+  //           return { error: e.message };
+  //         }
+  //       })(),
+  //     });
+  //   }
+  // }, [schema, trxDirectionId, forbiddenKeys, form]);
+
+  // Don't render form until schema is loaded and itemToEdit is available
+  //TODO: make this better: may be render the form anyways but put a message in the form top...
   if (loadingValidation || !schema) {
     // if (loadingValidation ) {
     return <div>Loading form...</div>;
@@ -328,12 +419,22 @@ export default function AddItemTrxForm({ onCloseModal }) {
             {(mutation.error?.message ||
               form.formState.errors?.root ||
               formState?.message) && (
-              <div className="error-banner rounded border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-                {typeof form.formState.errors.root === "string"
-                  ? form.formState.errors.root
-                  : form.formState.errors.root.message ||
-                    formState?.message ||
-                    "Validation error occurred"}
+              <div className="error-banner px- rounded border border-red-200 bg-red-50 py-3 text-red-700">
+                {(() => {
+                  if (mutation.error?.message) return mutation.error.message;
+                  if (formState?.message) return formState.message;
+                  if (form.formState.errors?.root) {
+                    if (typeof form.formState.errors.root === "string") {
+                      return form.formState.errors.root;
+                    }
+                    if (form.formState.errors.root.message) {
+                      return form.formState.errors.root.message;
+                    }
+                    // If it's an object without message, stringify it
+                    return `Validation error: ${JSON.stringify(form.formState.errors.root)}`;
+                  }
+                  return "Validation error occurred";
+                })()}
               </div>
             )}
 
@@ -354,6 +455,7 @@ export default function AddItemTrxForm({ onCloseModal }) {
                           field={field}
                           entity="trxType"
                           name="itemTrxHeader.trxTypeId"
+                          handleChange={handleTrxTypeChange}
                           // label="location"
                         />
                       </FormControl>
@@ -435,149 +537,205 @@ export default function AddItemTrxForm({ onCloseModal }) {
               </div>
 
               {/* Transaction Details */}
-              <div className="mb-6 rounded-lg bg-neutral-50 p-4">
-                <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-neutral-700">
-                    Transaction Details ({fieldArray.fields.length} lines)
-                  </h3>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={addDetailLine}>
-                    Add Line
-                  </Button>
+              {trxDirectionId && (
+                <div className="mb-6 rounded-lg bg-neutral-50 p-4">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-neutral-700">
+                      Transaction Details ({fieldArray.fields.length} lines)
+                    </h3>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={addDetailLine}>
+                      Add Line
+                    </Button>
+                  </div>
+
+                  <div className="overflow-scroll">
+                    {fieldArray.fields.map((_, index) => (
+                      <div
+                        key={index}
+                        className="mb-4 rounded-lg border border-neutral-200 bg-white p-4">
+                        <div className="mb-3 flex items-center justify-between">
+                          <h4 className="font-medium text-neutral-600">
+                            Line {index + 1}
+                          </h4>
+                          {fieldArray.fields.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="danger"
+                              onClick={() => removeDetailLine(index)}>
+                              -
+                            </Button>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                          <FormField
+                            control={form.control}
+                            name={`itemTrxDetails.${index}.itemId`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Item</FormLabel>
+                                <FormControl>
+                                  <DropDown
+                                    field={field}
+                                    entity="item"
+                                    name={`itemTrxDetails.${index}.itemId`}
+                                    handleChange={handleLineFieldChange}
+                                    // label="location"
+                                  />
+                                </FormControl>
+                                <FormDescription>Select item</FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {forbiddenKeys?.includes("fromBinId") ? null : (
+                            <FormField
+                              control={form.control}
+                              name={`itemTrxDetails.${index}.fromBinId`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>From Bin</FormLabel>
+                                  <FormControl>
+                                    <DropDown
+                                      field={field}
+                                      entity="bin"
+                                      disabled={forbiddenKeys?.includes(
+                                        "fromBinId",
+                                      )}
+                                      name={`itemTrxDetails.${index}.fromBinId`}
+                                      // label="location"
+                                      handleChange={handleLineFieldChange}
+                                    />
+                                  </FormControl>
+                                  <FormDescription>
+                                    Select from Bin
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
+
+                          {forbiddenKeys?.includes("qtyIn") ? null : (
+                            <FormField
+                              control={form.control}
+                              name={`itemTrxDetails.${index}.qtyIn`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Qty In</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder="0"
+                                      disabled={forbiddenKeys?.includes(
+                                        "qtyIn",
+                                      )}
+                                      {...field}
+                                      onChange={(e) => {
+                                        field.onChange(e);
+                                        handleLineFieldChange();
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormDescription>
+                                    Enter Quantity In &gt; 0
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
+
+                          {forbiddenKeys?.includes("toBinId") ? null : (
+                            <FormField
+                              control={form.control}
+                              name={`itemTrxDetails.${index}.toBinId`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>To Bin</FormLabel>
+                                  <FormControl>
+                                    <DropDown
+                                      field={field}
+                                      entity="bin"
+                                      disabled={forbiddenKeys?.includes(
+                                        "toBinId",
+                                      )}
+                                      name={`itemTrxDetails.${index}.toBinId`}
+                                      handleChange={handleLineFieldChange}
+                                      // label="location"
+                                    />
+                                  </FormControl>
+                                  <FormDescription>
+                                    Select To Bin
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
+
+                          {forbiddenKeys?.includes("qtyOut") ? null : (
+                            <FormField
+                              control={form.control}
+                              name={`itemTrxDetails.${index}.qtyOut`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>
+                                    {/* QOH Display */}
+                                    <LineQohDisplay
+                                      control={form.control}
+                                      index={index}
+                                    />
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder="0"
+                                      disabled={forbiddenKeys?.includes(
+                                        "qtyOut",
+                                      )}
+                                      {...field}
+                                      onChange={(e) => {
+                                        field.onChange(e);
+                                        handleLineFieldChange();
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormDescription>
+                                    Enter Quantity Out &gt; 0
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
+                        </div>
+
+                        <div className="mt-4">
+                          <FormField
+                            control={form.control}
+                            name={`itemTrxDetails.${index}.descField`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Line Description</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Enter line description"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-
-                <div className="overflow-scroll">
-                  {fieldArray.fields.map((_, index) => (
-                    <div
-                      key={index}
-                      className="mb-4 rounded-lg border border-neutral-200 bg-white p-4">
-                      <div className="mb-3 flex items-center justify-between">
-                        <h4 className="font-medium text-neutral-600">
-                          Line {index + 1}
-                        </h4>
-                        {fieldArray.fields.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="danger"
-                            onClick={() => removeDetailLine(index)}>
-                            -
-                          </Button>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        <FormField
-                          control={form.control}
-                          name={`itemTrxDetails.${index}.itemId`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Item</FormLabel>
-                              <FormControl>
-                                <DropDown
-                                  field={field}
-                                  entity="item"
-                                  name={`itemTrxDetails.${index}.itemId`}
-                                  // label="location"
-                                />
-                              </FormControl>
-                              <FormDescription>Select item</FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`itemTrxDetails.${index}.fromBin`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>From Bin</FormLabel>
-                              <FormControl>
-                                <DropDown
-                                  field={field}
-                                  entity="bin"
-                                  name={`itemTrxDetails.${index}.fromBin`}
-                                  // label="location"
-                                />
-                              </FormControl>
-                              <FormDescription>Select from Bin</FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`itemTrxDetails.${index}.qtyIn`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Qty In</FormLabel>
-                              <FormControl>
-                                <Input placeholder="0" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`itemTrxDetails.${index}.toBin`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>To Bin</FormLabel>
-                              <FormControl>
-                                <DropDown
-                                  field={field}
-                                  entity="bin"
-                                  name={`itemTrxDetails.${index}.toBin`}
-                                  // label="location"
-                                />
-                              </FormControl>
-                              <FormDescription>Select To Bin</FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`itemTrxDetails.${index}.qtyOut`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Qty Out</FormLabel>
-                              <FormControl>
-                                <Input placeholder="0" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="mt-4">
-                        <FormField
-                          control={form.control}
-                          name={`itemTrxDetails.${index}.descField`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Line Description</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Enter line description"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              )}
 
               <div className="flex items-center justify-end gap-3">
                 {loadingValidation || !schema ? null : (
@@ -596,7 +754,7 @@ export default function AddItemTrxForm({ onCloseModal }) {
                   disabled={mutation.isPending}>
                   Cancel
                 </Button>
-                <Button
+                {/* <Button
                   type="button"
                   onClick={async () => {
                     console.log("Manual validation check:");
@@ -608,7 +766,7 @@ export default function AddItemTrxForm({ onCloseModal }) {
                     });
                   }}>
                   Test Validation
-                </Button>
+                </Button> */}
               </div>
             </div>
           </form>

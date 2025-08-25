@@ -12,7 +12,7 @@ import { getEntityDisplayLabel } from "@/app/_utils/helpers";
 import { useEffect, useState } from "react";
 import SpinnerMini from "../server/SpinnerMini";
 
-export function DropDown({ entity, field, ...props }) {
+export function DropDown({ entity, field, handleChange, ...props }) {
   const [isMounted, setIsMounted] = useState(false);
 
   const {
@@ -22,12 +22,14 @@ export function DropDown({ entity, field, ...props }) {
     error,
   } = useClientData({
     entity,
-    select: (data) => {
-      if (!Array.isArray(data)) return [];
-      return data.map((_) => ({
-        idField: _.idField,
-        nameField: _.nameField,
-      }));
+    options: {
+      select: (data) => {
+        if (!Array.isArray(data)) return [];
+        return data.map((_) => ({
+          idField: _.idField,
+          nameField: _.nameField,
+        }));
+      },
     },
   });
 
@@ -88,7 +90,10 @@ export function DropDown({ entity, field, ...props }) {
   return (
     <Select
       onValueChange={async (value) => {
+        if (!isMounted) return;
+
         // console.log("🔍 DropDown onValueChange triggered with:", value);
+
         if (value === "none") {
           field.onChange(null);
           field.onBlur();
@@ -111,6 +116,8 @@ export function DropDown({ entity, field, ...props }) {
             // console.log("🔍 Calling field.onBlur()");
 
             field.onBlur();
+
+            handleChange(value);
 
             // console.log("🔍 Calling validationTrigger for field:", field.name);
 

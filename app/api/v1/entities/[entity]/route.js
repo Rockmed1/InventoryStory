@@ -31,20 +31,15 @@ export async function GET(request, { params }) {
         { status: 400 },
       );
     }
-    // Build parameters object for getServerData function
-
-    // console.log("route search params: ", searchParams);
 
     const allParams = Object.fromEntries(searchParams);
 
-    // console.log("route[entity]-searchParams: ", searchParams);
-    // console.log("route[entity]-allParams: ", allParams);
+    // console.log("route[entity]- getServerData parameters: ", {
+    //   entity,
+    //   ...allParams,
+    // });
+
     //TODO: 🚨 Add zod validation and sanitization here
-
-    // if (id) queryParams.push(Number(id));
-
-    // if (type) queryParams.push(type === 'simple' ? true : type)
-    // if (limit) queryParams.push(Number(limit))
 
     const data = await getServerData({ entity, ...allParams });
 

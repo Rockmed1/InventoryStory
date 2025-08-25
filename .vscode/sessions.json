@@ -51,22 +51,6 @@
         "color": "terminal.ansiBlue",
         "cwd": "/Users/themac/Dev/React/",
         "commands": ["acli rovodev run"]
-      },
-      {
-        "name": "Cursor Agent",
-        "autoExecuteCommands": true,
-        "icon": "globe",
-        "color": "terminal.ansiBrightCyan",
-        "cwd": "/Users/themac/Dev/React/",
-        "commands": ["cursor-agent"]
-      },
-      {
-        "name": "Groq",
-        "autoExecuteCommands": true,
-        "icon": "globe",
-        "color": "terminal.ansiBrightRed",
-        "cwd": "/Users/themac/Dev/React/",
-        "commands": ["groq"]
       }
     ]
   }

@@ -330,3 +330,8 @@ export function getEntityDirectionRules(entity) {
   const businessRules = getEntityBusinessValidationBases(entity);
   return businessRules?.directionBased?.rules;
 }
+
+export function getForbiddenKeys({ entity, rule }) {
+  const rules = getEntityDirectionRules(entity);
+  return rules?.[rule]?.forbidden;
+}

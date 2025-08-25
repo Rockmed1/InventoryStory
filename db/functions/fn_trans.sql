@@ -369,7 +369,7 @@ BEGIN
 	IF NOT FOUND OR _qty_out > _QOH THEN
 		RETURN TRUE;
 	END IF;
-	-- RETURN FALSE;
+	RETURN FALSE;
 EXCEPTION
 	WHEN OTHERS THEN
 		RAISE;
@@ -453,14 +453,16 @@ BEGIN
 					AND (_obj ->> '_qty_in' IS NULL
 						OR ((_obj ->> '_qty_in')::decimal(8 , 2)) = 0
 					OR _obj ->> '_to_bin_id' IS NULL
-					OR _obj ->> '_qty_out' IS NOT NULL
+					OR (_obj ->> '_qty_out' IS NOT NULL
+						AND ((_obj ->> '_qty_out')::decimal(8 , 2)) > 0)
 					OR _obj ->> '_from_bin_id' IS NOT NULL) THEN
 					'invalid_in_transaction'
 				WHEN _trx_direction_id = 2
 					AND (_obj ->> '_qty_out' IS NULL
 						OR (((_obj ->> '_qty_out')::decimal(8 , 2))) = 0
 					OR _obj ->> '_from_bin_id' IS NULL
-					OR _obj ->> '_qty_in' IS NOT NULL
+					OR (_obj ->> '_qty_in' IS NOT NULL
+						AND ((_obj ->> '_qty_in')::decimal(8 , 2)) > 0)
 					OR _obj ->> '_to_bin_id' IS NOT NULL
 					-- OR _fn_not_enough_item_QOH((_obj ->> '_item_id')::INT ,(_obj ->> '_from_bin_id')::INT ,((_obj ->> '_qty_out')::DECIMAL(8 , 2)))
 ) THEN
@@ -492,13 +494,15 @@ WHERE
 			AND (_obj ->> '_qty_in' IS NULL
 				OR ((_obj ->> '_qty_in')::decimal(8 , 2)) = 0
 				OR _obj ->> '_to_bin_id' IS NULL
-				OR _obj ->> '_qty_out' IS NOT NULL
+				OR (_obj ->> '_qty_out' IS NOT NULL
+					AND ((_obj ->> '_qty_out')::decimal(8 , 2)) > 0)
 				OR _obj ->> '_from_bin_id' IS NOT NULL))
 		OR (_trx_direction_id = 2
 			AND (_obj ->> '_qty_out' IS NULL
 				OR (((_obj ->> '_qty_out')::decimal(8 , 2))) = 0
 				OR _obj ->> '_from_bin_id' IS NULL
-				OR _obj ->> '_qty_in' IS NOT NULL
+				OR (_obj ->> '_qty_in' IS NOT NULL
+					AND ((_obj ->> '_qty_in')::decimal(8 , 2)) > 0)
 				OR _obj ->> '_to_bin_id' IS NOT NULL
 				OR _fn_not_enough_item_QOH((_obj ->> '_item_id')::INT ,(_obj ->> '_from_bin_id')::INT ,((_obj ->> '_qty_out')::DECIMAL(8 , 2)))))
 		OR (_trx_direction_id = 3
@@ -687,7 +691,7 @@ RETURNING
 					UNION
 						ALL
 								SELECT
-									d.org_id , i.item_trx_id , d.item_trx_detail_id , d.item_id , d.to_bin AS bin_id , d.qty_in AS qty
+									d.org_id , i.item_trx_id , d.item_trx_detail_id , d.item_id , d.to_bin_id AS bin_id , d.qty_in AS qty
 								FROM
 									trans.item_trx_detail d
 									JOIN trans.item_trx i ON d.item_trx_id = i.item_trx_id
@@ -709,6 +713,8 @@ RETURNING
 			VALUES (
 			source.item_id , source.bin_id , source.qty , source.created_by , source.org_id);
 	END IF;
+
+		_success := TRUE;
 		RETURN json_build_object('success' , _success , 'item_trx_id' , _item_trx_id);
 EXCEPTION
 	WHEN OTHERS THEN
