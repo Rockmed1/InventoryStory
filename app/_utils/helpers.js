@@ -1,12 +1,25 @@
-import entityClientConfig, {
-  fieldClientConfig,
+import {
+  ENTITY_CONFIG,
+  FIELD_CONFIG,
   PATTERN_CONFIG,
-} from "../_lib/config/entityClientConfig";
+} from "../_lib/config/entityConfig";
+
+export default function entityConfig(entity) {
+  return ENTITY_CONFIG[entity];
+}
+
+export function fieldConfig(field) {
+  return FIELD_CONFIG[field];
+}
+
+export function patternConfig(field) {
+  return PATTERN_CONFIG[field];
+}
 
 export function lookup({ data, lookupField, findValue, targetField }) {
   // const value = data?.find((_) => _[lookupField] === findValue);
 
-  // Get the field type from entityClientConfig
+  // Get the field type from entityConfig
   const fieldType = getFieldType(lookupField) || null;
 
   // Cast the findValue based on field type
@@ -86,7 +99,7 @@ export function createFormData(data) {
  */
 
 export function getFieldDefinition(entity, field) {
-  const config = entityClientConfig(entity);
+  const config = entityConfig(entity);
   return config?.fields?.[field];
 }
 
@@ -103,7 +116,7 @@ export function getFieldDefinition(entity, field) {
  */
 
 export function getFieldType(field) {
-  const fieldDef = fieldClientConfig(field);
+  const fieldDef = fieldConfig(field);
   return fieldDef?._type || "string";
 }
 /**
@@ -148,7 +161,7 @@ export function getFieldDisplayLabel(entity, field) {
  * getForeignKeys("item");
  */
 export function getForeignKeys(entity) {
-  const config = entityClientConfig(entity);
+  const config = entityConfig(entity);
   return Object.entries(config?.fields || {})
     .filter(([_, def]) => def.foreignKey)
     .reduce((acc, [field, def]) => {
@@ -158,12 +171,12 @@ export function getForeignKeys(entity) {
 }
 
 export function getFkField(field) {
-  const fieldDef = fieldClientConfig(field);
+  const fieldDef = fieldConfig(field);
   return fieldDef?.foreignKey?.field;
 }
 
 export function getNotRequiredFields(entity) {
-  const config = entityClientConfig(entity);
+  const config = entityConfig(entity);
   return Object.entries(config?.fields || {})
     .filter(([_, def]) => !def.fieldValidation?.required)
     .map(([field, _]) => field);
@@ -178,7 +191,7 @@ export function getNotRequiredFields(entity) {
  * getUniqueFields("item");
  */
 export function getUniqueFields(entity) {
-  const config = entityClientConfig(entity);
+  const config = entityConfig(entity);
   return Object.entries(config?.fields || {})
     .filter(([_, def]) => def.fieldValidation?.unique)
     .map(([field, _]) => field);
@@ -193,7 +206,7 @@ export function getUniqueFields(entity) {
  * getEntityChangeDetectionFields("item");
  */
 export function getEntityChangeDetectionFields(entity) {
-  const config = entityClientConfig(entity);
+  const config = entityConfig(entity);
   return config?.changeDetectionFields || [];
 }
 
@@ -243,7 +256,7 @@ export function getEntityAndDependencies(entity) {
  * getEntityFieldsValidation("item");
  */
 export function getEntityFieldsValidation(entity) {
-  const config = entityClientConfig(entity);
+  const config = entityConfig(entity);
   if (!config?.fields) {
     return {};
   }
@@ -256,28 +269,28 @@ export function getEntityFieldsValidation(entity) {
 }
 
 export function getEntityDisplayName(entity) {
-  const config = entityClientConfig(entity);
+  const config = entityConfig(entity);
   return config.display.name || "⚠️ no entity display name!";
 }
 
 export function getEntityDisplayLabel(entity) {
-  const config = entityClientConfig(entity);
+  const config = entityConfig(entity);
   return config.display.label || "⚠️ no entity display label!";
 }
 
 export function getEntityTableLabels(entity) {
-  const config = entityClientConfig(entity);
+  const config = entityConfig(entity);
   return config.displayTableLabels || [];
 }
 
 export function getEntityUrlIdentifier(entity) {
-  const config = entityClientConfig(entity);
+  const config = entityConfig(entity);
   // console.log(config);
   return config.urlIdentifer || "id";
 }
 
 export function getEntityPattern(entity) {
-  const config = entityClientConfig(entity);
+  const config = entityConfig(entity);
   return config?.pattern;
 }
 
@@ -286,11 +299,11 @@ export function getEntityPatternType(entity) {
   if (!pattern) {
     throw new Error(`No entity pattern is defined for entity ${entity}`);
   }
-  return PATTERN_CONFIG[pattern];
+  return patternConfig(pattern);
 }
 
 export function getCompositeEntities(entity) {
-  const config = entityClientConfig(entity);
+  const config = entityConfig(entity);
   if (
     getEntityPatternType(entity) !== "composite" ||
     !config?.compositeEntities
@@ -321,7 +334,7 @@ export function getEntityValidationObj(entity) {
 }
 
 export function getEntityBusinessValidationBases(entity) {
-  const config = entityClientConfig(entity);
+  const config = entityConfig(entity);
   const businessRules = config?.businessRules;
   return businessRules;
 }

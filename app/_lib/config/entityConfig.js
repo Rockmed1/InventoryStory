@@ -1,4 +1,4 @@
-const FIELD_CONFIG = {
+export const FIELD_CONFIG = {
   idField: {
     _type: "number",
     fieldValidation: { type: "positiveInteger", required: true, unique: false },
@@ -194,7 +194,7 @@ const {
   qtyOut,
 } = FIELD_CONFIG;
 
-const ENTITY_CONFIG = {
+export const ENTITY_CONFIG = {
   item: {
     display: { name: "Item", label: "Item" },
     pattern: "master",
@@ -487,11 +487,3 @@ export const PATTERN_CONFIG = {
   event: "atomic",
   audit: "atomic",
 };
-
-export default function entityClientConfig(entity) {
-  return ENTITY_CONFIG[entity];
-}
-
-export function fieldClientConfig(field) {
-  return FIELD_CONFIG[field];
-}

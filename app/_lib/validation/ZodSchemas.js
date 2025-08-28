@@ -7,7 +7,7 @@ import {
 } from "@/app/_utils/helpers";
 import DOMPurify from "isomorphic-dompurify";
 import * as z from "zod";
-import { ENTITY_ASSERT } from "./getValidationSchema";
+import { ENTITY_ASSERT } from "./buildValidationSchema";
 
 // Enhanced error messages object
 

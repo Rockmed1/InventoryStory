@@ -3,7 +3,7 @@
 import Form from "@/app/_components/_ui/client/Form";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { createItem } from "../../_lib/server/actions";
+import { createItem } from "../../_lib/data/server/actions";
 import { schema } from "../../_lib/validation/ZodSchemas";
 import { useAppStore } from "../../_store/AppProvider";
 import { DropDown } from "../_ui/client/DropDown";
@@ -56,7 +56,7 @@ export default function AddItemForm({ onCloseModal }) {
     // CLIENT VALIDATE FORM DATA
 
     // 2- Refresh the data used in validation
-    const itemSchemaWithValidation = schema.getValidationSchema(
+    const itemSchemaWithValidation = schema.buildValidationSchema(
       "items",
       existingItems,
     );

@@ -1,16 +1,16 @@
 "use client";
 
-import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
+import { useClientValidationSchema } from "@/app/_lib/validation/client/useClientValidationSchema";
 import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useActionState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { updateItem } from "../../_lib/server/actions";
+import { updateItem } from "../../_lib/data/server/actions";
 import { DropDown } from "../_ui/client/DropDown";
 // import Button from "../_ui/server/Button";
-import useClientData from "@/app/_lib/client/useClientData";
+import useClientData from "@/app/_lib/data/client/useClientData";
 import { DevTool } from "@hookform/devtools";
 import { Button } from "../_ui/client/shadcn-Button";
 import {
@@ -59,7 +59,7 @@ export default function EditItemForm({ id, onCloseModal }) {
     isLoading: loadingValidation,
     isError,
     debug,
-  } = useValidationSchema({
+  } = useClientValidationSchema({
     entity: "item",
     operation: "update",
     editedEntityId: id,
@@ -83,8 +83,6 @@ export default function EditItemForm({ id, onCloseModal }) {
   );
 
   //4- Enhanced form management (JS available)
-  // const { apiOnlyData, restoreDefaultFormat, isChanged } =
-  //   entityTransformers("item").editForm;
 
   // //4-a customize the resolver to handle the custom form data:
   // const customZodResolver = (schema) => {

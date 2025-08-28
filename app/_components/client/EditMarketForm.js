@@ -1,7 +1,7 @@
 "use client";
 
-import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
-import useClientData from "@/app/_lib/client/useClientData";
+import useClientData from "@/app/_lib/data/client/useClientData";
+import { useClientValidationSchema } from "@/app/_lib/validation/client/useClientValidationSchema";
 import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +9,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useActionState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { updateMarket } from "../../_lib/server/actions";
+import { updateMarket } from "../../_lib/data/server/actions";
 import { DropDown } from "../_ui/client/DropDown";
 import { Button } from "../_ui/client/shadcn-Button";
 import {
@@ -38,7 +38,7 @@ export default function EditMarketForm({ id, onCloseModal }) {
     isLoading: loadingValidation,
     isError,
     debug,
-  } = useValidationSchema({
+  } = useClientValidationSchema({
     entity: "market",
     operation: "update",
     editedEntityId: id,

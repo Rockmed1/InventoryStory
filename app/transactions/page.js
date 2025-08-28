@@ -3,7 +3,7 @@ import AddButtonModal from "../_components/_ui/client/AddButtonModal";
 import AddItemTrxForm from "../_components/client/AddItemTrxForm";
 import TestForm from "../_components/client/TestForm";
 import ItemsTrxTable from "../_components/server/ItemsTrxTable";
-import UseAuth from "../_hooks/useAuth";
+import UseAuth from "../_lib/auth/useAuth";
 
 export const metadata = {
   title: "items",

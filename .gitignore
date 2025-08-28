@@ -44,3 +44,6 @@ next-env.d.ts
 # CRUSH
 .crush
 
+
+# clerk configuration (can include secrets)
+/.clerk/

@@ -2,7 +2,7 @@
 
 import { getEntityAndDependencies } from "@/app/_utils/helpers";
 import { getServerData } from "../../../_utils/helpers-server";
-import { getValidationSchema } from "../getValidationSchema";
+import { buildValidationSchema } from "../buildValidationSchema";
 
 /**
  * A server-side utility to generate a Zod validation schema.
@@ -53,7 +53,7 @@ export async function getServerValidationSchema({
         //   availableEntities: Object.keys(dataDependencies),
         //   operation,
         // });
-        return getValidationSchema({
+        return buildValidationSchema({
           entity,
           dataDependencies,
           operation,

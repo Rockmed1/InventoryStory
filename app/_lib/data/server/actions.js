@@ -3,9 +3,10 @@
 import { revalidateTag } from "next/cache";
 // import { auth } from "./auth"; // Placeholder for your actual auth function
 import { dbReadyData } from "@/app/_utils/helpers-server";
+import { redirect } from "next/navigation";
 import z from "zod";
-import { appContextSchema } from "../validation/getValidationSchema";
-import { getServerValidationSchema } from "../validation/server/getServerValidationSchema";
+import { appContextSchema } from "../../validation/buildValidationSchema";
+import { getServerValidationSchema } from "../../validation/server/getServerValidationSchema";
 import { supabase } from "./supabase";
 
 /**
@@ -33,6 +34,7 @@ function dbAction(rpcName, entity, operation) {
     const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
     // const session = await auth();
     const session = { _org_uuid: ORG_UUID, _usr_uuid: USR_UUID };
+    // TODO: authenticate user
 
     if (!session?._org_uuid || !session?._usr_uuid) return redirect("/");
     const { _org_uuid, _usr_uuid } = session;
@@ -46,27 +48,11 @@ function dbAction(rpcName, entity, operation) {
     // console.log("validatedAppContext: ", validatedAppContext);
 
     if (!validatedAppContext.success) {
+      console.error(z.prettifyError(validatedAppContext.error));
       return {
         error: z.prettifyError(validatedAppContext.error),
       };
     }
-
-    // prepare and validate the form data
-    // let destructuredFormData;
-
-    // // Special handling for ItemTrx entity
-    // if (entity === "itemTrx") {
-    //   // Transform FormData using unified pipeline for complex transactions
-    //   destructuredFormData = formDataTransformer.transform(formData);
-    //   // console.log("Transformed ItemTrx data:", destructuredFormData);
-    // } else {
-    //   // Standard FormData handling for other entities
-    //   destructuredFormData = Object.fromEntries(formData);
-    // }
-
-    // destructuredFormData = Object.fromEntries(formData);
-
-    // console.log("server formData: ", formData);
 
     const editedEntityId =
       operation === "update" ? parseInt(formData.idField) : null;
@@ -102,29 +88,6 @@ function dbAction(rpcName, entity, operation) {
 
     // For testing
     // await new Promise((res) => setTimeout(res, 2000));
-
-    // 2. Prepare the data for the RPC call.
-
-    // const destructuredFormData = Object.fromEntries(formData);
-
-    // const validatedData = schema[actionSchema].safeParseAsync({
-    //   _org_uuid,
-    //   _usr_uuid,
-    //   ...destructuredFormData,
-    // });
-
-    // if (!validatedData.success) {
-    //   return {
-    //     success: false,
-    //     formData: destructuredFormData,
-    //     zodErrors: validatedData.error.flatten().fieldErrors,
-    //     message: "Missing Fields. Operation aborted.",
-    //   };
-    // }
-
-    // const _data = validatedData.data;
-    // console.log(_data);
-    // console.log(typeof payload);
 
     // 3. Call the specified Supabase RPC function.
     const { data: resultData, error } = await supabase.rpc(rpcName, {

@@ -1,7 +1,7 @@
 "use client";
 
-import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
-import useClientData from "@/app/_lib/client/useClientData";
+import useClientData from "@/app/_lib/data/client/useClientData";
+import { useClientValidationSchema } from "@/app/_lib/validation/client/useClientValidationSchema";
 import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +9,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useActionState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { updateItemClass } from "../../_lib/server/actions";
+import { updateItemClass } from "../../_lib/data/server/actions";
 import { Button } from "../_ui/client/shadcn-Button";
 import {
   Form,
@@ -37,7 +37,7 @@ export default function EditItemClassForm({ id, onCloseModal }) {
     isLoading: loadingValidation,
     isError,
     debug,
-  } = useValidationSchema({
+  } = useClientValidationSchema({
     entity: "itemClass",
     operation: "update",
     editedEntityId: id,
@@ -70,9 +70,13 @@ export default function EditItemClassForm({ id, onCloseModal }) {
 
   const mutation = useMutation({
     onMutate: async (values) => {
-      await queryClient.cancelQueries({ queryKey: generateQueryKeys(cancelDataParams) });
+      await queryClient.cancelQueries({
+        queryKey: generateQueryKeys(cancelDataParams),
+      });
 
-      const previousValues = queryClient.getQueryData(generateQueryKeys(dataParams));
+      const previousValues = queryClient.getQueryData(
+        generateQueryKeys(dataParams),
+      );
 
       queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) =>
         old.map((itemClass) => {
@@ -118,7 +122,10 @@ export default function EditItemClassForm({ id, onCloseModal }) {
 
     onError: (error, variables, context) => {
       if (context?.previousValues) {
-        queryClient.setQueryData(generateQueryKeys(dataParams), context.previousValues);
+        queryClient.setQueryData(
+          generateQueryKeys(dataParams),
+          context.previousValues,
+        );
       }
 
       if (error.zodErrors) {

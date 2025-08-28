@@ -1,6 +1,6 @@
 "use client";
 
-import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
+import { useClientValidationSchema } from "@/app/_lib/validation/client/useClientValidationSchema";
 import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,7 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useActionState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { createLocation } from "../../_lib/server/actions";
+import { createLocation } from "../../_lib/data/server/actions";
 import { Button } from "../_ui/client/shadcn-Button";
 import {
   Form,
@@ -26,7 +26,7 @@ export default function AddLocationForm({ onCloseModal }) {
   const queryClient = useQueryClient();
 
   // 2- get the validation schema with refreshed validation data
-  const { schema, isLoading: loadingValidation } = useValidationSchema({
+  const { schema, isLoading: loadingValidation } = useClientValidationSchema({
     entity: "location",
     operation: "create",
   });
@@ -40,7 +40,7 @@ export default function AddLocationForm({ onCloseModal }) {
 
   const [formState, formAction, pending] = useActionState(
     createLocation,
-    initialState
+    initialState,
   );
 
   //4- Enhanced form management (JS available)
@@ -81,10 +81,14 @@ export default function AddLocationForm({ onCloseModal }) {
     // Optimistic update:
     onMutate: async (newLocation) => {
       //cancel ongoing refetches for all tags including "location"
-      await queryClient.cancelQueries({ queryKey: generateQueryKeys(cancelDataParams) });
+      await queryClient.cancelQueries({
+        queryKey: generateQueryKeys(cancelDataParams),
+      });
 
       //Snapshot previous values
-      const previousValues = queryClient.getQueryData(generateQueryKeys(dataParams));
+      const previousValues = queryClient.getQueryData(
+        generateQueryKeys(dataParams),
+      );
 
       //optimistically update cache
       queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) => [
@@ -113,7 +117,7 @@ export default function AddLocationForm({ onCloseModal }) {
       });
       //UI feedback //! may be grab the newly created id here...
       toast.success(
-        `Location ${variables.nameField} was created successfully!`
+        `Location ${variables.nameField} was created successfully!`,
       );
       form.reset();
       onCloseModal?.();
@@ -123,7 +127,10 @@ export default function AddLocationForm({ onCloseModal }) {
     onError: (error, variables, context) => {
       //Roll back optimistic update
       if (context?.previousValues) {
-        queryClient.setQueryData(generateQueryKeys(dataParams), context.previousValues);
+        queryClient.setQueryData(
+          generateQueryKeys(dataParams),
+          context.previousValues,
+        );
       }
 
       //! may be make a default to redirect the user to login page if the error is 401
@@ -134,14 +141,14 @@ export default function AddLocationForm({ onCloseModal }) {
           form.setError(field, {
             type: "server",
             message: Array.isArray(errors) ? errors[0] : errors,
-          })
+          }),
         );
         // may be put this message on the top of the form
         // toast.error("Please fix the validation errors");
       } else if (error.name === "NetworkError") {
         //Network specific error handling
         toast.error(
-          "Network error. Please check your connection and try again."
+          "Network error. Please check your connection and try again.",
         );
         form.setError("root", {
           type: "network",
@@ -194,8 +201,7 @@ export default function AddLocationForm({ onCloseModal }) {
             onSubmit={form.handleSubmit(onSubmit)}
             action={formAction}
             // method="POST"
-            className="space-y-8"
-          >
+            className="space-y-8">
             {/* Global error display */}
             {(mutation.error?.message ||
               form.formState.errors?.root ||
@@ -244,8 +250,7 @@ export default function AddLocationForm({ onCloseModal }) {
                 <Button
                   disabled={mutation.isPending || !form.formState.isValid}
                   variant="outline"
-                  type="submit"
-                >
+                  type="submit">
                   {mutation.isPending && <SpinnerMini />}
                   <span> Add Location</span>
                 </Button>
@@ -254,8 +259,7 @@ export default function AddLocationForm({ onCloseModal }) {
                 type="button"
                 onClick={onCloseModal}
                 variant="destructive"
-                disabled={mutation.isPending}
-              >
+                disabled={mutation.isPending}>
                 Cancel
               </Button>
             </div>

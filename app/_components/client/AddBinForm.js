@@ -1,6 +1,6 @@
 "use client";
 
-import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
+import { useClientValidationSchema } from "@/app/_lib/validation/client/useClientValidationSchema";
 import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,7 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useActionState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { createBin } from "../../_lib/server/actions";
+import { createBin } from "../../_lib/data/server/actions";
 import { DropDown } from "../_ui/client/DropDown";
 import { Button } from "../_ui/client/shadcn-Button";
 import {
@@ -32,7 +32,7 @@ export default function AddBinForm({ onCloseModal }) {
     isLoading: loadingValidation,
     isError,
     debug,
-  } = useValidationSchema({ entity: "bin", operation: "create" });
+  } = useClientValidationSchema({ entity: "bin", operation: "create" });
 
   //3- server action fallback for progressive enhancement (works withour JS)
   const initialState = {

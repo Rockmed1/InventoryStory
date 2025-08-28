@@ -1,6 +1,6 @@
 "use client";
 
-import { useApiData } from "@/app/_lib/client/useClientData";
+import { useApiData } from "@/app/_lib/data/client/useClientData";
 import { generateQueryKeys, getEntityTableLabels } from "@/app/_utils/helpers";
 import { PencilIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";

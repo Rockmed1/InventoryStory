@@ -17,6 +17,7 @@ This document outlines the implementation plan for refactoring `useClientData`, 
 ## Phase 1: Refactor `useClientData` (Client Options Handling)
 
 ### Current Implementation
+
 ```javascript
 export default function useClientData({
   entity,
@@ -28,6 +29,7 @@ export default function useClientData({
 ```
 
 ### New Implementation
+
 ```javascript
 export default function useClientData({
   entity,
@@ -74,6 +76,7 @@ export default function useClientData({
 ## Phase 2: Update `getServerData` (Pass Options to createDataService)
 
 ### Current Implementation
+
 ```javascript
 export async function getServerData({ entity, ...otherParams }) {
   const dataService = await createDataService();
@@ -84,6 +87,7 @@ export async function getServerData({ entity, ...otherParams }) {
 ```
 
 ### New Implementation
+
 ```javascript
 export async function getServerData({ entity, options = {}, ...otherParams }) {
   if (!entity) throw new Error(`🚨 no entity was provided for getServerData.`);
@@ -109,6 +113,7 @@ export async function getServerData({ entity, options = {}, ...otherParams }) {
 ## Phase 3: Update `createDataService` (Accept and Pass Server Options)
 
 ### New Implementation
+
 ```javascript
 export async function createDataService(globalOptions = {}) {
   // Global server options with defaults
@@ -124,7 +129,7 @@ export async function createDataService(globalOptions = {}) {
   return {
     getItems: async (params) => {
       const { id: itemId = "all", options = {}, ...otherParams } = params;
-      
+
       // Merge global options with method-specific options
       const {
         forceRefresh = globalForceRefresh,
@@ -142,7 +147,7 @@ export async function createDataService(globalOptions = {}) {
         const filteredData = {
           _item_id: itemId === "all" ? null : itemId,
           ..._data,
-          ...otherParams
+          ...otherParams,
         };
         const { data, error } = await supabase.rpc("fn_get_items", {
           _data: filteredData,
@@ -156,7 +161,7 @@ export async function createDataService(globalOptions = {}) {
           const filteredData = {
             _item_id: itemId === "all" ? null : itemId,
             ..._data,
-            ...otherParams
+            ...otherParams,
           };
           const { data, error } = await supabase.rpc("fn_get_items", {
             _data: filteredData,
@@ -168,14 +173,14 @@ export async function createDataService(globalOptions = {}) {
         {
           tags: [`item-${_org_uuid}-${itemId}`],
           revalidate: cacheTTL,
-          ...additionalMethodOptions // Allow additional cache options
+          ...additionalMethodOptions, // Allow additional cache options
         },
       )();
     },
 
     getLocations: async (params) => {
       const { id: locationId = "all", options = {}, ...otherParams } = params;
-      
+
       const {
         forceRefresh = globalForceRefresh,
         cacheTTL = globalCacheTTL,
@@ -198,10 +203,11 @@ export async function createDataService(globalOptions = {}) {
 Each method (`getItems`, `getLocations`, `getBins`, `getItemClasses`, `getMarkets`, `getMarketTypes`, `getTrxTypes`, `getTrxDirections`, `getItemQoh`, `getItemTrx`, `getItemTrxDetails`) needs to follow this pattern:
 
 ### Template for Data Service Methods
+
 ```javascript
 getItemClasses: async (params) => {
   const { id: itemClassId = "all", options = {}, ...otherParams } = params;
-  
+
   // Server options with defaults + ability to accept additional options
   const {
     forceRefresh = globalForceRefresh,
@@ -238,6 +244,7 @@ getItemClasses: async (params) => {
 ```
 
 ### Special Case: `getItemQoh`
+
 ```javascript
 getItemQoh: async (params) => {
   const { itemId, binId, options = {}, ...otherParams } = params;
@@ -300,7 +307,7 @@ export async function GET(request, { params }) {
 
   // Only pass data parameters - no options filtering needed
   const data = await getServerData({ entity, ...allParams });
-  
+
   return Response.json(data, {
     headers: {
       "Cache-Control": "private, s-maxage=60, stale-while-revalidate=300",
@@ -318,7 +325,7 @@ export async function GET(request, { params }) {
 
   // Only pass data parameters - no options filtering needed
   const data = await getServerData({ entity, id, ...allParams });
-  
+
   return Response.json(data, {
     headers: {
       "Cache-Control": "private, s-maxage=60, stale-while-revalidate=300",
@@ -334,80 +341,87 @@ export async function GET(request, { params }) {
 ### Client Side Usage
 
 #### Basic Usage
+
 ```javascript
-useClientData({ entity: "item", id: "all" })
+useClientData({ entity: "item", id: "all" });
 ```
 
 #### With Client Options
+
 ```javascript
-useClientData({ 
-  entity: "item", 
+useClientData({
+  entity: "item",
   id: "all",
-  options: { 
+  options: {
     staleTime: 30000,
     gcTime: 60000,
     select: (data) => data.slice(0, 10),
     enabled: false, // Any React Query option
     refetchInterval: 5000, // Additional options not explicitly listed
-    refetchOnWindowFocus: false
-  }
-})
+    refetchOnWindowFocus: false,
+  },
+});
 ```
 
 #### Complex Data Parameters with Options
+
 ```javascript
-useClientData({ 
-  entity: "itemQoh", 
-  itemId: 7, 
+useClientData({
+  entity: "itemQoh",
+  itemId: 7,
   binId: 23,
-  options: { 
+  options: {
     staleTime: 10000,
-    enabled: itemId && binId // Conditional fetching
-  }
-})
+    enabled: itemId && binId, // Conditional fetching
+  },
+});
 ```
 
 ### Server Side Usage
 
 #### Basic Usage
+
 ```javascript
-getServerData({ entity: "item", id: "all" })
+getServerData({ entity: "item", id: "all" });
 ```
 
 #### With Server Options
+
 ```javascript
-getServerData({ 
-  entity: "item", 
+getServerData({
+  entity: "item",
   id: "all",
-  options: { 
+  options: {
     forceRefresh: true,
     cacheTTL: 600,
     skipCache: false,
-    customCacheKey: "special-key" // Additional options not explicitly listed
-  }
-})
+    customCacheKey: "special-key", // Additional options not explicitly listed
+  },
+});
 ```
 
 #### With Global Server Options
+
 ```javascript
-const dataService = await createDataService({ 
-  forceRefresh: true, 
+const dataService = await createDataService({
+  forceRefresh: true,
   cacheTTL: 1200,
-  skipCache: false
+  skipCache: false,
 });
 ```
 
 #### Complex Server Usage
+
 ```javascript
-getServerData({ 
-  entity: "itemQoh", 
-  itemId: 7, 
+getServerData({
+  entity: "itemQoh",
+  itemId: 7,
   binId: 23,
-  options: { 
+  options: {
     forceRefresh: true,
-    cacheTTL: 60 // Short cache for real-time data
-  }
-})
+    cacheTTL: 60, // Short cache for real-time data
+  },
+});
 ```
 
 ---
@@ -415,20 +429,24 @@ getServerData({
 ## Migration Strategy
 
 ### Step 1: Core Infrastructure Updates
+
 1. **Update `createDataService`** to accept global options parameter
 2. **Update all data service methods** (`getItems`, `getLocations`, etc.) to handle options parameter
 3. **Update `getServerData`** to pass options to createDataService
 
 ### Step 2: Client Infrastructure Updates
+
 4. **Update `useClientData`** to handle client options parameter
 5. **Test basic functionality** with new options structure
 
 ### Step 3: Component Migration
+
 6. **Update all client components** to use new options structure
 7. **Update server components** and validation hooks
 8. **Update DropDown and other UI components**
 
 ### Step 4: Testing & Validation
+
 9. **Comprehensive testing** of both client and server options
 10. **Performance testing** to ensure no regressions
 11. **Update documentation** and examples
@@ -438,17 +456,20 @@ getServerData({
 ## Files to Update
 
 ### Core Files
+
 - `app/_lib/client/useClientData.js`
 - `app/_utils/helpers-server.js`
 - `app/_lib/server/dataServices.js`
 
 ### Component Files (Examples)
+
 - `app/_components/client/AddItemTrxForm.js`
 - `app/_components/_ui/client/DropDown.js`
-- `app/_hooks/useValidationSchema.js`
+- `app/_hooks/useClientValidationSchema.js`
 - All form components using `useClientData`
 
 ### Server Files
+
 - `app/_lib/validation/server/getServerValidationSchema.js`
 - All server components using `getServerData`
 
@@ -475,7 +496,7 @@ export default function useClientData({
   entity,
   // Legacy parameters (deprecated)
   staleTime,
-  gcTime, 
+  gcTime,
   select,
   // New structure
   options = {},
@@ -491,7 +512,9 @@ export default function useClientData({
 
   // Show deprecation warning
   if (staleTime !== undefined || gcTime !== undefined || select !== undefined) {
-    console.warn('Direct staleTime, gcTime, select parameters are deprecated. Use options object instead.');
+    console.warn(
+      "Direct staleTime, gcTime, select parameters are deprecated. Use options object instead.",
+    );
   }
 
   // ... rest of implementation with finalOptions

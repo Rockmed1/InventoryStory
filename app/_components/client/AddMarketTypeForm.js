@@ -1,6 +1,6 @@
 "use client";
 
-import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
+import { useClientValidationSchema } from "@/app/_lib/validation/client/useClientValidationSchema";
 import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,7 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useActionState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { createMarketType } from "../../_lib/server/actions";
+import { createMarketType } from "../../_lib/data/server/actions";
 import { Button } from "../_ui/client/shadcn-Button";
 import {
   Form,
@@ -31,7 +31,7 @@ export default function AddMarketTypeForm({ onCloseModal }) {
     isLoading: loadingValidation,
     isError,
     debug,
-  } = useValidationSchema({ entity: "marketType", operation: "create" });
+  } = useClientValidationSchema({ entity: "marketType", operation: "create" });
 
   //3- server action fallback for progressive enhancement (works withour JS)
   const initialState = {
@@ -82,9 +82,13 @@ export default function AddMarketTypeForm({ onCloseModal }) {
 
     // Optimistic update
     onMutate: async (newMarketType) => {
-      await queryClient.cancelQueries({ queryKey: generateQueryKeys(cancelDataParams) });
+      await queryClient.cancelQueries({
+        queryKey: generateQueryKeys(cancelDataParams),
+      });
 
-      const previousValues = queryClient.getQueryData(generateQueryKeys(dataParams));
+      const previousValues = queryClient.getQueryData(
+        generateQueryKeys(dataParams),
+      );
 
       // Optimistically update cache
       queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) => [
@@ -118,7 +122,10 @@ export default function AddMarketTypeForm({ onCloseModal }) {
     onError: (error, variables, context) => {
       //Roll back optimistic update
       if (context?.previousValues) {
-        queryClient.setQueryData(generateQueryKeys(dataParams), context.previousValues);
+        queryClient.setQueryData(
+          generateQueryKeys(dataParams),
+          context.previousValues,
+        );
       }
 
       //! may be make a default to redirect the user to login page if the error is 401

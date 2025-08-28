@@ -4,7 +4,7 @@ import { getEntityFieldMapping } from "@/app/_utils/helpers-server";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { appContextSchema } from "../validation/getValidationSchema";
+import { appContextSchema } from "../../validation/buildValidationSchema";
 import { supabase } from "./supabase";
 
 //!Factory pattern is used as it is better for multi-tennant applications caching to ensure org scoped operations
@@ -13,10 +13,12 @@ export async function createDataService(globalOptions = {}) {
   // if (!org_uuid) throw new Error("Organization UUID is required");
 
   //1- authenticate the user
+
   const ORG_UUID = "ceba721b-b8dc-487d-a80c-15ae9d947084";
   const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
   const session = { _org_uuid: ORG_UUID, _usr_uuid: USR_UUID };
   // const session = {}; for testing
+  // TODO: authenticate user
 
   // const session = await auth();
 
@@ -33,6 +35,7 @@ export async function createDataService(globalOptions = {}) {
   });
 
   if (!validatedAppContext.success) {
+    console.error(z.prettifyError(validatedAppContext.error));
     return {
       error: z.prettifyError(validatedAppContext.error),
     };

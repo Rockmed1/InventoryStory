@@ -1,8 +1,15 @@
 "use client";
 
 import {
+  OrganizationSwitcher,
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+} from "@clerk/nextjs";
+import {
   ArchiveBoxIcon,
-  ArrowRightEndOnRectangleIcon,
   ArrowsRightLeftIcon,
   ChartPieIcon,
   Cog8ToothIcon,
@@ -11,6 +18,7 @@ import {
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Button } from "../_ui/client/shadcn-Button";
 
 export default function SideNavigation() {
   const pathName = usePathname();
@@ -22,6 +30,7 @@ export default function SideNavigation() {
         href: "/",
         icon: <HomeIcon className="" />,
       },
+
       {
         name: "Items",
         href: "/items",
@@ -53,11 +62,11 @@ export default function SideNavigation() {
         href: "/settings",
         icon: <Cog8ToothIcon className="" />,
       },
-      {
-        name: "Sign out/ Account",
-        href: "/",
-        icon: <ArrowRightEndOnRectangleIcon />,
-      },
+      // {
+      //   name: "Sign out/ Account",
+      //   href: "/",
+      //   icon: <ArrowRightEndOnRectangleIcon />,
+      // },
     ],
   };
   return (
@@ -85,6 +94,21 @@ export default function SideNavigation() {
               </Link>
             </li>
           ))}
+          <SignedOut>
+            <div className="flex items-center justify-between gap-2">
+              <SignInButton>
+                <Button>Sign In</Button>
+              </SignInButton>
+              <SignUpButton>
+                <Button>Sign Up</Button>
+              </SignUpButton>
+            </div>
+          </SignedOut>
+          <SignedIn>
+            <UserButton showName />
+            {/* <SignOutButton redirectUrl="/landing" /> */}
+            <OrganizationSwitcher />
+          </SignedIn>
         </div>
       </ul>
     </div>

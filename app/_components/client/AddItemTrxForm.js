@@ -1,15 +1,16 @@
 "use client";
 
-import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
+import { useClientValidationSchema } from "@/app/_lib/validation/client/useClientValidationSchema";
+import { formUtils } from "@/app/_utils/formUtils";
 import { generateQueryKeys, getForbiddenKeys } from "@/app/_utils/helpers";
-import { formUtils, useTrxDirectionId } from "@/app/_utils/helpers-client";
+import { useTrxDirectionId } from "@/app/_utils/helpers-client";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useActionState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { createItemTrx } from "../../_lib/server/actions";
+import { createItemTrx } from "../../_lib/data/server/actions";
 import { DropDown } from "../_ui/client/DropDown";
 import { Button } from "../_ui/client/shadcn-Button";
 import DatePicker from "../_ui/client/shadcn-DatePicker";
@@ -39,7 +40,7 @@ export default function AddItemTrxForm({ onCloseModal }) {
     errors: validationErrors,
     isError,
     debug,
-  } = useValidationSchema({ entity: "itemTrx", operation: "create" });
+  } = useClientValidationSchema({ entity: "itemTrx", operation: "create" });
 
   //3- server action fallback for progressive enhancement (works withour JS)
   const initialState = {

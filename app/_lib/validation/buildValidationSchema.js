@@ -470,14 +470,14 @@ export const ENTITY_ASSERT = {
 };
 
 // 5. validation function
-export const getValidationSchema = ({
+export const buildValidationSchema = ({
   entity,
   dataDependencies = {},
   operation = "create",
   editedEntityId = null,
   universalDataService,
 }) => {
-  // console.log("🐛 getValidationSchema called with:", {
+  // console.log("🐛 buildValidationSchema called with:", {
   //   entity,
   //   dataDependencies,
   //   operation,

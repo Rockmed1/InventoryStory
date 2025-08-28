@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import AddButtonModal from "../_components/_ui/client/AddButtonModal";
 import AddItemForm from "../_components/client/AddItemForm";
 import ItemsTable from "../_components/server/ItemsTable";
-import UseAuth from "../_hooks/useAuth";
+import UseAuth from "../_lib/auth/useAuth";
 
 export const metadata = {
   title: "items",

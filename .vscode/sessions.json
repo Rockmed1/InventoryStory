@@ -48,7 +48,7 @@
         "name": "Rovo",
         "autoExecuteCommands": true,
         "icon": "globe",
-        "color": "terminal.ansiBlue",
+        "color": "terminal.ansiBrightYellow",
         "cwd": "/Users/themac/Dev/React/",
         "commands": ["acli rovodev run"]
       }

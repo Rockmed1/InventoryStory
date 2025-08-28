@@ -1,12 +1,12 @@
 "use client";
 
 import Form from "@/app/_components/_ui/client/Form";
-import { getValidationSchema } from "@/app/_lib/validation/getValidationSchema";
+import { buildValidationSchema } from "@/app/_lib/validation/buildValidationSchema";
 import { useAppStore } from "@/app/_store/AppProvider";
 import { useActionState, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { createItemTrx } from "../../_lib/server/actions";
-import { formDataTransformer } from "../../_lib/server/transformers";
+import { createItemTrx } from "../../_lib/data/server/actions";
+import { formDataTransformer } from "../../_lib/data/server/transformers";
 import { DropDown } from "../_ui/client/DropDown";
 import DatePicker from "../_ui/client/shadcn-DatePicker";
 import Button from "../_ui/server/Button";
@@ -83,7 +83,7 @@ export default function AddItemTrxForm({ onCloseModal }) {
       trxType: existingTrxTypes,
     };
 
-    const schema = getValidationSchema("itemTrx", dataDependencies, "create");
+    const schema = buildValidationSchema("itemTrx", dataDependencies, "create");
 
     // Perform combined validation
     const validationResults = schema.safeParse(transformedData);

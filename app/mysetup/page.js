@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import Card from "../_components/_ui/server/Card";
 import AddButtonModal from "../_components/_ui/client/AddButtonModal";
+import Card from "../_components/_ui/server/Card";
 import AddBinForm from "../_components/client/AddBinForm";
 import AddItemClassForm from "../_components/client/AddItemClassForm";
 import AddLocationForm from "../_components/client/AddLocationForm";
@@ -13,7 +13,7 @@ import LocationsTable from "../_components/server/locationsTable";
 import MarketsTable from "../_components/server/MarketsTable";
 import MarketTypesTable from "../_components/server/MarketTypesTable";
 import TrxTypesTable from "../_components/server/TrxTypesTable";
-import UseAuth from "../_hooks/useAuth";
+import UseAuth from "../_lib/auth/useAuth";
 
 export const revalidate = 0; // this will make the page dynamic and revalidate cache every request
 
@@ -67,7 +67,7 @@ export default function Page() {
 
     {
       cardName: "Transaction Types",
-      cardTable: <TrxTypesTable org_uuid={_org_uuid} />,
+      cardTable: <TrxTypesTable />,
       cardFallback: <TrxTypesTable.Fallback />,
       CardAction: (
         <AddButtonModal

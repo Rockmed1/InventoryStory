@@ -1,6 +1,6 @@
 "use client";
 
-import { useValidationSchema } from "@/app/_hooks/useValidationSchema";
+import { useClientValidationSchema } from "@/app/_lib/validation/client/useClientValidationSchema";
 import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,7 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useActionState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { createItemClass } from "../../_lib/server/actions";
+import { createItemClass } from "../../_lib/data/server/actions";
 import { Button } from "../_ui/client/shadcn-Button";
 import {
   Form,
@@ -31,7 +31,7 @@ export default function AddItemClassForm({ onCloseModal }) {
     isLoading: loadingValidation,
     isError,
     debug,
-  } = useValidationSchema({ entity: "itemClass", operation: "create" });
+  } = useClientValidationSchema({ entity: "itemClass", operation: "create" });
 
   //3- server action fallback for progressive enhancement (works withour JS)
   const initialState = {

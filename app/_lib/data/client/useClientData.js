@@ -2,6 +2,51 @@ import { generateQueryKeys } from "@/app/_utils/helpers";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 
+export async function useApiData({ entity, ...otherParams }) {
+  //1- TODO: authenticate user
+
+  if (!entity) throw new Error(`🚨 no entity was provided for useApiData.`);
+
+  // console.log("useApiData was called with: ", { entity, ...otherParams });
+  const { id = "all", ...additionalParams } = otherParams;
+  const queryParams = { id, ...additionalParams };
+
+  let url;
+  // if (id === "all" || id === null) {
+  //   url = `/api/v1/entities/${entity}`;
+  // }
+  // else {
+  //   url = `/api/v1/entities/${entity}/${id}`;
+  // }
+  url = `/api/v1/entities/${entity}`;
+
+  const params = new URLSearchParams();
+  Object.entries(queryParams).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      params.set(key, value.toString());
+    }
+  });
+
+  if (params.toString()) {
+    url += `?${params}`;
+  }
+
+  //TODO: validate data before api call
+
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    const errorPayload = await res.json();
+    const errorMessage =
+      errorPayload.error || errorPayload.message || "Failed to fetch data";
+    throw new Error(errorMessage);
+  }
+
+  const responseData = await res.json();
+
+  return responseData;
+}
+
 export default function useClientData({
   entity,
   options = {},
@@ -15,6 +60,8 @@ export default function useClientData({
     refetchOnWindowFocus = true,
     ...additionalReactQueryOptions
   } = options;
+
+  // TODO: authenticate user
 
   const queryClient = useQueryClient();
 
@@ -56,45 +103,4 @@ export default function useClientData({
   }
 
   return results;
-}
-
-export async function useApiData({ entity, ...otherParams }) {
-  if (!entity) throw new Error(`🚨 no entity was provided for useApiData.`);
-
-  // console.log("useApiData was called with: ", { entity, ...otherParams });
-  const { id = "all", ...additionalParams } = otherParams;
-  const queryParams = { id, ...additionalParams };
-
-  let url;
-  // if (id === "all" || id === null) {
-  //   url = `/api/v1/entities/${entity}`;
-  // }
-  // else {
-  //   url = `/api/v1/entities/${entity}/${id}`;
-  // }
-  url = `/api/v1/entities/${entity}`;
-
-  const params = new URLSearchParams();
-  Object.entries(queryParams).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      params.set(key, value.toString());
-    }
-  });
-
-  if (params.toString()) {
-    url += `?${params}`;
-  }
-
-  const res = await fetch(url);
-
-  if (!res.ok) {
-    const errorPayload = await res.json();
-    const errorMessage =
-      errorPayload.error || errorPayload.message || "Failed to fetch data";
-    throw new Error(errorMessage);
-  }
-
-  const responseData = await res.json();
-
-  return responseData;
 }
