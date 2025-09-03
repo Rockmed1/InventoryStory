@@ -10,6 +10,7 @@
     "prod": " next build && next start"
   },
   "dependencies": {
+    "@clerk/clerk-sdk-node": "^4.13.23",
     "@clerk/nextjs": "^6.31.5",
     "@clerk/themes": "^2.4.14",
     "@heroicons/react": "^2.2.0",

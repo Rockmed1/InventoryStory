@@ -8,7 +8,7 @@ import { getQueryClient } from "./queryClient";
 export default function QueryProvider({ children }) {
   const { organization, isLoaded } = useOrganization();
 
-  console.log(organization);
+  // console.log("organization: ", organization);
 
   // Handle loading state
   if (!isLoaded) {

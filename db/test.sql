@@ -7,16 +7,91 @@ SELECT
 FROM
 	orgs.org;
 
+1043 3a09ac5e - e6f3 - 4157 - 9bd9 - 8d7e57e17187 company1 company1 1000 2025 - 08 - 30 23:32:38.650654 + 00 1000 2025 - 08 - 31 02:07:24.742316 + 00 utils_admin org_321n4szFoh3wlYSBtMbzbzt2L5i DELETE FROM orgs.org
+WHERE org.org_id = 1043;
+
+UPDATE
+	orgs.org
+SET
+	org_xid = 'org_321n4szFoh3wlYSBtMbzbzt2L5i'
+WHERE
+	org_id = 1001;
+
+DELETE FROM orgs.org
+WHERE org.org_id = 1043;
+
+SELECT
+	*
+FROM
+	usrs.usr_org
+WHERE
+	org_id = 1043;
+
+DELETE FROM usrs.usr_org
+WHERE org_id = 1043;
+
 SELECT
 	*
 FROM
 	usrs.usr;
+
+DELETE FROM usrs.usr u
+WHERE u.usr_id = 1035;
+
+SELECT
+	*
+FROM
+	usrs.usr
+WHERE
+	usr_id = 1035;
 
 -- DELETE FROM usrs.usr WHERE usr_id > 1001;
 SELECT
 	*
 FROM
 	usrs.v_usr_org;
+
+SELECT
+	*
+FROM
+	usrs.usr_org
+WHERE
+	usr_id = 1035;
+
+-- Delete rows from 'usrs.usr_org' where condition is met
+DELETE FROM usrs.usr_org
+WHERE usr_id = 1035;
+
+-----------
+----
+---
+--
+------------
+--* sync
+SELECT
+	utils.fn_sync_x_usr_org($$ { "_clerk_usr_data" : { "_usr_xid" :"user_321gLMApUC9pYsVuqDbcH5CdSPv" , "_email" :"castamile@gmail.com" , "_usr_name" :"castamile" , "_first_name" :"Ahmed" , "_last_name" :"Aboutaleb" } , "_clerk_org_data" : { "_org_xid" :"org_321gQp0441H3RJM7Bwk8EtRb7VE" , "_org_name" :"company1" , "_org_desc" :"company1" } , "_clerk_usr_org_data" :["org_321gQp0441H3RJM7Bwk8EtRb7VE"] } $$::JSONB);
+
+SELECT
+	utils.fn_sync_x_usr($$ { "_usr_xid" :"user_321gLMApUC9pYsVuqDbcH5CdSPv" , "_email" :"castamile@gmail.com" , "_usr_name" :"castamile" , "_first_name" :"Ahmed" , "_last_name" :"Aboutaleb" } $$::JSONB);
+
+SELECT
+	utils.fn_sync_x_org($$ { "_org_xid" :"org_321gQp0441H3RJM7Bwk8EtRb7VE" , "_org_name" :"company1" , "_org_desc" :"company1" } $$::JSONB);
+
+SELECT
+	utils._fn_assert_x_org_exists(ARRAY['org_321gQp0441H3RJM7Bwk8EtRb7VE']);
+
+------
+---
+--
+SELECT
+	p.proname
+	, pg_get_function_identity_arguments(p.oid) AS arguments
+FROM
+	pg_proc p
+	JOIN pg_namespace n ON p.pronamespace = n.oid
+WHERE
+	n.nspname = 'utils'
+	AND p.proname = '_fn_assign_usr_org';
 
 ---------
 ---------
@@ -33,7 +108,7 @@ SELECT
 --* create new user
 --run twice
 SELECT
-	utils.fn_create_usr('{"_usr_name":"test_usr2", "_first_name":"test", "_last_name":"test", "_email":"email@email.com"}'::JSONB);
+	utils.fn_create_usr('{"_usr_name":"test_usr3", "_first_name":"test", "_last_name":"test", "_email":"email@email.com"}'::JSONB);
 
 SELECT
 	*
@@ -310,7 +385,12 @@ FROM
 SELECT
 	*
 FROM
-	utils.fn_get_items(jsonb_build_object('_item_id' , '1000' , '_org_uuid' , 'ceba721b-b8dc-487d-a80c-15ae9d947084' , '_usr_uuid' , '2bfdec48-d917-41ee-99ff-123757d59df1'));
+	orgs.org;
+
+SELECT
+	*
+FROM
+	utils.fn_get_items(jsonb_build_object('_item_id' , NULL , '_org_xid' , 'org_321zC4cKUfWVWVdnc32HeHEutxB' , '_usr_xid' , 'user_321z6XVP2PimOI8yKOV1mlu96MC'));
 
 DELETE FROM items.item
 WHERE item.item_id = 1037
@@ -571,3 +651,49 @@ FROM
 		*
 	FROM
 		trans.v_item_trx_detail;
+
+--------
+----
+--
+-- Test RLS directly as utils_admin
+SET ROLE utils_admin;
+
+SET rls.org_id = '1081';
+
+SELECT
+	*
+FROM
+	items.v_item;
+
+-- Does this respect RLS?
+-- Reset
+RESET ROLE;
+
+------
+------
+---
+--
+SELECT
+	*
+FROM
+	pg_policies
+WHERE
+	schemaname = 'items'
+	AND tablename = 'item';
+
+SELECT
+	*
+FROM
+	pg_roles
+WHERE
+	rolname = 'utils_admin';
+
+SELECT
+	schemaname
+	, tablename
+	, rowsecurity
+FROM
+	pg_tables
+WHERE
+	schemaname = 'items'
+	AND tablename = 'item';

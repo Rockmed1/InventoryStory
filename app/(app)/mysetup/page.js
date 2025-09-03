@@ -1,25 +1,25 @@
 import { Suspense } from "react";
-import AddButtonModal from "../_components/_ui/client/AddButtonModal";
-import Card from "../_components/_ui/server/Card";
-import AddBinForm from "../_components/client/AddBinForm";
-import AddItemClassForm from "../_components/client/AddItemClassForm";
-import AddLocationForm from "../_components/client/AddLocationForm";
-import AddMarketForm from "../_components/client/AddMarketForm";
-import AddMarketTypeForm from "../_components/client/AddMarketTypeForm";
-import AddTrxTypeForm from "../_components/client/AddTrxTypeForm";
-import BinsTable from "../_components/server/BinsTable";
-import ItemClassesTable from "../_components/server/ItemClassesTable";
-import LocationsTable from "../_components/server/locationsTable";
-import MarketsTable from "../_components/server/MarketsTable";
-import MarketTypesTable from "../_components/server/MarketTypesTable";
-import TrxTypesTable from "../_components/server/TrxTypesTable";
-import UseAuth from "../_lib/auth/useAuth";
+import AddButtonModal from "../../_components/_ui/client/AddButtonModal";
+import Card from "../../_components/_ui/server/Card";
+import AddBinForm from "../../_components/client/AddBinForm";
+import AddItemClassForm from "../../_components/client/AddItemClassForm";
+import AddLocationForm from "../../_components/client/AddLocationForm";
+import AddMarketForm from "../../_components/client/AddMarketForm";
+import AddMarketTypeForm from "../../_components/client/AddMarketTypeForm";
+import AddTrxTypeForm from "../../_components/client/AddTrxTypeForm";
+import BinsTable from "../../_components/server/BinsTable";
+import ItemClassesTable from "../../_components/server/ItemClassesTable";
+import LocationsTable from "../../_components/server/locationsTable";
+import MarketsTable from "../../_components/server/MarketsTable";
+import MarketTypesTable from "../../_components/server/MarketTypesTable";
+import TrxTypesTable from "../../_components/server/TrxTypesTable";
+import getAuthContext from "../../_lib/auth/getAuthContext";
 
 export const revalidate = 0; // this will make the page dynamic and revalidate cache every request
 
 export default function Page() {
   //1- authenticate the user
-  const { _org_uuid, _usr_uuid } = UseAuth();
+  const { _org_uuid, _usr_uuid } = getAuthContext();
 
   const cards = [
     {

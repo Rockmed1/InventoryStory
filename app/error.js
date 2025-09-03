@@ -7,6 +7,7 @@ import { startTransition } from "react";
 
 export default function Error({ error, reset }) {
   const router = useRouter();
+
   const reload = () => {
     startTransition(() => {
       router.refresh(); // for server side we need to refresh

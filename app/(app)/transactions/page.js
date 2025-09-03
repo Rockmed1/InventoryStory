@@ -1,9 +1,9 @@
 import { Suspense } from "react";
-import AddButtonModal from "../_components/_ui/client/AddButtonModal";
-import AddItemTrxForm from "../_components/client/AddItemTrxForm";
-import TestForm from "../_components/client/TestForm";
-import ItemsTrxTable from "../_components/server/ItemsTrxTable";
-import UseAuth from "../_lib/auth/useAuth";
+import AddButtonModal from "../../_components/_ui/client/AddButtonModal";
+import AddItemTrxForm from "../../_components/client/AddItemTrxForm";
+import TestForm from "../../_components/client/TestForm";
+import ItemsTrxTable from "../../_components/server/ItemsTrxTable";
+import getAuthContext from "../../_lib/auth/getAuthContext";
 
 export const metadata = {
   title: "items",
@@ -16,7 +16,7 @@ export default async function Page({ searchParams }) {
 
   //1- authenticate the user
 
-  const { _org_uuid } = UseAuth();
+  const { _org_uuid } = getAuthContext();
 
   const param = await searchParams;
   // console.log("param: ", param);

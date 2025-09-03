@@ -1,8 +1,8 @@
 import { Suspense } from "react";
-import AddButtonModal from "../_components/_ui/client/AddButtonModal";
-import AddItemForm from "../_components/client/AddItemForm";
-import ItemsTable from "../_components/server/ItemsTable";
-import UseAuth from "../_lib/auth/useAuth";
+import AddButtonModal from "../../_components/_ui/client/AddButtonModal";
+import AddItemForm from "../../_components/client/AddItemForm";
+import ItemsTable from "../../_components/server/ItemsTable";
+import getAuthContext from "../../_lib/auth/getAuthContext";
 
 export const metadata = {
   title: "items",
@@ -15,7 +15,7 @@ export default async function Items() {
 
   //1- authenticate the user
 
-  const { _org_uuid } = UseAuth();
+  const { _org_uuid } = getAuthContext();
 
   //2- Wrap the entire page in the provider to create an empty store
   return (

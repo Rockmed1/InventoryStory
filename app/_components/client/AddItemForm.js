@@ -200,6 +200,16 @@ export default function AddItemForm({ onCloseModal }) {
 
   // console.log("AddItemForm validation errors:", validationErrors);
 
+  console.log("📝 Deep error check:", {
+    rootErrors: form.formState.errors,
+    headerErrors: form.formState.errors.itemTrxHeader,
+    detailsErrors: form.formState.errors.itemTrxDetails,
+    allFormErrors: form.formState.errors,
+    // Check if there are any error keys we're missing
+    errorKeys: Object.keys(form.formState.errors),
+    nestedErrorCheck: JSON.stringify(form.formState.errors, null, 2),
+  });
+
   // Don't render form until schema is loaded and itemToEdit is available
   //TODO: make this better: may be render the form anyways but put a message in the form top...
   if (loadingValidation || !schema) {

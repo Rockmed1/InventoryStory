@@ -43,14 +43,15 @@ DROP TABLE IF EXISTS usrs.usr;
 
 CREATE TABLE IF NOT EXISTS usrs.usr(
 	usr_id INTEGER GENERATED ALWAYS AS IDENTITY (START WITH 1000) PRIMARY KEY
-	, usr_uuid UUID NOT NULL DEFAULT gen_random_uuid() UNIQUE
+	-- , usr_uuid UUID NOT NULL DEFAULT gen_random_uuid() UNIQUE
+	, usr_xid VARCHAR(50) NOT NULL UNIQUE
 	, usr_name VARCHAR(20) NOT NULL UNIQUE
 	, first_name VARCHAR(50) NOT NULL
 	, last_name VARCHAR(50) NOT NULL
 	, email VARCHAR(100)
-	, created_by INTEGER NULL
+	, created_by INTEGER NULL DEFAULT 1000
 	, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-	, modified_by INTEGER
+	, modified_by INTEGER DEFAULT 1000
 	, modified_at TIMESTAMPTZ DEFAULT NOW()
 	, exec_by VARCHAR(50) NOT NULL DEFAULT CURRENT_USER
 	-- PRIMARY KEY (usr_id)
@@ -93,12 +94,13 @@ DROP TABLE IF EXISTS orgs.org;
 
 CREATE TABLE IF NOT EXISTS orgs.org(
 	org_id INTEGER GENERATED ALWAYS AS IDENTITY (START WITH 1000) PRIMARY KEY
-	, org_uuid UUID NOT NULL DEFAULT gen_random_uuid() UNIQUE
+	-- , org_uuid UUID NOT NULL DEFAULT gen_random_uuid() UNIQUE
+	, org_xid VARCHAR(50) NOT NULL UNIQUE
 	, org_name VARCHAR(50) NOT NULL UNIQUE
 	, org_desc TEXT NULL
 	, created_by INTEGER NOT NULL
 	, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-	, modified_by INTEGER
+	, modified_by INTEGER DEFAULT 1000
 	, modified_at TIMESTAMPTZ DEFAULT NOW()
 	, exec_by VARCHAR(50) NOT NULL DEFAULT CURRENT_USER
 	, FOREIGN KEY (created_by) REFERENCES usrs.usr(usr_id)
@@ -114,9 +116,9 @@ CREATE TABLE IF NOT EXISTS usrs.usr_org(
 	, org_id INTEGER NOT NULL
 	, usr_id INTEGER NOT NULL
 	, active BOOL NOT NULL DEFAULT TRUE
-	, created_by INTEGER NOT NULL
+	, created_by INTEGER NOT NULL DEFAULT 1000
 	, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-	, modified_by INTEGER DEFAULT NULL
+	, modified_by INTEGER DEFAULT 1000
 	, modified_at TIMESTAMPTZ DEFAULT NOW()
 	, exec_by VARCHAR(50) NOT NULL DEFAULT CURRENT_USER
 	, FOREIGN KEY (org_id) REFERENCES orgs.org(org_id)
@@ -125,7 +127,27 @@ CREATE TABLE IF NOT EXISTS usrs.usr_org(
 	, FOREIGN KEY (modified_by) REFERENCES usrs.usr(usr_id)
 );
 
+ALTER TABLE orgs.org
+	ADD CONSTRAINT org_org_xid_unique UNIQUE (org_xid);
+
 ALTER TABLE usrs.usr_org ENABLE ROW LEVEL SECURITY;
+
+-- ALTER TABLE usrs.usr
+-- 	ADD CONSTRAINT usr_usr_xid_unique UNIQUE (usr_xid);
+-- ALTER TABLE usrs.usr_org
+-- 	ADD CONSTRAINT usr_org_usr_id_org_id_unique UNIQUE (usr_id , org_id);
+-- ALTER TABLE usrs.usr
+-- 	ADD COLUMN IF NOT EXISTS usr_xid VARCHAR(50) UNIQUE;
+-- ALTER TABLE orgs.org
+-- 	ADD COLUMN IF NOT EXISTS org_xid VARCHAR(50) UNIQUE;
+CREATE INDEX IF NOT EXISTS idx_usr_xid ON usrs.usr(usr_xid);
+
+CREATE INDEX IF NOT EXISTS idx_org_xid ON orgs.org(org_xid);
+
+-- Add composite index for user-org lookups
+CREATE INDEX IF NOT EXISTS idx_usr_org_lookup ON usrs.usr_org(usr_id , org_id)
+WHERE
+	active = TRUE;
 
 DROP TABLE IF EXISTS locations.location;
 

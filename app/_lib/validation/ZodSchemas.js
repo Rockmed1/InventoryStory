@@ -13,6 +13,8 @@ import { ENTITY_ASSERT } from "./buildValidationSchema";
 
 export const errorMessages = {
   field: {},
+  unauthorized: (field) => `Unauthorized 🚫. Invalid ${field}`,
+
   required: (field) => `${field} is required`,
 
   invalid: (field) => `${field} is invalid`,
@@ -194,6 +196,35 @@ const sanitizedUrl = (fieldName = "URL") => {
       )
   );
 };
+
+const sanitizedXId = (fieldName = "xId") => {
+  const patterns = {
+    _usr_xid: /^user_[a-zA-Z0-9]{27}$/,
+    _org_xid: /^org_[a-zA-Z0-9]{27}$/,
+  };
+  // Validate type parameter at function creation time
+  if (!patterns[fieldName]) {
+    throw new Error(`Invalid sanitizedXId fieldName: "${fieldName}". Must be one of:  
+  ${Object.keys(patterns).join(", ")}`);
+  }
+
+  return z
+    .string()
+
+    .transform((value) => {
+      if (!value) return value;
+      return DOMPurify.sanitize(value.trim(), {
+        ALLOWED_TAGS: [],
+        ALLOWED_ATTR: [],
+        KEEP_CONTENT: true,
+      });
+    })
+
+    .refine((value) => patterns[fieldName]?.test(value), {
+      error: errorMessages.unauthorized(fieldName),
+    });
+};
+
 // Condensed validation rules matching database schema VARCHAR lengths
 export const FIELD_VALIDATION_RULES = {
   // Positive integers for IDs
@@ -260,6 +291,8 @@ export const FIELD_VALIDATION_RULES = {
         message: errorMessages.invalid(fieldName),
       })
       .transform((value) => Number(value)),
+
+  xId: (fieldName) => sanitizedXId(fieldName),
 };
 
 export const BUSINESS_VALIDATION_BASE = {

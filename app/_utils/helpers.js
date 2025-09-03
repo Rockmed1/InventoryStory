@@ -82,8 +82,8 @@ export function destructuredFormData(state, formData) {
 export function createFormData(data) {
   //Convert RHF data to FormData for server action compatibility
   const formData = new FormData();
-  Object.entries(data).forEach(([Key, value]) => {
-    formData.append(Key, value);
+  Object.entries(data).forEach(([key, value]) => {
+    formData.append(key, value);
   });
   return formData;
 }

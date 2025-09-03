@@ -2,8 +2,8 @@
 
 import { getEntityFieldMapping } from "@/app/_utils/helpers-server";
 import { revalidateTag, unstable_cache } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
+import getAuthContext from "../../auth/getAuthContext";
 import { appContextSchema } from "../../validation/buildValidationSchema";
 import { supabase } from "./supabase";
 
@@ -14,24 +14,29 @@ export async function createDataService(globalOptions = {}) {
 
   //1- authenticate the user
 
-  const ORG_UUID = "ceba721b-b8dc-487d-a80c-15ae9d947084";
-  const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
-  const session = { _org_uuid: ORG_UUID, _usr_uuid: USR_UUID };
-  // const session = {}; for testing
-  // TODO: authenticate user
+  // const ORG_UUID = "ceba721b-b8dc-487d-a80c-15ae9d947084";
+  // const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
+  // const session = { _org_uuid: ORG_UUID, _usr_uuid: USR_UUID };
+  // // const session = {}; for testing
 
-  // const session = await auth();
+  // // const session = await auth();
 
-  if (!session?._org_uuid || !session?._usr_uuid) return redirect("/");
-  const { _usr_uuid, _org_uuid } = session;
+  // if (!session?._org_uuid || !session?._usr_uuid) return redirect("/");
+  // const { _usr_uuid, _org_uuid } = session;
 
-  // if (_org_uuid !== org_uuid) throw new Error("Unauthorized 🚫"); //unauthorized
+  // // if (_org_uuid !== org_uuid) throw new Error("Unauthorized 🚫"); //unauthorized
 
-  let _data = { _org_uuid, _usr_uuid };
+  // const validatedAppContext = await appContextSchema.safeParseAsync({
+  //   _org_uuid,
+  //   _usr_uuid,
+  // });
 
+  const { userId: _usr_xid, orgId: _org_xid } = await getAuthContext();
+
+  // validate the session data
   const validatedAppContext = await appContextSchema.safeParseAsync({
-    _org_uuid,
-    _usr_uuid,
+    _usr_xid,
+    _org_xid,
   });
 
   if (!validatedAppContext.success) {
@@ -40,6 +45,8 @@ export async function createDataService(globalOptions = {}) {
       error: z.prettifyError(validatedAppContext.error),
     };
   }
+
+  let _data = { _org_xid, _usr_xid };
 
   const {
     forceRefresh: globalForceRefresh = false,
@@ -60,7 +67,7 @@ export async function createDataService(globalOptions = {}) {
       } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
-        revalidateTag(`item-${_org_uuid}-${itemId}`);
+        revalidateTag(`item-${_org_xid}-${itemId}`);
       }
 
       if (skipCache) {
@@ -69,6 +76,7 @@ export async function createDataService(globalOptions = {}) {
           ..._data,
           ...otherParams,
         };
+        // console.log("_data: ", filteredData);
         const { data, error } = await supabase.rpc("fn_get_items", {
           _data: filteredData,
         });
@@ -83,15 +91,17 @@ export async function createDataService(globalOptions = {}) {
             ..._data,
             ...otherParams,
           };
+
           const { data, error } = await supabase.rpc("fn_get_items", {
             _data: filteredData,
           });
+
           if (error) throw new Error("Item(s) could not be loaded.");
           return data ?? [];
         },
-        [`item-${_org_uuid}-${itemId}`],
+        [`item-${_org_xid}-${itemId}`],
         {
-          tags: [`item-${_org_uuid}-${itemId}`],
+          tags: [`item-${_org_xid}-${itemId}`],
           revalidate: cacheTTL,
           ...additionalMethodOptions,
         },
@@ -109,7 +119,7 @@ export async function createDataService(globalOptions = {}) {
       } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
-        revalidateTag(`location-${_org_uuid}-${locationId}`);
+        revalidateTag(`location-${_org_xid}-${locationId}`);
       }
 
       if (skipCache) {
@@ -141,9 +151,9 @@ export async function createDataService(globalOptions = {}) {
           }
           return data ?? [];
         },
-        [`location-${_org_uuid}-${locationId}`],
+        [`location-${_org_xid}-${locationId}`],
         {
-          tags: [`location-${_org_uuid}-${locationId}`],
+          tags: [`location-${_org_xid}-${locationId}`],
           revalidate: cacheTTL,
           ...additionalMethodOptions,
         },
@@ -160,7 +170,7 @@ export async function createDataService(globalOptions = {}) {
       } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
-        revalidateTag(`bin-${_org_uuid}-${binId}`);
+        revalidateTag(`bin-${_org_xid}-${binId}`);
       }
 
       if (skipCache) {
@@ -192,9 +202,9 @@ export async function createDataService(globalOptions = {}) {
           }
           return data ?? [];
         },
-        [`bin-${_org_uuid}-${binId}`],
+        [`bin-${_org_xid}-${binId}`],
         {
-          tags: [`bin-${_org_uuid}-${binId}`],
+          tags: [`bin-${_org_xid}-${binId}`],
           revalidate: cacheTTL,
           ...additionalMethodOptions,
         },
@@ -211,7 +221,7 @@ export async function createDataService(globalOptions = {}) {
       } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
-        revalidateTag(`itemClass-${_org_uuid}-${itemClassId}`);
+        revalidateTag(`itemClass-${_org_xid}-${itemClassId}`);
       }
 
       if (skipCache) {
@@ -243,9 +253,9 @@ export async function createDataService(globalOptions = {}) {
           }
           return data ?? [];
         },
-        [`itemClass-${_org_uuid}-${itemClassId}`],
+        [`itemClass-${_org_xid}-${itemClassId}`],
         {
-          tags: [`itemClass-${_org_uuid}-${itemClassId}`],
+          tags: [`itemClass-${_org_xid}-${itemClassId}`],
           revalidate: cacheTTL,
           ...additionalMethodOptions,
         },
@@ -263,7 +273,7 @@ export async function createDataService(globalOptions = {}) {
       } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
-        revalidateTag(`marketType-${_org_uuid}-${marketTypeId}`);
+        revalidateTag(`marketType-${_org_xid}-${marketTypeId}`);
       }
 
       if (skipCache) {
@@ -295,9 +305,9 @@ export async function createDataService(globalOptions = {}) {
           }
           return data ?? [];
         },
-        [`marketType-${_org_uuid}-${marketTypeId}`],
+        [`marketType-${_org_xid}-${marketTypeId}`],
         {
-          tags: [`marketType-${_org_uuid}-${marketTypeId}`],
+          tags: [`marketType-${_org_xid}-${marketTypeId}`],
           revalidate: cacheTTL,
           ...additionalMethodOptions,
         },
@@ -315,7 +325,7 @@ export async function createDataService(globalOptions = {}) {
       } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
-        revalidateTag(`market-${_org_uuid}-${marketId}`);
+        revalidateTag(`market-${_org_xid}-${marketId}`);
       }
 
       if (skipCache) {
@@ -347,9 +357,9 @@ export async function createDataService(globalOptions = {}) {
           }
           return data ?? [];
         },
-        [`market-${_org_uuid}-${marketId}`],
+        [`market-${_org_xid}-${marketId}`],
         {
-          tags: [`market-${_org_uuid}-${marketId}`],
+          tags: [`market-${_org_xid}-${marketId}`],
           revalidate: cacheTTL,
           ...additionalMethodOptions,
         },
@@ -367,7 +377,7 @@ export async function createDataService(globalOptions = {}) {
       } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
-        revalidateTag(`trxType-${_org_uuid}-${trxTypeId}`);
+        revalidateTag(`trxType-${_org_xid}-${trxTypeId}`);
       }
 
       if (skipCache) {
@@ -401,9 +411,9 @@ export async function createDataService(globalOptions = {}) {
           }
           return data ?? [];
         },
-        [`trxType-${_org_uuid}-${trxTypeId}`],
+        [`trxType-${_org_xid}-${trxTypeId}`],
         {
-          tags: [`trxType-${_org_uuid}-${trxTypeId}`],
+          tags: [`trxType-${_org_xid}-${trxTypeId}`],
           revalidate: cacheTTL,
           ...additionalMethodOptions,
         },
@@ -424,7 +434,7 @@ export async function createDataService(globalOptions = {}) {
       } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
-        revalidateTag(`trxDirection-${_org_uuid}-${trxDirectionId}`);
+        revalidateTag(`trxDirection-${_org_xid}-${trxDirectionId}`);
       }
 
       if (skipCache) {
@@ -457,9 +467,9 @@ export async function createDataService(globalOptions = {}) {
           }
           return data ?? [];
         },
-        [`trxDirection-${_org_uuid}-${trxDirectionId}`],
+        [`trxDirection-${_org_xid}-${trxDirectionId}`],
         {
-          tags: [`trxDirection-${_org_uuid}-${trxDirectionId}`],
+          tags: [`trxDirection-${_org_xid}-${trxDirectionId}`],
           revalidate: false, //Cache forever
           ...additionalMethodOptions,
         },
@@ -483,7 +493,7 @@ export async function createDataService(globalOptions = {}) {
       } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
-        revalidateTag(`itemQoh-${_org_uuid}-${itemId}-${binId}`);
+        revalidateTag(`itemQoh-${_org_xid}-${itemId}-${binId}`);
       }
 
       if (skipCache) {
@@ -525,9 +535,9 @@ export async function createDataService(globalOptions = {}) {
 
           return data ?? [];
         },
-        [`itemQoh-${_org_uuid}-${itemId}-${binId}`],
+        [`itemQoh-${_org_xid}-${itemId}-${binId}`],
         {
-          tags: [`itemQoh-${_org_uuid}-${itemId}-${binId}`],
+          tags: [`itemQoh-${_org_xid}-${itemId}-${binId}`],
           revalidate: cacheTTL,
           ...additionalMethodOptions,
         },
@@ -544,7 +554,7 @@ export async function createDataService(globalOptions = {}) {
       } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
-        revalidateTag(`itemTrx-${_org_uuid}-${itemTrxId}`);
+        revalidateTag(`itemTrx-${_org_xid}-${itemTrxId}`);
       }
 
       if (skipCache) {
@@ -578,9 +588,9 @@ export async function createDataService(globalOptions = {}) {
           }
           return data ?? [];
         },
-        [`itemTrx-${_org_uuid}-${itemTrxId}`],
+        [`itemTrx-${_org_xid}-${itemTrxId}`],
         {
-          tags: [`itemTrx-${_org_uuid}-${itemTrxId}`],
+          tags: [`itemTrx-${_org_xid}-${itemTrxId}`],
           revalidate: cacheTTL,
           ...additionalMethodOptions,
         },
@@ -597,7 +607,7 @@ export async function createDataService(globalOptions = {}) {
       } = { ...additionalGlobalOptions, ...options };
 
       if (forceRefresh) {
-        revalidateTag(`itemTrxDetails-${itemTrxId}-${_org_uuid}`);
+        revalidateTag(`itemTrxDetails-${itemTrxId}-${_org_xid}`);
       }
 
       if (skipCache) {
@@ -634,9 +644,9 @@ export async function createDataService(globalOptions = {}) {
           }
           return data ?? [];
         },
-        [`itemTrxDetails-${itemTrxId}-${_org_uuid}`],
+        [`itemTrxDetails-${itemTrxId}-${_org_xid}`],
         {
-          tags: [`itemTrxDetails-${itemTrxId}-${_org_uuid}`],
+          tags: [`itemTrxDetails-${itemTrxId}-${_org_xid}`],
           revalidate: cacheTTL,
           ...additionalMethodOptions,
         },

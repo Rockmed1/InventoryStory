@@ -1,12 +1,5 @@
 import Logo from "@/app/_components/server/Logo";
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-} from "@clerk/nextjs";
-import { Button } from "../_ui/client/shadcn-Button";
+import ClerkSignInOut from "../client/ClerkSignInOut";
 
 export default async function Navigation() {
   // const user = await currentUser();
@@ -18,20 +11,7 @@ export default async function Navigation() {
 
       <ul className="sm:text-md flex items-center justify-between gap-2 font-semibold text-slate-700 sm:gap-4">
         <li>
-          <SignedOut>
-            <div className="flex items-center justify-between gap-2">
-              <SignInButton>
-                <Button>Sign In</Button>
-              </SignInButton>
-              <SignUpButton>
-                <Button>Sign Up</Button>
-              </SignUpButton>
-            </div>
-          </SignedOut>
-          <SignedIn>
-            <UserButton showName />
-            {/* <SignOutButton redirectUrl="/landing" /> */}
-          </SignedIn>
+          <ClerkSignInOut />
         </li>
       </ul>
     </div>

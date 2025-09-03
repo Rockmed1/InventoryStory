@@ -1,4 +1,5 @@
 # Clerk Implementation Plan
+
 ## Step-by-Step Implementation Guide
 
 ---
@@ -7,7 +8,8 @@
 
 **Objective**: Migrate from hardcoded auth to Clerk authentication with direct Clerk ID usage and JIT sync strategy.
 
-**Approach**: 
+**Approach**:
+
 - Use Clerk IDs directly in database calls
 - Implement JIT (Just-in-Time) sync for immediate functionality
 - Prepare for future webhook integration
@@ -18,6 +20,7 @@
 ## **PHASE 1: DATABASE PREPARATION**
 
 ### **Step 1.1: Add Clerk ID Columns**
+
 ```sql
 -- Add Clerk ID columns to existing tables
 ALTER TABLE usrs.usr ADD COLUMN IF NOT EXISTS clerk_user_id VARCHAR(50) UNIQUE;
@@ -28,14 +31,15 @@ CREATE INDEX IF NOT EXISTS idx_usr_clerk_id ON usrs.usr(clerk_user_id);
 CREATE INDEX IF NOT EXISTS idx_org_clerk_id ON orgs.org(clerk_org_id);
 
 -- Add composite index for user-org lookups
-CREATE INDEX IF NOT EXISTS idx_usr_org_clerk_lookup 
-ON usrs.usr_org(usr_id, org_id) 
+CREATE INDEX IF NOT EXISTS idx_usr_org_clerk_lookup
+ON usrs.usr_org(usr_id, org_id)
 WHERE active = true;
 ```
 
 ### **Step 1.2: Create Consolidated Database Functions**
 
 #### **A. User/Org Data Retrieval Function**
+
 ```sql
 -- Function to get user, org, and membership data in one call
 CREATE OR REPLACE FUNCTION fn_get_user_org_data(
@@ -73,7 +77,7 @@ BEGIN
   FROM usrs.usr u
   JOIN usrs.usr_org uo ON u.usr_id = uo.usr_id
   JOIN orgs.org o ON uo.org_id = o.org_id
-  WHERE u.clerk_user_id = _clerk_user_id 
+  WHERE u.clerk_user_id = _clerk_user_id
     AND o.clerk_org_id = _clerk_org_id
     AND uo.active = true;
 
@@ -83,10 +87,11 @@ $$ LANGUAGE plpgsql;
 ```
 
 #### **B. JIT Sync Function**
+
 ```sql
 -- Atomic function to ensure user, org, and membership exist
 CREATE OR REPLACE FUNCTION fn_ensure_user_org_exists(
-  _clerk_user_data JSONB,
+  _clerk_usr_data JSONB,
   _clerk_org_data JSONB
 )
 RETURNS JSONB AS $$
@@ -107,11 +112,11 @@ BEGIN
     created_by
   )
   VALUES (
-    _clerk_user_data->>'id',
-    COALESCE(_clerk_user_data->>'username', _clerk_user_data->>'email'),
-    _clerk_user_data->>'first_name',
-    _clerk_user_data->>'last_name',
-    _clerk_user_data->>'email',
+    _clerk_usr_data->>'id',
+    COALESCE(_clerk_usr_data->>'username', _clerk_usr_data->>'email'),
+    _clerk_usr_data->>'first_name',
+    _clerk_usr_data->>'last_name',
+    _clerk_usr_data->>'email',
     gen_random_uuid(),
     1 -- System user for JIT creation
   )
@@ -170,7 +175,7 @@ BEGIN
 
   -- Return consolidated data
   SELECT fn_get_user_org_data(
-    _clerk_user_data->>'id',
+    _clerk_usr_data->>'id',
     _clerk_org_data->>'id'
   ) INTO _result;
 
@@ -180,6 +185,7 @@ $$ LANGUAGE plpgsql;
 ```
 
 #### **C. Updated App Context Function**
+
 ```sql
 -- Enhanced _fn_set_app_context to use Clerk IDs
 CREATE OR REPLACE FUNCTION utils._fn_set_app_context(_data JSONB)
@@ -193,39 +199,39 @@ BEGIN
   -- Extract Clerk IDs from data
   _clerk_user_id := _data->>'clerk_user_id';
   _clerk_org_id := _data->>'clerk_org_id';
-  
+
   -- Validate required parameters
   IF _clerk_user_id IS NULL OR _clerk_org_id IS NULL THEN
     RAISE EXCEPTION 'clerk_user_id and clerk_org_id are required';
   END IF;
-  
+
   -- Get internal IDs from Clerk IDs
-  SELECT usr_id INTO _usr_id 
-  FROM usrs.usr 
+  SELECT usr_id INTO _usr_id
+  FROM usrs.usr
   WHERE clerk_user_id = _clerk_user_id;
-  
-  SELECT org_id INTO _org_id 
-  FROM orgs.org 
+
+  SELECT org_id INTO _org_id
+  FROM orgs.org
   WHERE clerk_org_id = _clerk_org_id;
-  
+
   -- Validate user exists
   IF _usr_id IS NULL THEN
     RAISE EXCEPTION 'User not found for clerk_user_id: %', _clerk_user_id;
   END IF;
-  
-  -- Validate org exists  
+
+  -- Validate org exists
   IF _org_id IS NULL THEN
     RAISE EXCEPTION 'Organization not found for clerk_org_id: %', _clerk_org_id;
   END IF;
-  
+
   -- Validate user is active member of org
   IF NOT EXISTS (
-    SELECT 1 FROM usrs.usr_org 
+    SELECT 1 FROM usrs.usr_org
     WHERE usr_id = _usr_id AND org_id = _org_id AND active = true
   ) THEN
     RAISE EXCEPTION 'User % is not an active member of organization %', _clerk_user_id, _clerk_org_id;
   END IF;
-  
+
   -- Set context for RLS and other functions
   PERFORM set_config('app.usr_id', _usr_id::text, true);
   PERFORM set_config('app.org_id', _org_id::text, true);
@@ -236,6 +242,7 @@ $$ LANGUAGE plpgsql;
 ```
 
 ### **Step 1.3: Test Database Functions**
+
 ```sql
 -- Test the functions with sample data
 SELECT fn_ensure_user_org_exists(
@@ -257,6 +264,7 @@ SELECT utils._fn_set_app_context('{"clerk_user_id": "user_test123", "clerk_org_i
 ### **Step 2.1: Create Auth Utility Functions**
 
 #### **File: `app/_lib/auth/server.js`**
+
 ```javascript
 "use server";
 import { auth } from "@clerk/nextjs/server";
@@ -267,23 +275,23 @@ import { clerkClient } from "@clerk/nextjs/server";
 // Get current auth context from Clerk
 export async function getAuthContext() {
   const { userId, orgId } = auth();
-  
+
   if (!userId || !orgId) {
-    redirect('/sign-in');
+    redirect("/sign-in");
   }
-  
+
   return { userId, orgId };
 }
 
 // Consolidated function to get user/org data
 export async function getUserOrgData(clerkUserId, clerkOrgId) {
-  const { data, error } = await supabase.rpc('fn_get_user_org_data', {
+  const { data, error } = await supabase.rpc("fn_get_user_org_data", {
     _clerk_user_id: clerkUserId,
-    _clerk_org_id: clerkOrgId
+    _clerk_org_id: clerkOrgId,
   });
 
   if (error) {
-    console.error('Error getting user/org data:', error);
+    console.error("Error getting user/org data:", error);
     return null;
   }
 
@@ -296,7 +304,7 @@ export async function ensureUserOrgExists(clerkUserId, clerkOrgId) {
     // Get Clerk data for both user and org
     const [clerkUser, clerkOrg] = await Promise.all([
       clerkClient.users.getUser(clerkUserId),
-      clerkClient.organizations.getOrganization({ organizationId: clerkOrgId })
+      clerkClient.organizations.getOrganization({ organizationId: clerkOrgId }),
     ]);
 
     // Prepare data for database function
@@ -305,20 +313,20 @@ export async function ensureUserOrgExists(clerkUserId, clerkOrgId) {
       username: clerkUser.username,
       first_name: clerkUser.firstName,
       last_name: clerkUser.lastName,
-      email: clerkUser.primaryEmailAddress?.emailAddress
+      email: clerkUser.primaryEmailAddress?.emailAddress,
     };
 
     const clerkOrgData = {
       id: clerkOrg.id,
       name: clerkOrg.name,
       description: clerkOrg.publicMetadata?.description,
-      role: 'member' // Default role, can be enhanced later
+      role: "member", // Default role, can be enhanced later
     };
 
     // Call database function to ensure data exists
-    const { data, error } = await supabase.rpc('fn_ensure_user_org_exists', {
-      _clerk_user_data: clerkUserData,
-      _clerk_org_data: clerkOrgData
+    const { data, error } = await supabase.rpc("fn_ensure_user_org_exists", {
+      _clerk_usr_data: clerkUserData,
+      _clerk_org_data: clerkOrgData,
     });
 
     if (error) {
@@ -327,7 +335,7 @@ export async function ensureUserOrgExists(clerkUserId, clerkOrgId) {
 
     return data;
   } catch (error) {
-    console.error('Error in ensureUserOrgExists:', error);
+    console.error("Error in ensureUserOrgExists:", error);
     throw error;
   }
 }
@@ -336,13 +344,13 @@ export async function ensureUserOrgExists(clerkUserId, clerkOrgId) {
 export async function getOrCreateUserOrgData(clerkUserId, clerkOrgId) {
   // Try to get existing data first (webhook should have created it)
   let userOrgData = await getUserOrgData(clerkUserId, clerkOrgId);
-  
+
   // Fallback to JIT sync if data doesn't exist
   if (!userOrgData) {
-    console.log('User/org data not found, creating via JIT sync');
+    console.log("User/org data not found, creating via JIT sync");
     userOrgData = await ensureUserOrgExists(clerkUserId, clerkOrgId);
   }
-  
+
   return userOrgData;
 }
 ```
@@ -350,6 +358,7 @@ export async function getOrCreateUserOrgData(clerkUserId, clerkOrgId) {
 ### **Step 2.2: Update DataServices**
 
 #### **File: `app/_lib/data/server/dataServices.js`**
+
 ```javascript
 "server-only";
 
@@ -364,14 +373,14 @@ import { getAuthContext, getOrCreateUserOrgData } from "../../auth/server";
 export async function createDataService(globalOptions = {}) {
   // Get auth context from Clerk
   const { userId, orgId } = await getAuthContext();
-  
+
   // Ensure user and org data exists in our database
   const userOrgData = await getOrCreateUserOrgData(userId, orgId);
-  
+
   // Prepare data for database calls
-  let _data = { 
+  let _data = {
     clerk_user_id: userId,
-    clerk_org_id: orgId 
+    clerk_org_id: orgId,
   };
 
   // Validate app context (update schema to use Clerk IDs)
@@ -458,11 +467,16 @@ export async function createDataService(globalOptions = {}) {
 ### **Step 2.3: Update Validation Schema**
 
 #### **File: `app/_lib/validation/buildValidationSchema.js`**
+
 ```javascript
 // Update appContextSchema to use Clerk IDs
 export const appContextSchema = z.object({
-  clerk_user_id: z.string().min(1, { message: "Unauthorized 🚫. Invalid clerk_user_id" }),
-  clerk_org_id: z.string().min(1, { message: "Unauthorized 🚫. Invalid clerk_org_id" }),
+  clerk_user_id: z
+    .string()
+    .min(1, { message: "Unauthorized 🚫. Invalid clerk_user_id" }),
+  clerk_org_id: z
+    .string()
+    .min(1, { message: "Unauthorized 🚫. Invalid clerk_org_id" }),
 });
 ```
 
@@ -473,6 +487,7 @@ export const appContextSchema = z.object({
 ### **Step 3.1: Update QueryClient**
 
 #### **File: `app/_store/queryClient.js`**
+
 ```javascript
 import {
   defaultShouldDehydrateQuery,
@@ -525,6 +540,7 @@ export function clearOrgQueryClient(orgId) {
 ### **Step 3.2: Update QueryProvider**
 
 #### **File: `app/_store/QueryProvider.js`**
+
 ```javascript
 "use client";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -534,7 +550,7 @@ import { getQueryClient } from "./queryClient";
 
 export default function QueryProvider({ children }) {
   const { organization, isLoaded } = useOrganization();
-  
+
   // Handle loading state
   if (!isLoaded) {
     const queryClient = getQueryClient(); // Default client during loading
@@ -545,7 +561,7 @@ export default function QueryProvider({ children }) {
       </QueryClientProvider>
     );
   }
-  
+
   // Get orgId from Clerk (use Clerk's org ID directly)
   const orgId = organization?.id;
   const queryClient = getQueryClient(orgId);
@@ -562,6 +578,7 @@ export default function QueryProvider({ children }) {
 ### **Step 3.3: Create Client Auth Hook**
 
 #### **File: `app/_lib/auth/client.js`**
+
 ```javascript
 "use client";
 import { useUser, useOrganization } from "@clerk/nextjs";
@@ -569,31 +586,31 @@ import { useUser, useOrganization } from "@clerk/nextjs";
 export function useAuth() {
   const { user, isLoaded: userLoaded } = useUser();
   const { organization, isLoaded: orgLoaded } = useOrganization();
-  
+
   const isLoaded = userLoaded && orgLoaded;
-  
+
   if (!isLoaded) {
     return { loading: true };
   }
-  
+
   return {
     // Clerk IDs (used directly)
     clerkUserId: user?.id,
     clerkOrgId: organization?.id,
-    
+
     // User info
     firstName: user?.firstName,
     lastName: user?.lastName,
     email: user?.primaryEmailAddress?.emailAddress,
-    
+
     // Organization info
     orgName: organization?.name,
     userRole: organization?.membership?.role,
-    
+
     // Auth state
     isAuthenticated: !!user,
     hasOrganization: !!organization,
-    loading: false
+    loading: false,
   };
 }
 ```
@@ -605,6 +622,7 @@ export function useAuth() {
 ### **Step 4.1: Create Organization Switcher**
 
 #### **File: `app/_components/OrganizationSwitcher.js`**
+
 ```javascript
 "use client";
 import { useOrganization, useOrganizationList } from "@clerk/nextjs";
@@ -625,30 +643,29 @@ export default function OrganizationSwitcher() {
       if (organization?.id) {
         clearOrgQueryClient(organization.id);
       }
-      
+
       // Clear current query client
       queryClient.clear();
-      
+
       // Switch to new organization
       await setActive({ organization: newOrgId });
-      
+
       // Redirect to home for fresh start
-      router.push('/');
-      
-      toast.success('Organization switched successfully');
+      router.push("/");
+
+      toast.success("Organization switched successfully");
     } catch (error) {
-      console.error('Error switching organization:', error);
-      toast.error('Failed to switch organization');
+      console.error("Error switching organization:", error);
+      toast.error("Failed to switch organization");
     }
   };
 
   return (
     <div className="relative">
-      <select 
-        value={organization?.id || ''} 
+      <select
+        value={organization?.id || ""}
         onChange={(e) => switchToOrg(e.target.value)}
-        className="block w-full rounded-md border-gray-300 shadow-sm"
-      >
+        className="block w-full rounded-md border-gray-300 shadow-sm">
         <option value="">Select Organization</option>
         {organizationList?.map((org) => (
           <option key={org.organization.id} value={org.organization.id}>
@@ -668,29 +685,30 @@ export default function OrganizationSwitcher() {
 ### **Step 5.1: Create Test Script**
 
 #### **File: `scripts/test-auth-integration.js`**
+
 ```javascript
 // Test script to validate the integration
-import { createDataService } from '../app/_lib/data/server/dataServices.js';
+import { createDataService } from "../app/_lib/data/server/dataServices.js";
 
 async function testAuthIntegration() {
   try {
-    console.log('Testing auth integration...');
-    
+    console.log("Testing auth integration...");
+
     // Test data service creation
     const dataService = await createDataService();
-    console.log('✅ DataService created successfully');
-    
+    console.log("✅ DataService created successfully");
+
     // Test getting items
-    const items = await dataService.getItems({ id: 'all' });
-    console.log('✅ Items retrieved:', items.length);
-    
+    const items = await dataService.getItems({ id: "all" });
+    console.log("✅ Items retrieved:", items.length);
+
     // Test other entities
-    const locations = await dataService.getLocations({ id: 'all' });
-    console.log('✅ Locations retrieved:', locations.length);
-    
-    console.log('🎉 All tests passed!');
+    const locations = await dataService.getLocations({ id: "all" });
+    console.log("✅ Locations retrieved:", locations.length);
+
+    console.log("🎉 All tests passed!");
   } catch (error) {
-    console.error('❌ Test failed:', error);
+    console.error("❌ Test failed:", error);
   }
 }
 
@@ -715,6 +733,7 @@ testAuthIntegration();
 ### **Step 6.1: Remove Old Auth Code**
 
 #### **Files to Remove/Update:**
+
 - [ ] Remove `app/_hooks/useAuth.js` (old hardcoded version)
 - [ ] Update all imports to use new auth functions
 - [ ] Remove UUID-based mapping logic (keep UUIDs for backward compatibility)
@@ -723,9 +742,10 @@ testAuthIntegration();
 ### **Step 6.2: Performance Optimization**
 
 #### **Add Caching for User/Org Lookups:**
+
 ```javascript
 // Add caching to reduce database calls
-import { cache } from 'react';
+import { cache } from "react";
 
 export const getCachedUserOrgData = cache(async (clerkUserId, clerkOrgId) => {
   return await getUserOrgData(clerkUserId, clerkOrgId);
@@ -735,21 +755,22 @@ export const getCachedUserOrgData = cache(async (clerkUserId, clerkOrgId) => {
 ### **Step 6.3: Error Handling Enhancement**
 
 #### **Add Comprehensive Error Handling:**
+
 ```javascript
 // Enhanced error handling for auth failures
 export async function createDataService(globalOptions = {}) {
   try {
     const { userId, orgId } = await getAuthContext();
     const userOrgData = await getOrCreateUserOrgData(userId, orgId);
-    
+
     // Continue with data service creation...
   } catch (error) {
-    if (error.message.includes('not found')) {
+    if (error.message.includes("not found")) {
       // Handle user/org not found
-      redirect('/onboarding');
-    } else if (error.message.includes('not a member')) {
+      redirect("/onboarding");
+    } else if (error.message.includes("not a member")) {
       // Handle membership issues
-      redirect('/unauthorized');
+      redirect("/unauthorized");
     } else {
       // Handle other errors
       throw error;
@@ -765,26 +786,28 @@ export async function createDataService(globalOptions = {}) {
 ### **Step 7.1: Webhook Endpoint Preparation**
 
 #### **File: `app/api/webhooks/clerk/route.js`**
+
 ```javascript
 // Placeholder for future webhook implementation
 export async function POST(req) {
   const { type, data } = await req.json();
-  
+
   // TODO: Implement webhook handlers
   // - user.created
-  // - user.updated  
+  // - user.updated
   // - organization.created
   // - organization.updated
   // - organizationMembership.created
   // - organizationMembership.deleted
-  
-  return new Response('OK', { status: 200 });
+
+  return new Response("OK", { status: 200 });
 }
 ```
 
 ### **Step 7.2: Webhook Integration Plan**
 
 When ready to implement webhooks:
+
 1. Implement webhook handlers for real-time sync
 2. Update JIT functions to be fallback only
 3. Add webhook failure recovery mechanisms
@@ -795,16 +818,19 @@ When ready to implement webhooks:
 ## **IMPLEMENTATION TIMELINE**
 
 ### **Week 1: Database & Server Setup**
+
 - **Days 1-2**: Phase 1 (Database preparation)
 - **Days 3-4**: Phase 2 (Server-side integration)
 - **Day 5**: Testing database functions
 
 ### **Week 2: Client Integration & Testing**
+
 - **Days 1-2**: Phase 3 (Client-side integration)
 - **Days 3-4**: Phase 4 (Organization switching)
 - **Day 5**: Phase 5 (Testing & validation)
 
 ### **Week 3: Cleanup & Optimization**
+
 - **Days 1-2**: Phase 6 (Cleanup & optimization)
 - **Days 3-5**: Performance testing and bug fixes
 

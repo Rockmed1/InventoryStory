@@ -3,8 +3,8 @@
 import { revalidateTag } from "next/cache";
 // import { auth } from "./auth"; // Placeholder for your actual auth function
 import { dbReadyData } from "@/app/_utils/helpers-server";
-import { redirect } from "next/navigation";
 import z from "zod";
+import getAuthContext from "../../auth/getAuthContext";
 import { appContextSchema } from "../../validation/buildValidationSchema";
 import { getServerValidationSchema } from "../../validation/server/getServerValidationSchema";
 import { supabase } from "./supabase";
@@ -30,19 +30,20 @@ function dbAction(rpcName, entity, operation) {
   return async function (prevState, formData) {
     // 1. Authenticate the user on the server.
     // Server Actions should not use hooks. They get auth state directly.
-    const ORG_UUID = "ceba721b-b8dc-487d-a80c-15ae9d947084";
-    const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
+    // const ORG_UUID = "ceba721b-b8dc-487d-a80c-15ae9d947084";
+    // const USR_UUID = "2bfdec48-d917-41ee-99ff-123757d59df1";
     // const session = await auth();
-    const session = { _org_uuid: ORG_UUID, _usr_uuid: USR_UUID };
+    // const session = { _org_uuid: ORG_UUID, _usr_uuid: USR_UUID };
     // TODO: authenticate user
 
-    if (!session?._org_uuid || !session?._usr_uuid) return redirect("/");
-    const { _org_uuid, _usr_uuid } = session;
+    // if (!session?._org_uuid || !session?._usr_uuid) return redirect("/");
+    // const { _org_uuid, _usr_uuid } = session;
+    const { userId: _usr_xid, orgId: _org_xid } = await getAuthContext();
 
     // validate the session data
     const validatedAppContext = await appContextSchema.safeParseAsync({
-      _org_uuid,
-      _usr_uuid,
+      _usr_xid,
+      _org_xid,
     });
 
     // console.log("validatedAppContext: ", validatedAppContext);
@@ -65,9 +66,15 @@ function dbAction(rpcName, entity, operation) {
       editedEntityId,
     });
 
-    const validatedData = await schema.safeParseAsync(formData);
+    console.log("formData: ", formData);
 
-    // console.log("server validatedData: ", validatedData);
+    // Convert FormData to plain object for Zod validation
+    const formDataObject = Object.fromEntries(formData.entries());
+    console.log("formDataObject: ", formDataObject);
+
+    const validatedData = await schema.safeParseAsync(formDataObject);
+
+    console.log("server validatedData: ", validatedData);
 
     if (!validatedData.success) {
       return {
@@ -81,7 +88,7 @@ function dbAction(rpcName, entity, operation) {
     // Massage the validated data to match database field mappings
     const readyData = dbReadyData(validatedData.data, entity);
 
-    const _data = { _org_uuid, _usr_uuid, ...readyData };
+    const _data = { _org_xid, _usr_xid, ...readyData };
 
     // console.log("RPC_data", _data);
     // await connection();
@@ -112,7 +119,7 @@ function dbAction(rpcName, entity, operation) {
 
     // 5. Revalidate the appropriate cache tag on success.
     if (entity) {
-      revalidateTag(`${entity}-${_org_uuid}`);
+      revalidateTag(`${entity}-${_org_xid}`);
     }
 
     // console.log(prevState);
@@ -187,6 +194,33 @@ export const createItemTrx = dbAction(
   "itemTrx",
   "create",
 );
+
+export async function clerkSync(_data) {
+  const { data: resultData, error } = await supabase.rpc("fn_sync_x_usr_org", {
+    _data,
+  });
+  console.log("resultData: ", resultData, "dbError: ", error);
+
+  if (error || !resultData?.success) {
+    const errorMessage =
+      error?.message || resultData?.message || `Failed to execute clerkSync.`;
+
+    console.error(`Error in clerkSync:`, errorMessage);
+
+    // 💥 Throw an actual error
+    throw new Error(errorMessage);
+
+    // return {
+    //   success: false,
+    //   message: errorMessage,
+    // };
+  }
+
+  return {
+    success: resultData.success,
+    message: resultData.message,
+  };
+}
 
 export async function dummyServerAction(param) {
   console.log(`${param} button has been pressed`);

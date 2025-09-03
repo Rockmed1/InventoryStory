@@ -22,8 +22,8 @@ import {
 import { z } from "zod";
 
 export const appContextSchema = z.object({
-  _usr_uuid: z.uuid({ error: errorMessages.invalid("usr_uuid") }),
-  _org_uuid: z.uuid({ error: errorMessages.invalid("org_uuid") }),
+  _usr_xid: FIELD_VALIDATION_RULES["xId"]("_usr_xid"),
+  _org_xid: FIELD_VALIDATION_RULES["xId"]("_org_xid"),
 });
 
 //generate the base schema for field types only

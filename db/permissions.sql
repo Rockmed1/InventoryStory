@@ -279,4 +279,3 @@ DROP POLICY IF EXISTS "Org_select_policy" ON trans.trx_direction;
 CREATE POLICY "Org_select_policy" ON trans.trx_direction AS PERMISSIVE
 	FOR SELECT TO public
 		USING (TRUE);
-

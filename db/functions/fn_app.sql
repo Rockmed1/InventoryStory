@@ -72,20 +72,33 @@ ALTER FUNCTION utils._fn_set_org_rls OWNER TO utils_admin;
 -----
 DROP FUNCTION IF EXISTS utils._fn_assert_input_keys_param;
 
-CREATE OR REPLACE FUNCTION utils._fn_assert_input_keys_param(IN _data JSONB , IN _keys_param TEXT[] , _fn_name TEXT DEFAULT '')
+CREATE OR REPLACE FUNCTION utils._fn_assert_input_keys_param(IN _data JSONB , _keys_param TEXT[] , _fn_name TEXT DEFAULT '' , _add_context_keys BOOLEAN DEFAULT TRUE)
 	RETURNS void
 	LANGUAGE plpgsql
 	SECURITY DEFINER
 	SET search_path = utils
 	AS $$
+DECLARE
+	_enhanced_keys TEXT[];
 BEGIN
 	--! Assert logic here
-	-- verify input parameters:
-	IF array_length(_keys_param , 1) IS NULL THEN
-		RAISE EXCEPTION '% _keys_param cannot be empty array or null in a record function.' , _fn_name;
+	IF _add_context_keys THEN
+		_enhanced_keys := ARRAY['_usr_xid' , '_org_xid'];
 	END IF;
-	IF NOT(_data ?& _keys_param) THEN
-		RAISE EXCEPTION 'Invalid function parameters contained in the % _data JSONB. _keys_param: % while recieved: %' , _fn_name , _keys_param , _data;
+	-- Add the function-specific keys if provided
+	IF _keys_param IS NOT NULL AND array_length(_keys_param , 1) > 0 THEN
+		_enhanced_keys := _enhanced_keys || _keys_param;
+	END IF;
+	-- Remove duplicates (in case function explicitly passes _usr_xid / _org_xid)
+	SELECT
+		ARRAY ( SELECT DISTINCT
+				unnest(_enhanced_keys)) INTO _enhanced_keys;
+	-- verify input parameters:
+	-- IF array_length(_keys_param , 1) IS NULL THEN
+	-- 	RAISE EXCEPTION '% _keys_param cannot be empty array or null in a record function.' , _fn_name;
+	-- END IF;
+	IF NOT (_data ?& _enhanced_keys) THEN
+		RAISE EXCEPTION 'Invalid function parameters contained in the % _data JSONB. _enhanced_params: % while recieved: %' , _fn_name , _enhanced_keys , _data;
 	END IF;
 
 EXCEPTION
@@ -121,18 +134,18 @@ BEGIN
 		RAISE EXCEPTION 'Invalid context option: %, must be one of record or trans' , _option;
 	END IF;
 	-- _keys_param should not be null or empty array for 'record'
-	IF _option = 'record' AND(_keys_param IS NULL OR array_length(_keys_param , 1) IS NULL) THEN
-		RAISE EXCEPTION '_keys_param cannot be null or empty array in a record function.';
-	END IF;
+	-- IF _option = 'record' AND(_keys_param IS NULL OR array_length(_keys_param , 1) IS NULL) THEN
+	-- 	RAISE EXCEPTION '_keys_param cannot be null or empty array in a record function.';
+	-- END IF;
 	--verify level 1 input parameters:
 	PERFORM
 		_fn_assert_input_keys_param(_data , _keys_param , _fn_name);
 	--get user id
 	SELECT
-		_fn_get_usr_id((_data ->> '_usr_uuid')::UUID) INTO _usr_id;
+		_fn_get_usr_id(_data ->> '_usr_xid') INTO _usr_id;
 	--get org_id
 	SELECT
-		_fn_get_org_id((_data ->> '_org_uuid')::UUID) INTO _org_id;
+		_fn_get_org_id(_data ->> '_org_xid') INTO _org_id;
 	--confirm user is authorized in organization
 	PERFORM
 		_fn_assert_usr_org_auth(_usr_id , _org_id);

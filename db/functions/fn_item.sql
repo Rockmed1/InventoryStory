@@ -20,7 +20,7 @@ CREATE OR REPLACE FUNCTION utils.fn_create_item_class(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_item_class_name' , '_item_class_desc'];
+	_data_keys TEXT[] := ARRAY['_item_class_name' , '_item_class_desc'];
 	_is_context_set BOOLEAN;
 	_success BOOLEAN := FALSE;
 BEGIN
@@ -78,7 +78,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_items_classes(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_item_class_id'];
+	_data_keys TEXT[] := ARRAY['_item_class_id'];
 	_is_context_set BOOLEAN;
 	_result JSON;
 BEGIN
@@ -133,7 +133,7 @@ CREATE OR REPLACE FUNCTION utils.fn_update_item_class(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_item_class_id' , '_item_class_name' , '_item_class_desc'];
+	_data_keys TEXT[] := ARRAY['_item_class_id' , '_item_class_name' , '_item_class_desc'];
 	_is_context_set BOOLEAN;
 	_rows_affected INTEGER;
 	_updated_item_class_id INTEGER;
@@ -203,7 +203,7 @@ CREATE OR REPLACE FUNCTION utils.fn_create_location(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_loc_name' , '_loc_desc'];
+	_data_keys TEXT[] := ARRAY['_loc_name' , '_loc_desc'];
 	_is_context_set BOOLEAN;
 	_success BOOLEAN := FALSE;
 BEGIN
@@ -264,7 +264,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_locations(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_loc_id'];
+	_data_keys TEXT[] := ARRAY['_loc_id'];
 	_is_context_set BOOLEAN;
 	_result JSON;
 BEGIN
@@ -319,7 +319,7 @@ CREATE OR REPLACE FUNCTION utils.fn_update_location(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_loc_id' , '_loc_name' , '_loc_desc'];
+	_data_keys TEXT[] := ARRAY['_loc_id' , '_loc_name' , '_loc_desc'];
 	_rows_affected INTEGER;
 	_is_context_set BOOLEAN;
 	_updated_loc_id INTEGER;
@@ -390,7 +390,7 @@ CREATE OR REPLACE FUNCTION utils.fn_create_bin(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_bin_name' , '_bin_desc' , '_loc_id'];
+	_data_keys TEXT[] := ARRAY['_bin_name' , '_bin_desc' , '_loc_id'];
 	_is_context_set BOOLEAN;
 	_success BOOLEAN := FALSE;
 BEGIN
@@ -454,7 +454,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_bins(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_bin_id'];
+	_data_keys TEXT[] := ARRAY['_bin_id'];
 	_is_context_set BOOLEAN;
 	_result JSON;
 BEGIN
@@ -509,7 +509,7 @@ CREATE OR REPLACE FUNCTION utils.fn_update_bin(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_bin_id' , '_bin_name' , '_bin_desc' , '_loc_id'];
+	_data_keys TEXT[] := ARRAY['_bin_id' , '_bin_name' , '_bin_desc' , '_loc_id'];
 	_is_context_set BOOLEAN;
 	_rows_affected INTEGER;
 	_updated_bin_id INTEGER;
@@ -585,7 +585,7 @@ CREATE OR REPLACE FUNCTION utils.fn_create_market_type(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_market_type_name' , '_market_type_desc'];
+	_data_keys TEXT[] := ARRAY['_market_type_name' , '_market_type_desc'];
 	_is_context_set BOOLEAN;
 	_success BOOLEAN := FALSE;
 BEGIN
@@ -646,7 +646,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_market_types(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_market_type_id'];
+	_data_keys TEXT[] := ARRAY['_market_type_id'];
 	_is_context_set BOOLEAN;
 	_result JSON;
 BEGIN
@@ -701,7 +701,7 @@ CREATE OR REPLACE FUNCTION utils.fn_update_market_type(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_market_type_id' , '_market_type_name' , '_market_type_desc'];
+	_data_keys TEXT[] := ARRAY['_market_type_id' , '_market_type_name' , '_market_type_desc'];
 	_is_context_set BOOLEAN;
 	_rows_affected INTEGER;
 	_updated_market_type_id INTEGER;
@@ -776,7 +776,7 @@ CREATE OR REPLACE FUNCTION utils.fn_create_market(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_market_name' , '_market_desc' , '_market_url' , '_market_type_id'];
+	_data_keys TEXT[] := ARRAY['_market_name' , '_market_desc' , '_market_url' , '_market_type_id'];
 	_is_context_set BOOLEAN;
 	_success BOOLEAN := FALSE;
 BEGIN
@@ -842,7 +842,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_markets(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_market_id'];
+	_data_keys TEXT[] := ARRAY['_market_id'];
 	_is_context_set BOOLEAN;
 	_result JSON;
 BEGIN
@@ -897,7 +897,7 @@ CREATE OR REPLACE FUNCTION utils.fn_update_market(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_market_id' , '_market_name' , '_market_desc' , '_market_url' , '_market_type_id'];
+	_data_keys TEXT[] := ARRAY['_market_id' , '_market_name' , '_market_desc' , '_market_url' , '_market_type_id'];
 	_is_context_set BOOLEAN;
 	_rows_affected INTEGER;
 	_updated_market_id INTEGER;
@@ -974,7 +974,7 @@ CREATE OR REPLACE FUNCTION utils.fn_create_item(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_item_name' , '_item_desc' , '_item_class_id'];
+	_data_keys TEXT[] := ARRAY['_item_name' , '_item_desc' , '_item_class_id'];
 	_is_context_set BOOLEAN;
 	_success BOOLEAN := FALSE;
 BEGIN
@@ -1039,7 +1039,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_items(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_item_id'];
+	_data_keys TEXT[] := ARRAY['_item_id'];
 	_is_context_set BOOLEAN;
 	_result JSON;
 BEGIN
@@ -1094,7 +1094,7 @@ CREATE OR REPLACE FUNCTION utils.fn_update_item(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_item_id' , '_item_name' , '_item_desc' , '_item_class_id'];
+	_data_keys TEXT[] := ARRAY['_item_id' , '_item_name' , '_item_desc' , '_item_class_id'];
 	_is_context_set BOOLEAN;
 	_rows_affected INTEGER;
 	_updated_item_id INTEGER;
@@ -1168,7 +1168,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_item_qoh(_data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_item_id' , '_bin_id'];
+	_data_keys TEXT[] := ARRAY['_item_id' , '_bin_id'];
 	_is_context_set BOOLEAN;
 	-- _result JSON;
 	_QOH DECIMAL(8 , 2) := 0;
@@ -1201,13 +1201,13 @@ BEGIN
 	-- WHERE
 	-- 	q.item_id =(_data ->> '_item_id')::INTEGER
 	-- 	AND q.bin_id =(_data ->> '_bin_id')::INTEGER;
-	-- IF NOT FOUND THEN
-	-- RAISE EXCEPTION 'No item quantity exists for item % and bin %.' ,(_data ->> '_item_id') ,(_data ->> '_bin_id');
-	_QOH := 0;
-END IF;
+	IF NOT FOUND THEN
+		RAISE EXCEPTION 'No item quantity exists for item % and bin %.' ,(_data ->> '_item_id') ,(_data ->> '_bin_id');
+		_QOH := 0;
+	END IF;
 	-- make sure it is not negative
 	IF _QOH < 0 THEN
-		RAISE EXCEPTION 'Negative QOH Error. Contact admin. The current QOH is % for item % in bin %.' , _QOH , _item_id , _bin_id;
+		RAISE EXCEPTION 'Negative QOH Error. Contact admin. The current QOH is % for item % in bin %.' , _QOH , _data ->> '_item_id' , _data ->> '_bin_id';
 	END IF;
 
 	RETURN _QOH;

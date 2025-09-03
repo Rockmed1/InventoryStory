@@ -17,7 +17,8 @@
 // }
 
 import { Button } from "@/app/_components/_ui/client/shadcn-Button";
-import { useClerk } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
+
 import {
   ArchiveBoxIcon,
   ArrowsRightLeftIcon,
@@ -28,8 +29,14 @@ import {
   GlobeAltIcon,
   PlayCircleIcon,
 } from "@heroicons/react/24/outline";
+import Link from "next/link";
+import ClerkSignInOut from "./_components/client/ClerkSignInOut";
 
-export default function LandingPageDraft() {
+export default async function LandingPageDraft() {
+  const { isAuthenticated } = await auth();
+  // const isAuthenticated = userId.isAuthenticated;
+  console.log("isAuthenticated: ", isAuthenticated);
+
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
@@ -51,9 +58,15 @@ export default function LandingPageDraft() {
                 Pricing
               </a>
               <a href="#" className="text-gray-500 hover:text-gray-900">
-                Sign In
+                <ClerkSignInOut />
               </a>
-              <Button>Start Free Trial</Button>
+              {!isAuthenticated ? (
+                <Button>Start Free Trial</Button>
+              ) : (
+                <Link href="/dashboard">
+                  <Button>Go to Dashboard</Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -74,9 +87,11 @@ export default function LandingPageDraft() {
                 grow with confidence.
               </p>
               <div className="mt-8 flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
-                  Start Free Trial
-                </Button>
+                {!isAuthenticated && (
+                  <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+                    Start Free Trial
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="lg"

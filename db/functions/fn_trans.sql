@@ -21,7 +21,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_trx_directions(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_trx_direction_id'];
+	_data_keys TEXT[] := ARRAY['_trx_direction_id'];
 	_is_context_set BOOLEAN;
 	_result JSON;
 BEGIN
@@ -79,7 +79,7 @@ CREATE OR REPLACE FUNCTION utils.fn_create_trx_type(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_trx_type_name' , '_trx_type_desc' , '_trx_direction_id'];
+	_data_keys TEXT[] := ARRAY['_trx_type_name' , '_trx_type_desc' , '_trx_direction_id'];
 	_is_context_set BOOLEAN;
 	_success BOOLEAN := FALSE;
 BEGIN
@@ -143,7 +143,7 @@ CREATE OR REPLACE FUNCTION utils.fn_update_trx_type(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_trx_type_id' , '_trx_type_name' , '_trx_type_desc' , '_trx_direction_id'];
+	_data_keys TEXT[] := ARRAY['_trx_type_id' , '_trx_type_name' , '_trx_type_desc' , '_trx_direction_id'];
 	_is_context_set BOOLEAN;
 	_rows_affected INTEGER;
 	_updated_trx_type_id INTEGER;
@@ -220,7 +220,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_trx_types(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_trx_type_id'];
+	_data_keys TEXT[] := ARRAY['_trx_type_id'];
 	_is_context_set BOOLEAN;
 	_result JSON;
 BEGIN
@@ -415,7 +415,7 @@ BEGIN
 	-- validate LEVEL 2 - in the jsonb
 	-- Validate header fields
 	PERFORM
-		_fn_assert_input_keys_param(_data -> '_trx_header' , _trx_header_keys , '_trx_header');
+		_fn_assert_input_keys_param(_data -> '_trx_header' , _trx_header_keys , '_trx_header' , FALSE);
 	--get trx_direction_id
 	_trx_direction_id := _fn_get_trx_direction_id((_data -> '_trx_header' ->> '_trx_type_id')::INT);
 	-- Validate trx_details is an array with at least one object
@@ -549,7 +549,7 @@ DECLARE
 	_item_trx_id INTEGER;
 	_insert_row_count INTEGER;
 	_success BOOLEAN := FALSE;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_trx_header' , '_trx_details'];
+	_data_keys TEXT[] := ARRAY['_trx_header' , '_trx_details'];
 BEGIN
 	-- verify input parameters:
 	-- set org context and get usr_id, org_id:
@@ -742,7 +742,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_item_trans(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_item_trx_id'];
+	_data_keys TEXT[] := ARRAY['_item_trx_id'];
 	_is_context_set BOOLEAN;
 	_result JSON;
 BEGIN
@@ -795,7 +795,7 @@ CREATE OR REPLACE FUNCTION utils.fn_get_item_trx_details(IN _data JSONB)
 DECLARE
 	_usr_id INTEGER;
 	_org_id INTEGER;
-	_data_keys TEXT[] := ARRAY['_org_uuid' , '_usr_uuid' , '_item_trx_id'];
+	_data_keys TEXT[] := ARRAY['_item_trx_id'];
 	_is_context_set BOOLEAN;
 	_result JSON;
 BEGIN

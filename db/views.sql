@@ -3,8 +3,12 @@ RESET ROLE;
 SELECT
 	"current_user"();
 
+--! WITH ( security_barrier, security_invoker = TRUE) is a must in order for rls to work with views for utils_admin
+--
 -- DROP VIEW usrs.v_usr_org;
-CREATE OR REPLACE VIEW usrs.v_usr_org AS
+CREATE OR REPLACE VIEW usrs.v_usr_org WITH ( security_barrier
+, security_invoker = TRUE
+) AS
 SELECT
 	u.usr_id
 	, u.usr_uuid
@@ -25,7 +29,10 @@ FROM
 --
 DROP VIEW IF EXISTS items.v_item;
 
-CREATE OR REPLACE VIEW items.v_item AS
+-- Recreate as a security barrier view
+CREATE VIEW items.v_item WITH ( security_barrier
+, security_invoker = TRUE
+) AS
 SELECT
 	i.item_id
 	, i.item_name
@@ -33,7 +40,10 @@ SELECT
 	, i.item_class_id
 	, c.item_class_name
 	, c.item_class_desc
-	, sum(q.item_qty) AS QOH
+	, sum(
+		q.item_qty
+) AS QOH
+	, i.org_id
 FROM
 	items.item i
 	JOIN items.item_class c ON i.item_class_id = c.item_class_id
@@ -44,7 +54,10 @@ GROUP BY
 	, i.item_desc
 	, i.item_class_id
 	, c.item_class_name
-	, c.item_class_desc;
+	, c.item_class_desc
+	, i.org_id;
+
+GRANT SELECT ON items.v_item TO utils_admin;
 
 ----------------
 --------------
@@ -54,7 +67,9 @@ GROUP BY
 ---
 DROP VIEW IF EXISTS locations.v_location;
 
-CREATE OR REPLACE VIEW locations.v_location AS
+CREATE OR REPLACE VIEW locations.v_location WITH ( security_barrier
+, security_invoker = TRUE
+) AS
 SELECT
 	l.loc_id
 	, l.loc_name
@@ -70,7 +85,9 @@ FROM
 ---
 DROP VIEW IF EXISTS locations.v_bin;
 
-CREATE OR REPLACE VIEW locations.v_bin AS
+CREATE OR REPLACE VIEW locations.v_bin WITH ( security_barrier
+, security_invoker = TRUE
+) AS
 SELECT
 	b.bin_id
 	, b.bin_name
@@ -89,7 +106,9 @@ FROM
 ---
 DROP VIEW IF EXISTS items.v_item_class;
 
-CREATE OR REPLACE VIEW items.v_item_class AS
+CREATE OR REPLACE VIEW items.v_item_class WITH ( security_barrier
+, security_invoker = TRUE
+) AS
 SELECT
 	c.item_class_id
 	, c.item_class_name
@@ -105,7 +124,9 @@ FROM
 ---
 DROP VIEW IF EXISTS markets.v_market_type;
 
-CREATE OR REPLACE VIEW markets.v_market_type AS
+CREATE OR REPLACE VIEW markets.v_market_type WITH ( security_barrier
+, security_invoker = TRUE
+) AS
 SELECT
 	t.market_type_id
 	, t.market_type_name
@@ -121,7 +142,9 @@ FROM
 ---
 DROP VIEW IF EXISTS markets.v_market;
 
-CREATE OR REPLACE VIEW markets.v_market AS
+CREATE OR REPLACE VIEW markets.v_market WITH ( security_barrier
+, security_invoker = TRUE
+) AS
 SELECT
 	m.market_id
 	, m.market_name
@@ -141,7 +164,9 @@ FROM
 ---
 DROP VIEW IF EXISTS trans.v_trx_type;
 
-CREATE OR REPLACE VIEW trans.v_trx_type AS
+CREATE OR REPLACE VIEW trans.v_trx_type WITH ( security_barrier
+, security_invoker = TRUE
+) AS
 SELECT
 	y.trx_type_id
 	, y.trx_type_name
@@ -160,7 +185,9 @@ FROM
 ---
 DROP VIEW IF EXISTS trans.v_item_trx;
 
-CREATE OR REPLACE VIEW trans.v_item_trx AS
+CREATE OR REPLACE VIEW trans.v_item_trx WITH ( security_barrier
+, security_invoker = TRUE
+) AS
 SELECT
 	t.item_trx_id
 	, t.trx_date
@@ -186,7 +213,9 @@ FROM
 ---
 DROP VIEW IF EXISTS trans.v_item_trx_detail;
 
-CREATE OR REPLACE VIEW trans.v_item_trx_detail AS
+CREATE OR REPLACE VIEW trans.v_item_trx_detail WITH ( security_barrier
+, security_invoker = TRUE
+) AS
 SELECT
 	d.item_trx_detail_id
 	, d.item_trx_id
