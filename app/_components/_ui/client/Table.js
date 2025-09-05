@@ -17,7 +17,7 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "./shadcn-Collapsible";
+} from "./shadcn/shadcn-Collapsible";
 
 // import { createContext, use, useState } from "react";
 
@@ -392,16 +392,22 @@ export default function Table({
 
   return (
     <TableProvider tableState={tableState}>
-      <div className="overflow-scroll rounded-lg border border-neutral-200">
+      <div className="flex h-full flex-col overflow-hidden rounded-lg border border-neutral-200">
         <Menus>
-          <table className="w-full table-auto text-left text-sm">
-            <TableHeader labels={labels} />
-            {!tableData ? (
-              <TableBodyLoading />
-            ) : (
-              <TableBody>{children}</TableBody>
-            )}
-          </table>
+          <div className="sticky top-0 z-10 flex-shrink-0 border-b border-neutral-200 bg-white">
+            <table className="w-full table-auto text-left text-sm">
+              <TableHeader labels={labels} />
+            </table>
+          </div>
+          <div className="flex overflow-y-scroll">
+            <table className="w-full table-auto text-left text-sm">
+              {!tableData ? (
+                <TableBodyLoading />
+              ) : (
+                <TableBody>{children}</TableBody>
+              )}
+            </table>
+          </div>
         </Menus>
       </div>
     </TableProvider>

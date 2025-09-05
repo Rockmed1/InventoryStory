@@ -10,7 +10,7 @@ import { useActionState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { updateItemClass } from "../../_lib/data/server/actions";
-import { Button } from "../_ui/client/shadcn-Button";
+import { Button } from "../_ui/client/shadcn/shadcn-Button";
 import {
   Form,
   FormControl,
@@ -19,8 +19,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "../_ui/client/shadcn-Form";
-import { Input } from "../_ui/client/shadcn-Input";
+} from "../_ui/client/shadcn/shadcn-Form";
+import { Input } from "../_ui/client/shadcn/shadcn-Input";
 import SpinnerMini from "../_ui/server/SpinnerMini";
 
 export default function EditItemClassForm({ id, onCloseModal }) {

@@ -1,5 +1,6 @@
 import ItemsTrxDetailsTable from "@/app/_components/server/ItemsTrxDetailsTable";
 import ItemsTrxTable from "@/app/_components/server/ItemsTrxTable";
+import { ArrowsRightLeftIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -26,10 +27,15 @@ export default async function Page({ params }) {
   //1- authenticate the user
 
   return (
-    <>
-      <div>
-        <Link href="/transactions">All Transactions</Link>
-        <h2>Transaction: {itemTrxId}</h2>
+    <div className="flex flex-col gap-4 p-2">
+      <div className="flex flex-shrink-0 items-center justify-between gap-2">
+        <h2 className="font-medium">Transaction: {itemTrxId}</h2>
+        <Link
+          href="/transactions"
+          className={`flex items-center justify-items-start gap-2 rounded-md p-2 text-sm transition-all duration-300 hover:font-semibold [&_svg]:size-4 hover:[&_svg]:stroke-[1.6]`}>
+          <ArrowsRightLeftIcon className="" />
+          All Transactions
+        </Link>
       </div>
       <div className="container m-auto grid w-full items-center gap-6 p-2">
         <Suspense fallback={<ItemsTrxTable.Fallback />}>
@@ -40,6 +46,6 @@ export default async function Page({ params }) {
           <ItemsTrxDetailsTable itemTrxId={numericItemTrxId} />
         </Suspense>
       </div>
-    </>
+    </div>
   );
 }

@@ -66,15 +66,22 @@ function dbAction(rpcName, entity, operation) {
       editedEntityId,
     });
 
-    console.log("formData: ", formData);
+    // console.log("formData: ", formData);
 
-    // Convert FormData to plain object for Zod validation
-    const formDataObject = Object.fromEntries(formData.entries());
-    console.log("formDataObject: ", formDataObject);
+    // Convert FormData to plain object for Zod validation, or use as-is if already a plain object
+    let formDataObject;
+    if (formData && typeof formData.entries === "function") {
+      // It's a FormData object
+      formDataObject = Object.fromEntries(formData.entries());
+    } else {
+      // It's already a plain JavaScript object
+      formDataObject = formData;
+    }
+    // console.log("formDataObject: ", formDataObject);
 
     const validatedData = await schema.safeParseAsync(formDataObject);
 
-    console.log("server validatedData: ", validatedData);
+    // console.log("server validatedData: ", validatedData);
 
     if (!validatedData.success) {
       return {

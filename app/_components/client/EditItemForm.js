@@ -12,7 +12,7 @@ import { DropDown } from "../_ui/client/DropDown";
 // import Button from "../_ui/server/Button";
 import useClientData from "@/app/_lib/data/client/useClientData";
 import { DevTool } from "@hookform/devtools";
-import { Button } from "../_ui/client/shadcn-Button";
+import { Button } from "../_ui/client/shadcn/shadcn-Button";
 import {
   Form,
   FormControl,
@@ -21,8 +21,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "../_ui/client/shadcn-Form";
-import { Input } from "../_ui/client/shadcn-Input";
+} from "../_ui/client/shadcn/shadcn-Form";
+import { Input } from "../_ui/client/shadcn/shadcn-Input";
 import SpinnerMini from "../_ui/server/SpinnerMini";
 
 /**

@@ -8,7 +8,7 @@ import {
   useFormState,
 } from "react-hook-form";
 
-import { Label } from "@/app/_components/_ui/client/shadcn-Label";
+import { Label } from "@/app/_components/_ui/client/shadcn/shadcn-Label";
 import { cn } from "@/app/_utils/utils";
 
 const Form = FormProvider;

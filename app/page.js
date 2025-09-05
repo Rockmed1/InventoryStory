@@ -16,7 +16,7 @@
 //   );
 // }
 
-import { Button } from "@/app/_components/_ui/client/shadcn-Button";
+import { Button } from "@/app/_components/_ui/client/shadcn/shadcn-Button";
 import { auth } from "@clerk/nextjs/server";
 
 import {

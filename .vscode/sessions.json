@@ -33,7 +33,7 @@
         "autoExecuteCommands": true,
         "icon": "github",
         "color": "terminal.ansiRed",
-        "cwd": "/Users/themac/Dev/React/",
+        "cwd": "/Users/aa/Dev/InventoryStory/",
         "commands": [""]
       },
       {
@@ -41,7 +41,7 @@
         "autoExecuteCommands": true,
         "icon": "globe",
         "color": "terminal.ansiBlue",
-        "cwd": "/Users/themac/Dev/React/",
+        "cwd": "/Users/aa/Dev/InventoryStory/",
         "commands": ["gemini"]
       },
       {
@@ -49,7 +49,7 @@
         "autoExecuteCommands": true,
         "icon": "globe",
         "color": "terminal.ansiBrightYellow",
-        "cwd": "/Users/themac/Dev/React/",
+        "cwd": "/Users/aa/Dev/InventoryStory/",
         "commands": ["acli rovodev run"]
       }
     ]

@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncRedirectUrl } from "@/app/_utils/helpers-client";
+import { useClerkRedirectUrl } from "@/app/_utils/helpers-client";
 import {
   OrganizationSwitcher,
   SignedIn,
@@ -11,7 +11,7 @@ import {
 } from "@clerk/nextjs";
 
 export default function ClerkSignInOut({ orgSelector = false }) {
-  const redirectUrl = useSyncRedirectUrl();
+  const redirectUrl = useClerkRedirectUrl();
   // console.log("sideNavigation redirectUrl:", redirectUrl);
 
   return (

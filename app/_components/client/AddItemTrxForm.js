@@ -12,8 +12,8 @@ import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { createItemTrx } from "../../_lib/data/server/actions";
 import { DropDown } from "../_ui/client/DropDown";
-import { Button } from "../_ui/client/shadcn-Button";
-import DatePicker from "../_ui/client/shadcn-DatePicker";
+import { Button } from "../_ui/client/shadcn/shadcn-Button";
+import DatePicker from "../_ui/client/shadcn/shadcn-DatePicker";
 import {
   Form,
   FormControl,
@@ -22,8 +22,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "../_ui/client/shadcn-Form";
-import { Input } from "../_ui/client/shadcn-Input";
+} from "../_ui/client/shadcn/shadcn-Form";
+import { Input } from "../_ui/client/shadcn/shadcn-Input";
 import SpinnerMini from "../_ui/server/SpinnerMini";
 import LineQohDisplay from "./LineQohDisplay";
 

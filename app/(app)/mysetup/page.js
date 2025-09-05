@@ -1,3 +1,10 @@
+import { Button } from "@/app/_components/_ui/client/shadcn/shadcn-Button";
+import {
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/app/_components/_ui/client/shadcn/shadcn-Collapsible";
+import { Collapsible } from "@radix-ui/react-collapsible";
+import { ChevronsUpDownIcon } from "lucide-react";
 import { Suspense } from "react";
 import AddButtonModal from "../../_components/_ui/client/AddButtonModal";
 import Card from "../../_components/_ui/server/Card";
@@ -104,26 +111,47 @@ export default function Page() {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-4 px-3">
-      {cards.map((card) => (
-        <Card key={card.cardName}>
-          <Card.CardHeader>
-            <Card.CardTitle>{card.cardName}</Card.CardTitle>
-            <Card.CardAction>{card.CardAction} </Card.CardAction>
-          </Card.CardHeader>
-          <Card.CardContent>
-            <Suspense fallback={card.cardFallback}>{card.cardTable}</Suspense>
-          </Card.CardContent>
-        </Card>
-      ))}
-      {/* <Card>
+    <div className="flex h-full flex-col gap-5 overflow-scroll p-2">
+      <div className="m-3 flex items-center">
+        <h1 className="text-2xl font-semibold font-stretch-semi-expanded">
+          Company Setup
+        </h1>
+      </div>
+      <div className="flex flex-col gap-4">
+        {cards.map((card) => (
+          <Collapsible key={card.name} asChild>
+            <Card key={card.cardName}>
+              <Card.CardHeader>
+                <CollapsibleTrigger asChild>
+                  <div className="flex items-center justify-between">
+                    <Button variant="ghost" size="icon" className="size-8">
+                      <ChevronsUpDownIcon />
+                      <span className="sr-only">Toggle</span>
+                    </Button>
+                    <Card.CardTitle>{card.cardName}</Card.CardTitle>
+                  </div>
+                </CollapsibleTrigger>
+                <Card.CardAction>{card.CardAction} </Card.CardAction>
+              </Card.CardHeader>
+              <CollapsibleContent>
+                <Card.CardContent>
+                  <Suspense fallback={card.cardFallback}>
+                    {card.cardTable}
+                  </Suspense>
+                </Card.CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+        ))}
+        {/* <Card>
         <Card.CardHeader>
-          <Card.CardTitle>Form</Card.CardTitle>
+        <Card.CardTitle>Form</Card.CardTitle>
         </Card.CardHeader>
         <Card.CardContent>
-          <AddLocationForm />
+        <AddLocationForm />
         </Card.CardContent>
-      </Card> */}
+        </Card> */}
+      </div>
     </div>
   );
 }

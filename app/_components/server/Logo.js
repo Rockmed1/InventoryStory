@@ -26,7 +26,7 @@ export default function Logo() {
         width="60"
         className="block rounded-full"
     /> */}
-      <span className="w-10 sm:w-16">
+      <span className="w-10 sm:w-12">
         <Image
           src={logoImage}
           alt="Inventory House Logo"
@@ -36,7 +36,7 @@ export default function Logo() {
         />
       </span>
       <span
-        className={`${secondFont.className} hidden text-3xl font-semibold tracking-tighter text-neutral-900 text-shadow-neutral-200 sm:block`}>
+        className={`${secondFont.className} hidden text-xl font-semibold tracking-tighter text-neutral-900 text-shadow-neutral-200 sm:block`}>
         Inventory story
       </span>
     </div>

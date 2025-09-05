@@ -1,10 +1,10 @@
 "use client";
 
-import { useSyncRedirectUrl } from "@/app/_utils/helpers-client";
+import { useClerkRedirectUrl } from "@/app/_utils/helpers-client";
 import { SignIn } from "@clerk/nextjs";
 
 export default function SignInPage() {
-  const redirectUrl = useSyncRedirectUrl();
+  const redirectUrl = useClerkRedirectUrl();
 
   // console.log(redirectUrl);
 

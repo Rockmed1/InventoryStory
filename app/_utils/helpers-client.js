@@ -34,7 +34,7 @@ export function useUrlParam(param) {
   // return useMemo(() => ({ paramValue, toggle }), [paramValue, toggle]);
 }
 
-export function useSyncRedirectUrl() {
+export function useClerkRedirectUrl() {
   let { paramValue: redirect_url } = useUrlParam("redirect_url");
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL;

@@ -6,7 +6,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/app/_components/_ui/client/shadcn-Select";
+} from "@/app/_components/_ui/client/shadcn/shadcn-Select";
 import useClientData from "@/app/_lib/data/client/useClientData";
 import { getEntityDisplayLabel } from "@/app/_utils/helpers";
 import { useEffect, useState } from "react";

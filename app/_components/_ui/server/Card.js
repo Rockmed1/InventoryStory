@@ -33,7 +33,7 @@ function CardAction({ children }) {
  */
 function CardContent({ children, ...props }) {
   return (
-    <div className="px-4" {...props}>
+    <div className="min-h-0 flex-1 overflow-hidden px-4" {...props}>
       {children}
     </div>
   );
@@ -48,7 +48,7 @@ function CardContent({ children, ...props }) {
  */
 function Card({ children, ...props }) {
   return (
-    <div className="flex w-full flex-col gap-4 overflow-scroll rounded-xl border border-neutral-200 bg-white py-4 shadow-xs">
+    <div className="flex max-h-[500px] w-full flex-col gap-4 overflow-hidden rounded-xl border border-neutral-200 bg-white py-4 shadow-xs">
       {/* {cloneElement(children, { onCloseModal: close })} // this will error out if passing [null or undefined, Arrays of elements, Plain text/strings, Numbers, Multiple elements] as children*/}
       {React.Children.count(children) > 0 && React.isValidElement(children)
         ? cloneElement(children, { ...props })

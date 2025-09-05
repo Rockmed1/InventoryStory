@@ -11,7 +11,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { updateMarket } from "../../_lib/data/server/actions";
 import { DropDown } from "../_ui/client/DropDown";
-import { Button } from "../_ui/client/shadcn-Button";
+import { Button } from "../_ui/client/shadcn/shadcn-Button";
 import {
   Form,
   FormControl,
@@ -20,8 +20,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "../_ui/client/shadcn-Form";
-import { Input } from "../_ui/client/shadcn-Input";
+} from "../_ui/client/shadcn/shadcn-Form";
+import { Input } from "../_ui/client/shadcn/shadcn-Input";
 import SpinnerMini from "../_ui/server/SpinnerMini";
 
 export default function EditMarketForm({ id, onCloseModal }) {
