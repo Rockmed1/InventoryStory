@@ -52,7 +52,7 @@ function useTableState() {
 function TableHeader() {
   const { labels } = useTableState();
   return (
-    <thead className="sticky top-0 bg-neutral-100 z-10">
+    <thead className="sticky top-0 z-10 bg-neutral-100">
       <tr className="border-b border-neutral-200 whitespace-nowrap">
         <th scope="col" className="p-2 font-medium"></th>
         {labels.map((label) => (
@@ -146,9 +146,6 @@ function TableCell({ row, fieldKey }) {
 function ActionCell({ row }) {
   const { entity, type, rowActions, isLoading } = useTableState();
 
-  const param = getEntityUrlIdentifier(entity);
-  const { toggle: toggleRow } = useUrlParam(param);
-
   if (isLoading) {
     return (
       <td className="w-2 p-2 align-middle">
@@ -168,11 +165,12 @@ function ActionCell({ row }) {
       </td>
     );
 
+  const param = getEntityUrlIdentifier(entity);
+  const { toggle: toggleRow } = useUrlParam(param);
+  const handleClick = useCallback(() => {
+    toggleRow(row.idField);
+  }, [toggleRow, row.idField]);
   if (type === "compound") {
-    const handleClick = useCallback(() => {
-      toggleRow(row.idField);
-    }, [toggleRow, row.idField]);
-
     return (
       <td className="w-2 p-2 align-middle">
         <CollapsibleTrigger asChild>
