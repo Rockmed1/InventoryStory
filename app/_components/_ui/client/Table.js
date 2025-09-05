@@ -350,24 +350,6 @@ export default function Table({
   //     })),
   //   [labels],
   // );
-
-  // const displayData = tableData || placeHolderData;
-
-  // // Debug re-renders
-  // const renderCount = useRef(0);
-  // renderCount.current++;
-
-  // console.log(`Table render #${renderCount.current}`, {
-  //   tableDataLength: displayData.length,
-  //   tableData: displayData,
-  //   type,
-  // });
-
-  // console.log(displayData);
-
-  // const searchParams = useSearchParams();
-  // const openRowId = searchParams.get("itemTrxId");
-
   const tableState = useMemo(
     () => ({
       entity,

@@ -3,6 +3,7 @@ import "@/app/_styles/globals.css";
 //fonts using nextJs
 import { Geist } from "next/font/google";
 import { Toaster } from "react-hot-toast";
+import { Suspense } from "react";
 import { AppSidebar } from "../_components/_ui/client/AppSidebar";
 import {
   SidebarInset,
@@ -48,7 +49,9 @@ export default async function AppLayout({ children }) {
 
           {/* <SideNavigation /> */}
           {/* <div className="col-span-1"> */}
-          <AppSidebar />
+          <Suspense fallback={<Loader />}>
+            <AppSidebar />
+          </Suspense>
           {/* <main className="col-span-1 row-span-2 mr-2.5 h-[calc(100%-8px)] overflow-scroll rounded-xl bg-white p-2 shadow-sm">
 
 */}
