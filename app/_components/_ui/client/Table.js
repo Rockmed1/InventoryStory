@@ -145,6 +145,11 @@ function TableCell({ row, fieldKey }) {
 
 function ActionCell({ row }) {
   const { entity, type, rowActions, isLoading } = useTableState();
+  const param = getEntityUrlIdentifier(entity);
+  const { toggle: toggleRow } = useUrlParam(param);
+  const handleClick = useCallback(() => {
+    toggleRow(row.idField);
+  }, [toggleRow, row.idField]);
 
   if (isLoading) {
     return (
@@ -165,11 +170,6 @@ function ActionCell({ row }) {
       </td>
     );
 
-  const param = getEntityUrlIdentifier(entity);
-  const { toggle: toggleRow } = useUrlParam(param);
-  const handleClick = useCallback(() => {
-    toggleRow(row.idField);
-  }, [toggleRow, row.idField]);
   if (type === "compound") {
     return (
       <td className="w-2 p-2 align-middle">
