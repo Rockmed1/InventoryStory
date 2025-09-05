@@ -5,7 +5,7 @@ import { createFormData, generateQueryKeys } from "@/app/_utils/helpers";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { createItem } from "../../_lib/data/server/actions";
@@ -64,6 +64,13 @@ export default function AddItemForm({ onCloseModal }) {
     },
     mode: "onBlur", //onTouched
   });
+
+  // In AddItemForm.js (mutation component)
+  useEffect(() => {
+    const mutationKey = generateQueryKeys(dataParams);
+    console.log("🔑 AddItemForm query key:", mutationKey);
+    console.log("🔑 AddItemForm dataParams:", dataParams);
+  }, []);
 
   //5- Enhanced Mutation  (JS available)
   //! maybe extract into cusom hook
