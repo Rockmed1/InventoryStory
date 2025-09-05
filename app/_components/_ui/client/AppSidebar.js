@@ -37,7 +37,7 @@ const secondFont = Lora({
 });
 export function AppSidebar() {
   const pathName = usePathname();
-  const redirectUrl = useClerkRedirectUrl();
+  const redirectUrl = useClerkRedirectUrl(true);
 
   const navLinks = {
     top: [

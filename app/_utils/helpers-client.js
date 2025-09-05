@@ -34,8 +34,10 @@ export function useUrlParam(param) {
   // return useMemo(() => ({ paramValue, toggle }), [paramValue, toggle]);
 }
 
-export function useClerkRedirectUrl() {
+export function useClerkRedirectUrl(home = false) {
   let { paramValue: redirect_url } = useUrlParam("redirect_url");
+
+  if (home) return "/dashboard";
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL;
 
@@ -46,13 +48,6 @@ export function useClerkRedirectUrl() {
   const encodedUrl = encodeURIComponent(redirect_url);
 
   const afterSignInUrl = `api/v1/auth/clerk-sync${redirect_url ? `?return_url=${encodedUrl}` : ""}`;
-
-  // console.log(
-  //   "redirect_url: ",
-  //   redirect_url,
-  //   "afterSignInUrl: ",
-  //   afterSignInUrl,
-  // );
 
   return afterSignInUrl;
 }
