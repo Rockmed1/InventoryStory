@@ -206,6 +206,7 @@ export default function AddItemTrxForm({ onCloseModal }) {
     // Optimistic update:
     onMutate: async (newItemTrx) => {
       //cancel ongoing refetches for all tags including "itemTrx"
+      // console.log("🔄 Starting optimistic update for:", newItemTrx);
       await queryClient.cancelQueries({
         queryKey: generateQueryKeys(cancelDataParams),
       });
@@ -214,6 +215,7 @@ export default function AddItemTrxForm({ onCloseModal }) {
       const previousValues = queryClient.getQueryData(
         generateQueryKeys(dataParams),
       );
+      // console.log("📸 Previous values:", previousValues);
 
       const tempId = `temp-${Date.now()}`;
 
@@ -231,6 +233,7 @@ export default function AddItemTrxForm({ onCloseModal }) {
         numOfLines: newItemTrx.itemTrxHeader.numOfLines,
         // Add other fields as needed for your table display
       };
+      // console.log("✨ Adding optimistic item:", optimisticItem);
       //optimistically update cache
       queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) => [
         ...old,

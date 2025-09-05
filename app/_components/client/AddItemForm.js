@@ -94,6 +94,8 @@ export default function AddItemForm({ onCloseModal }) {
     // Optimistic update:
     onMutate: async (newItem) => {
       //cancel ongoing refetches for all tags including "item"
+      // console.log("🔄 Starting optimistic update for:", newItem);
+
       await queryClient.cancelQueries({
         queryKey: generateQueryKeys(cancelDataParams),
       });
@@ -102,12 +104,29 @@ export default function AddItemForm({ onCloseModal }) {
       const previousValues = queryClient.getQueryData(
         generateQueryKeys(dataParams),
       );
-
+      // console.log("📸 Previous values:", previousValues);
       //optimistically update cache
-      queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) => [
-        ...old,
-        { ...newItem, idField: `temp-${Date.now()}`, optimistic: true },
-      ]);
+
+      const optimisticItem = {
+        ...newItem,
+        idField: `temp-${Date.now()}`,
+        optimistic: true,
+      };
+
+      // console.log("✨ Adding optimistic item:", optimisticItem);
+
+      // Optimistically update cache
+      queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) => {
+        const newData = [...old, optimisticItem];
+        console.log("🎯 New cache data:", newData);
+        return newData;
+      });
+
+      // Force a re-render by invalidating without refetching
+      queryClient.invalidateQueries({
+        queryKey: generateQueryKeys(dataParams),
+        refetchType: "none",
+      });
 
       return { previousValues };
     },
@@ -185,7 +204,7 @@ export default function AddItemForm({ onCloseModal }) {
   //6- Progressive enhancement submit handler
 
   function onSubmit(data, e) {
-    console.log("🎪 AddItemForm was submitted with data: ", data);
+    // console.log("🎪 AddItemForm was submitted with data: ", data);
     // 🎯 BINARY DECISION: JavaScript Available & Mutation Ready?
     const isJavaScriptReady =
       mutation && !mutation.isPending && typeof mutation.mutate === "function";
@@ -200,18 +219,19 @@ export default function AddItemForm({ onCloseModal }) {
 
   // console.log("AddItemForm validation errors:", validationErrors);
 
-  console.log("📝 Deep error check:", {
-    rootErrors: form.formState.errors,
-    headerErrors: form.formState.errors.itemTrxHeader,
-    detailsErrors: form.formState.errors.itemTrxDetails,
-    allFormErrors: form.formState.errors,
-    // Check if there are any error keys we're missing
-    errorKeys: Object.keys(form.formState.errors),
-    nestedErrorCheck: JSON.stringify(form.formState.errors, null, 2),
-  });
+  // console.log("📝 Deep error check:", {
+  //   rootErrors: form.formState.errors,
+  //   headerErrors: form.formState.errors.itemTrxHeader,
+  //   detailsErrors: form.formState.errors.itemTrxDetails,
+  //   allFormErrors: form.formState.errors,
+  //   // Check if there are any error keys we're missing
+  //   errorKeys: Object.keys(form.formState.errors),
+  //   nestedErrorCheck: JSON.stringify(form.formState.errors, null, 2),
+  // });
 
   // Don't render form until schema is loaded and itemToEdit is available
   //TODO: make this better: may be render the form anyways but put a message in the form top...
+
   if (loadingValidation || !schema) {
     // if (loadingValidation ) {
     return <div>Loading form...</div>;
@@ -263,7 +283,7 @@ export default function AddItemForm({ onCloseModal }) {
                 <FormItem>
                   <FormLabel>Item name</FormLabel>
                   <FormControl>
-                    <Input placeholder="shadcn" {...field} />
+                    <Input placeholder="Enter item name" {...field} />
                   </FormControl>
                   <FormDescription>Enter new item name</FormDescription>
                   <FormMessage />
@@ -278,13 +298,14 @@ export default function AddItemForm({ onCloseModal }) {
                 <FormItem>
                   <FormLabel>Item description</FormLabel>
                   <FormControl>
-                    <Input placeholder="shadcn" {...field} />
+                    <Input placeholder="Enter item description" {...field} />
                   </FormControl>
                   <FormDescription>Enter new item name</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <div className="flex items-center justify-end gap-3">
               {loadingValidation || !schema ? null : (
                 <Button

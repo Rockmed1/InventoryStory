@@ -7,7 +7,7 @@ import CloseButton from "./CloseButton";
 
 function Overlay({ children }) {
   return (
-    <div className="fixed top-0 left-0 z-[1000] flex h-lvh w-full items-center justify-center bg-black/50 transition-all duration-200">
+    <div className="fixed top-0 left-0 z-[1000] flex h-lvh w-full items-start justify-center overflow-y-auto bg-black/50 py-4 transition-all duration-200">
       {children}
     </div>
   );
@@ -17,7 +17,7 @@ function StyledModal({ children, ref }) {
   return (
     <div
       ref={ref}
-      className="fixed top-1/2 left-1/2 w-full max-w-[calc(100%-2rem)] -translate-1/2 rounded-xl border border-neutral-300 bg-white p-6 shadow-lg transition-all duration-200 sm:w-2xl">
+      className="shadow-l relative mx-auto my-auto max-h-[90vh] w-full max-w-[calc(100%-2rem)] overflow-y-auto rounded-xl border border-neutral-300 bg-white p-6 transition-all duration-200 sm:w-2xl">
       <div>{children}</div>
     </div>
   );
