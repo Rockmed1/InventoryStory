@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useAppStore } from "./AppProvider";
 
 export default function StoreHydrator({ entitiesData }) {

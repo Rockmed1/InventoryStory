@@ -1,4 +1,24 @@
+// import Button from "./_components/_ui/server/Button";
+
+// export default function Home() {
+//   return (
+//     <div className="mx-auto flex h-full items-center justify-between rounded-xl border border-neutral-200 bg-white px-2.5 py-1">
+//       <input
+//         type="checkbox"
+//         name="line"
+//         id="line"
+//         className="h-6 w-4 accent-blue-400 focus:ring focus:ring-blue-400 focus:ring-offset-2 focus:outline-none"
+//       />
+//       <h1 className="block text-xl font-semibold">Hello Inventory</h1>
+//       <input className="input w-36" value="Item Name" readOnly />
+//       <Button variant="secondary">Add Item</Button>
+//     </div>
+//   );
+// }
+
 import { Button } from "@/app/_components/_ui/client/shadcn/shadcn-Button";
+import { auth } from "@clerk/nextjs/server";
+
 import {
   ArchiveBoxIcon,
   ArrowsRightLeftIcon,
@@ -9,8 +29,14 @@ import {
   GlobeAltIcon,
   PlayCircleIcon,
 } from "@heroicons/react/24/outline";
+import Link from "next/link";
+import ClerkSignInOut from "@/app/_components/client/ClerkSignInOut";
 
-export default function LandingPageDraft() {
+export default async function LandingPageDraft() {
+  const { isAuthenticated } = await auth();
+  // const isAuthenticated = userId.isAuthenticated;
+  console.log("isAuthenticated: ", isAuthenticated);
+
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
@@ -32,9 +58,15 @@ export default function LandingPageDraft() {
                 Pricing
               </a>
               <a href="#" className="text-gray-500 hover:text-gray-900">
-                Sign In
+                <ClerkSignInOut />
               </a>
-              <Button>Start Free Trial</Button>
+              {!isAuthenticated ? (
+                <Button>Start Free Trial</Button>
+              ) : (
+                <Link href="/dashboard">
+                  <Button>Go to Dashboard</Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -55,9 +87,11 @@ export default function LandingPageDraft() {
                 grow with confidence.
               </p>
               <div className="mt-8 flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
-                  Start Free Trial
-                </Button>
+                {!isAuthenticated && (
+                  <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+                    Start Free Trial
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="lg"
@@ -336,7 +370,7 @@ export default function LandingPageDraft() {
               Trusted by growing businesses
             </h2>
             <p className="mt-4 text-xl text-gray-600">
-              Join hundreds of sellers who've streamlined their inventory
+              Join hundreds of sellers who&apos;ve streamlined their inventory
               management
             </p>
           </div>
@@ -355,9 +389,9 @@ export default function LandingPageDraft() {
                 </div>
               </div>
               <p className="mt-4 text-gray-600">
-                "Finally, no more overselling on eBay! Inventory Story keeps
-                everything in sync across all my platforms. My stress levels
-                have dropped dramatically."
+                &quot;Finally, no more overselling on eBay! Inventory Story
+                keeps everything in sync across all my platforms. My stress
+                levels have dropped dramatically.&quot;
               </p>
             </div>
 
@@ -372,9 +406,9 @@ export default function LandingPageDraft() {
                 </div>
               </div>
               <p className="mt-4 text-gray-600">
-                "Setup took less than an hour. Now I can track 500+ items across
-                warehouse locations and never lose track of anything. Game
-                changer!"
+                &quot;Setup took less than an hour. Now I can track 500+ items
+                across warehouse locations and never lose track of anything.
+                Game changer!&quot;
               </p>
             </div>
 
@@ -389,9 +423,9 @@ export default function LandingPageDraft() {
                 </div>
               </div>
               <p className="mt-4 text-gray-600">
-                "The multi-platform sync is incredible. I sell on Facebook,
+                &quot;The multi-platform sync is incredible. I sell on Facebook,
                 Craigslist, and eBay simultaneously without any inventory
-                conflicts."
+                conflicts.&quot;
               </p>
             </div>
           </div>
@@ -482,7 +516,7 @@ export default function LandingPageDraft() {
             Ready to Take Control of Your Inventory?
           </h2>
           <p className="mt-4 text-xl text-blue-100">
-            Join hundreds of sellers who've eliminated inventory chaos and
+            Join hundreds of sellers who&apos;ve eliminated inventory chaos and
             boosted their profits
           </p>
 

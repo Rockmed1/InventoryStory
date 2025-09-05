@@ -57,7 +57,7 @@ export default function useClientData({
 
   const results = useQuery({
     queryKey: generateQueryKeys(apiParams),
-    queryFn: () => useApiData(apiParams), // Only data params, no options
+    queryFn: () => fetchApiData(apiParams), // Only data params, no options
     staleTime,
     gcTime,
     select,

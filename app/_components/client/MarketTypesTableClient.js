@@ -1,6 +1,6 @@
 "use client";
 
-import { useApiData } from "@/app/_lib/data/client/useClientData";
+import { fetchApiData } from "@/app/_lib/data/client/useClientData";
 import { generateQueryKeys, getEntityTableLabels } from "@/app/_utils/helpers";
 import { PencilIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -21,7 +21,7 @@ export default function MarketTypesTableClient() {
   const dataParams = { entity: "marketType", id: "all" };
   const { data, isFetching } = useSuspenseQuery({
     queryKey: generateQueryKeys(dataParams),
-    queryFn: () => useApiData(dataParams),
+    queryFn: () => fetchApiData(dataParams),
   });
   const displayTableLabels = getEntityTableLabels("marketType");
 

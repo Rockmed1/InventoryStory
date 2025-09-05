@@ -6,7 +6,9 @@ import React, { cloneElement } from "react";
  */
 function CardHeader({ children }) {
   return (
-    <div className="flex items-center justify-between px-6">{children}</div>
+    <div className="flex flex-shrink-0 items-center justify-between px-6">
+      {children}
+    </div>
   );
 }
 
@@ -33,7 +35,7 @@ function CardAction({ children }) {
  */
 function CardContent({ children, ...props }) {
   return (
-    <div className="min-h-0 flex-1 overflow-hidden px-4" {...props}>
+    <div className="h-full overflow-y-auto px-4" {...props}>
       {children}
     </div>
   );
@@ -48,7 +50,7 @@ function CardContent({ children, ...props }) {
  */
 function Card({ children, ...props }) {
   return (
-    <div className="flex max-h-[500px] w-full flex-col gap-4 overflow-hidden rounded-xl border border-neutral-200 bg-white py-4 shadow-xs">
+    <div className="flex w-full flex-col gap-4 rounded-xl border border-neutral-200 bg-white py-4 shadow-xs data-[state=open]:max-h-[300px] data-[state=open]:flex data-[state=open]:flex-1">
       {/* {cloneElement(children, { onCloseModal: close })} // this will error out if passing [null or undefined, Arrays of elements, Plain text/strings, Numbers, Multiple elements] as children*/}
       {React.Children.count(children) > 0 && React.isValidElement(children)
         ? cloneElement(children, { ...props })

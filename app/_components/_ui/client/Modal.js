@@ -65,17 +65,13 @@ function Window({
   children,
 }) {
   const { openName, close } = use(ModalContext);
-
-  let modalRef;
-  if (isUseOutsideClick) {
-    modalRef = useOutsideClick(close);
-  }
+  const modalRef = useOutsideClick(close);
 
   if (name !== openName) return null;
 
   return createPortal(
     <Overlay>
-      <StyledModal ref={modalRef}>
+      <StyledModal ref={isUseOutsideClick ? modalRef : undefined}>
         <CloseButton onClick={close} />
         <div className="flex w-full flex-col gap-4 sm:max-w-[600px]">
           <div className="flex flex-col gap-2">

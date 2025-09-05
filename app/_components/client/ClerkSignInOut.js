@@ -18,8 +18,8 @@ export default function ClerkSignInOut({ orgSelector = false }) {
     <>
       <SignedOut>
         <div className="flex items-center justify-between gap-2">
-          <SignInButton>Sign In</SignInButton>
-          <SignUpButton>Sign Up</SignUpButton>
+          <SignInButton forceRedirectUrl={redirectUrl}>Sign In</SignInButton>
+          <SignUpButton forceRedirectUrl={redirectUrl}>Sign Up</SignUpButton>
         </div>
       </SignedOut>
       <SignedIn>

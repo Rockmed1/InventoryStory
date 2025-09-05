@@ -52,8 +52,8 @@ function useTableState() {
 function TableHeader() {
   const { labels } = useTableState();
   return (
-    <thead>
-      <tr className="border-b border-neutral-200 bg-neutral-100 whitespace-nowrap">
+    <thead className="sticky top-0 bg-neutral-100 z-10">
+      <tr className="border-b border-neutral-200 whitespace-nowrap">
         <th scope="col" className="p-2 font-medium"></th>
         {labels.map((label) => (
           <th scope="col" key={label} className="h-10 px-2 font-medium">
@@ -146,6 +146,9 @@ function TableCell({ row, fieldKey }) {
 function ActionCell({ row }) {
   const { entity, type, rowActions, isLoading } = useTableState();
 
+  const param = getEntityUrlIdentifier(entity);
+  const { toggle: toggleRow } = useUrlParam(param);
+
   if (isLoading) {
     return (
       <td className="w-2 p-2 align-middle">
@@ -166,9 +169,6 @@ function ActionCell({ row }) {
     );
 
   if (type === "compound") {
-    const param = getEntityUrlIdentifier(entity);
-    const { toggle: toggleRow } = useUrlParam(param);
-
     const handleClick = useCallback(() => {
       toggleRow(row.idField);
     }, [toggleRow, row.idField]);
@@ -224,7 +224,7 @@ function TableBodyLoading() {
   //   tableDataLength: tableData.length,
   //   type,
   // });
-
+  const { labels } = useTableState();
   // default place holder for when data is not passed
   // LATER: get the number of placeholder rows
   const placeHolderData = useMemo(
@@ -362,6 +362,7 @@ export default function Table({
       // openRow: openRowId,
     }),
     [
+      entity,
       type,
       labels,
       tableData,

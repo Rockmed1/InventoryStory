@@ -2,12 +2,12 @@ import { generateQueryKeys } from "@/app/_utils/helpers";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 
-export async function useApiData({ entity, ...otherParams }) {
+export async function fetchApiData({ entity, ...otherParams }) {
   //1- TODO: authenticate user
 
-  if (!entity) throw new Error(`🚨 no entity was provided for useApiData.`);
+  if (!entity) throw new Error(`🚨 no entity was provided for fetchApiData.`);
 
-  // console.log("useApiData was called with: ", { entity, ...otherParams });
+  // console.log("fetchApiData was called with: ", { entity, ...otherParams });
   const { id = "all", ...additionalParams } = otherParams;
   const queryParams = { id, ...additionalParams };
 
@@ -82,11 +82,11 @@ export default function useClientData({
     }
 
     return undefined;
-  }, [queryClient, entity, otherParams]);
+  }, [queryClient, entity, apiParams.id]);
 
   const results = useQuery({
     queryKey: generateQueryKeys(apiParams),
-    queryFn: () => useApiData(apiParams),
+    queryFn: () => fetchApiData(apiParams),
     staleTime,
     gcTime,
     select,

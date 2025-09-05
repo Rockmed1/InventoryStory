@@ -13,7 +13,7 @@ export function useUrlParam(param) {
 
   const paramValue = useMemo(() => {
     return searchParams.get(param);
-  }, [searchParams]);
+  }, [searchParams, param]);
 
   const toggle = useCallback(
     (value) => {
@@ -27,7 +27,7 @@ export function useUrlParam(param) {
 
       router.replace(`${pathName}?${params.toString()}`, { scroll: false });
     },
-    [paramValue, router, pathName],
+    [paramValue, router, pathName, param, searchParams],
   );
 
   return { paramValue, toggle };

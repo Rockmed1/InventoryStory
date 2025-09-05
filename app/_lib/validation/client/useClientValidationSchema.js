@@ -4,7 +4,7 @@ import {
   generateQueryKeys,
   getEntityAndDependencies,
 } from "../../../_utils/helpers";
-import { useApiData } from "../../data/client/useClientData";
+import { fetchApiData } from "../../data/client/useClientData";
 import { buildValidationSchema } from "../buildValidationSchema";
 
 //Data preparation wrapper for getValidationScheme
@@ -57,7 +57,7 @@ export function useClientValidationSchema({
 
       return {
         queryKey: generateQueryKeys(apiParam),
-        queryFn: () => useApiData(apiParam), //useApiData directly not useClientData
+        queryFn: () => fetchApiData(apiParam), //fetchApiData directly not useClientData
         staleTime: 1000 * 60 * 5, // 5 minutes
         gcTime: 1000 * 60 * 10, // 10 minutes garbage collection
         select,
@@ -130,7 +130,7 @@ export function useClientValidationSchema({
                 dataDependencies,
                 operation,
                 editedEntityId,
-                universalDataService: useApiData, //injecting the data fetching mechanism for the client
+                universalDataService: fetchApiData, //injecting the data fetching mechanism for the client
               });
             })()
           : null; //if any data is missing the schema is set to null

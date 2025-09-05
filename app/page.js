@@ -370,7 +370,7 @@ export default async function LandingPageDraft() {
               Trusted by growing businesses
             </h2>
             <p className="mt-4 text-xl text-gray-600">
-              Join hundreds of sellers who've streamlined their inventory
+              Join hundreds of sellers who&apos;ve streamlined their inventory
               management
             </p>
           </div>
@@ -389,9 +389,9 @@ export default async function LandingPageDraft() {
                 </div>
               </div>
               <p className="mt-4 text-gray-600">
-                "Finally, no more overselling on eBay! Inventory Story keeps
+                &quot;Finally, no more overselling on eBay! Inventory Story keeps
                 everything in sync across all my platforms. My stress levels
-                have dropped dramatically."
+                have dropped dramatically.&quot;
               </p>
             </div>
 
@@ -406,9 +406,9 @@ export default async function LandingPageDraft() {
                 </div>
               </div>
               <p className="mt-4 text-gray-600">
-                "Setup took less than an hour. Now I can track 500+ items across
+                &quot;Setup took less than an hour. Now I can track 500+ items across
                 warehouse locations and never lose track of anything. Game
-                changer!"
+                changer!&quot;
               </p>
             </div>
 
@@ -423,9 +423,9 @@ export default async function LandingPageDraft() {
                 </div>
               </div>
               <p className="mt-4 text-gray-600">
-                "The multi-platform sync is incredible. I sell on Facebook,
+                &quot;The multi-platform sync is incredible. I sell on Facebook,
                 Craigslist, and eBay simultaneously without any inventory
-                conflicts."
+                conflicts.&quot;
               </p>
             </div>
           </div>
@@ -516,7 +516,7 @@ export default async function LandingPageDraft() {
             Ready to Take Control of Your Inventory?
           </h2>
           <p className="mt-4 text-xl text-blue-100">
-            Join hundreds of sellers who've eliminated inventory chaos and
+            Join hundreds of sellers who&apos;ve eliminated inventory chaos and
             boosted their profits
           </p>
 

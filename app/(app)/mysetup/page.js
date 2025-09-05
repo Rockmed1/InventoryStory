@@ -20,14 +20,10 @@ import LocationsTable from "../../_components/server/locationsTable";
 import MarketsTable from "../../_components/server/MarketsTable";
 import MarketTypesTable from "../../_components/server/MarketTypesTable";
 import TrxTypesTable from "../../_components/server/TrxTypesTable";
-import getAuthContext from "../../_lib/auth/getAuthContext";
 
 export const revalidate = 0; // this will make the page dynamic and revalidate cache every request
 
 export default function Page() {
-  //1- authenticate the user
-  const { _org_uuid, _usr_uuid } = getAuthContext();
-
   const cards = [
     {
       cardName: "Locations",
@@ -111,13 +107,13 @@ export default function Page() {
   ];
 
   return (
-    <div className="flex h-full flex-col gap-5 overflow-scroll p-2">
+    <div className="flex h-full flex-col gap-4 overflow-scroll p-2">
       <div className="m-3 flex items-center">
         <h1 className="text-2xl font-semibold font-stretch-semi-expanded">
           Company Setup
         </h1>
       </div>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-1 flex-col gap-4">
         {cards.map((card) => (
           <Collapsible key={card.name} asChild>
             <Card key={card.cardName}>
@@ -133,7 +129,7 @@ export default function Page() {
                 </CollapsibleTrigger>
                 <Card.CardAction>{card.CardAction} </Card.CardAction>
               </Card.CardHeader>
-              <CollapsibleContent>
+              <CollapsibleContent className="flex-1 min-h-0">
                 <Card.CardContent>
                   <Suspense fallback={card.cardFallback}>
                     {card.cardTable}

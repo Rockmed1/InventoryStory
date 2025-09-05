@@ -1,6 +1,6 @@
 "use client";
 
-import { useApiData } from "@/app/_lib/data/client/useClientData";
+import { fetchApiData } from "@/app/_lib/data/client/useClientData";
 import { generateQueryKeys } from "@/app/_utils/helpers";
 import { ArrowsRightLeftIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -27,7 +27,7 @@ export default function ItemsTrxDetailsTableClient({ itemTrxId }) {
   const dataParams = { entity: "itemTrxDetails", id: itemTrxId };
   const { data, isFetching } = useSuspenseQuery({
     queryKey: generateQueryKeys(dataParams),
-    queryFn: () => useApiData(dataParams),
+    queryFn: () => fetchApiData(dataParams),
   });
   // const displayTableLabels = getEntityTableLabels("itemTrxDetails");
 
