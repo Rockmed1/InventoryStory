@@ -127,6 +127,7 @@ function dbAction(rpcName, entity, operation) {
     // 5. Revalidate the appropriate cache tag on success.
     if (entity) {
       revalidateTag(`${entity}-${_org_xid}`);
+      revalidateTag(`${entity}-${_org_xid}-all`);
     }
 
     // console.log(prevState);
