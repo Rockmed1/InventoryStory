@@ -129,12 +129,6 @@ export default function AddItemForm({ onCloseModal }) {
         return newData;
       });
 
-      // Force a re-render by invalidating without refetching
-      queryClient.invalidateQueries({
-        queryKey: generateQueryKeys(dataParams),
-        refetchType: "none",
-      });
-
       return { previousValues };
     },
 
@@ -152,7 +146,7 @@ export default function AddItemForm({ onCloseModal }) {
       //! may be should refetch
       queryClient.invalidateQueries({
         queryKey: generateQueryKeys({ entity: "item" }),
-        refetchType: "none", //don't show loading state
+        refetchType: "active", //don't show loading state
       });
       //UI feedback //! may be grab the newly created id here...
       toast.success(`Item ${variables.nameField} was created successfully!`);
