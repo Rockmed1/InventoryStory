@@ -68,7 +68,7 @@ export default function AddItemForm({ onCloseModal }) {
     console.log("🔑 AddItemForm dataParams:", dataParams);
 
     // Also log the stringified version to check for deep equality
-    console.log("🔑 AddItemForm stringified key:", JSON.stringify(mutationKey));
+    // console.log("🔑 AddItemForm stringified key:", JSON.stringify(mutationKey));
   }, []);
 
   //5- Enhanced Mutation  (JS available)
@@ -93,7 +93,7 @@ export default function AddItemForm({ onCloseModal }) {
 
     // Optimistic update:
     onMutate: async (newItem) => {
-      console.log("🔄 Starting optimistic update for:", newItem);
+      // console.log("🔄 Starting optimistic update for:", newItem);
 
       // Cancel ongoing refetches for this specific query
       await queryClient.cancelQueries({
@@ -104,7 +104,7 @@ export default function AddItemForm({ onCloseModal }) {
       const previousValues = queryClient.getQueryData(
         generateQueryKeys(dataParams),
       );
-      console.log("📸 Previous values:", previousValues);
+      // console.log("📸 Previous values:", previousValues);
 
       // Create optimistic item
       const optimisticItem = {
@@ -113,29 +113,29 @@ export default function AddItemForm({ onCloseModal }) {
         optimistic: true,
       };
 
-      console.log("✨ Adding optimistic item:", optimisticItem);
+      // console.log("✨ Adding optimistic item:", optimisticItem);
 
       // Optimistically update cache
       queryClient.setQueryData(generateQueryKeys(dataParams), (old = []) => {
         const newData = [...old, optimisticItem];
-        console.log("🎯 New cache data length:", newData.length);
-        console.log(
-          "🎯 Has optimistic items:",
-          newData.some((item) => item.optimistic),
-        );
-        console.log("🎯 Full optimistic update data:", newData.slice(-3)); // Log last 3 items
+        // console.log("🎯 New cache data length:", newData.length);
+        // console.log(
+        //   "🎯 Has optimistic items:",
+        //   newData.some((item) => item.optimistic),
+        // );
+        // console.log("🎯 Full optimistic update data:", newData.slice(-3)); // Log last 3 items
         return newData;
       });
 
-      // Verify the cache was actually updated
-      const updatedCache = queryClient.getQueryData(
-        generateQueryKeys(dataParams),
-      );
-      console.log("🔍 Cache after optimistic update:", {
-        length: updatedCache?.length,
-        hasOptimistic: updatedCache?.some((item) => item.optimistic),
-        lastItem: updatedCache?.[updatedCache.length - 1],
-      });
+      // // Verify the cache was actually updated
+      // const updatedCache = queryClient.getQueryData(
+      //   generateQueryKeys(dataParams),
+      // );
+      // console.log("🔍 Cache after optimistic update:", {
+      //   length: updatedCache?.length,
+      //   hasOptimistic: updatedCache?.some((item) => item.optimistic),
+      //   lastItem: updatedCache?.[updatedCache.length - 1],
+      // });
 
       // DON'T call invalidateQueries here - it can interfere with optimistic updates
       // The component will re-render automatically due to setQueryData
@@ -145,7 +145,7 @@ export default function AddItemForm({ onCloseModal }) {
 
     //Success Handling
     onSuccess: (result, variables, context) => {
-      console.log("✅ Mutation succeeded:", result);
+      // console.log("✅ Mutation succeeded:", result);
 
       // Simply refetch fresh data from server
       queryClient.invalidateQueries({

@@ -109,7 +109,7 @@ export default function Page() {
   return (
     <div className="flex h-full flex-col gap-4 overflow-scroll p-2">
       <div className="m-3 flex items-center">
-        <h1 className="text-2xl font-semibold font-stretch-semi-expanded">
+        <h1 className="px-4 text-2xl font-semibold font-stretch-semi-expanded">
           Company Setup
         </h1>
       </div>
@@ -129,7 +129,7 @@ export default function Page() {
                 </CollapsibleTrigger>
                 <Card.CardAction>{card.CardAction} </Card.CardAction>
               </Card.CardHeader>
-              <CollapsibleContent className="flex-1 min-h-0">
+              <CollapsibleContent className="min-h-0 flex-1">
                 <Card.CardContent>
                   <Suspense fallback={card.cardFallback}>
                     {card.cardTable}
@@ -139,14 +139,6 @@ export default function Page() {
             </Card>
           </Collapsible>
         ))}
-        {/* <Card>
-        <Card.CardHeader>
-        <Card.CardTitle>Form</Card.CardTitle>
-        </Card.CardHeader>
-        <Card.CardContent>
-        <AddLocationForm />
-        </Card.CardContent>
-        </Card> */}
       </div>
     </div>
   );
