@@ -69,7 +69,7 @@ export function generateQueryKeys({ entity, ...params }) {
       .filter(([_, value]) => value !== undefined)
       .sort(([a], [b]) => a.localeCompare(b)),
   );
-  return [entity, cleanParams];
+  return [entity, JSON.stringify(cleanParams)];
 }
 
 export function destructuredFormData(state, formData) {
