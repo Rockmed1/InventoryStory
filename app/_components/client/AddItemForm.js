@@ -66,6 +66,9 @@ export default function AddItemForm({ onCloseModal }) {
     const mutationKey = generateQueryKeys(dataParams);
     console.log("🔑 AddItemForm query key:", mutationKey);
     console.log("🔑 AddItemForm dataParams:", dataParams);
+
+    // Also log the stringified version to check for deep equality
+    console.log("🔑 AddItemForm stringified key:", JSON.stringify(mutationKey));
   }, []);
 
   //5- Enhanced Mutation  (JS available)
